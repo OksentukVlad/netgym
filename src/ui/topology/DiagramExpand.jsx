@@ -52,6 +52,9 @@ import './DiagramExpand.css';
 export function useDiagramExpand({ zoom, onZoom = () => {} } = {}) {
   const [expanded, setExpanded] = useState(false);
   const [own, setOwn] = useState(undefined);
+  // Vlad (2 Nov): on a phone the page shows the whole drawing from the start (an overview; its text may
+  // be smaller than 12 px), with no zoom bar there; «Розгорнути схему» gives the readable, zoomable view.
+  const phone = usePhone();
   const buttonRef = useRef(null);
   const boxRef = useRef(null);
   // Round 6 repair (Fable 3): in portrait it opens at the whole drawing («Уся схема»); «+» or a turn gives detail.
@@ -74,7 +77,7 @@ export function useDiagramExpand({ zoom, onZoom = () => {} } = {}) {
     expanded,
     open,
     close,
-    zoom: expanded ? own : zoom,
+    zoom: expanded ? own : (phone && (zoom === undefined || zoom === null) ? 'all' : zoom),
     onZoom: expanded ? setOwn : onZoom,
     covered: textOpen => Boolean(textOpen) && !expanded,
     buttonRef,

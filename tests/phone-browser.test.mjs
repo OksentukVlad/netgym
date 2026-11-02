@@ -178,11 +178,10 @@ test('the phone layer in Chromium: scrolling, the sheet, 640 px, the full-screen
     assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.ng-te-panel')).position), 'relative', 'its panel is in the flow');
     await page.locator('.ng-te-button').click(); await settle(page);
     const frame = page.locator('.ng-rt-stage .ng-dg-frame');
-    const zoomIn = page.locator('.ng-rt-stage .ng-dg-zoom button').nth(1);
-    assert.equal(await zoomIn.count(), 1, 'the drawing pans at 12 px: the zoom bar shows');
-    await zoomIn.click(); await settle(page);
+    // Vlad (2 Nov): on a phone the page shows the whole drawing from the start, with no zoom bar there.
     const stored = await frame.getAttribute('data-zoom');
-    assert.notEqual(stored, 'default');
+    assert.equal(stored, 'all', 'the page shows the whole drawing');
+    assert.equal(await page.locator('.ng-rt-stage .ng-dg-zoom').isVisible().catch(() => false), false, 'no zoom bar in the page');
     await page.getByRole('button', { name: 'Розгорнути схему' }).click(); await settle(page);
     m = await page.evaluate(() => {
       const d = document.querySelector('.ng-dx.is-open'), r = d?.getBoundingClientRect();

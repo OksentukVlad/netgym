@@ -168,3 +168,13 @@ html.ng-dx-open {
     margin-top: 4px;
   }
 }
+
+/* On a phone the drawing in the page is an overview of the whole diagram: its zoom bar is hidden there
+   (the full-screen view has its own «−» and «+»). */
+@media (max-width: 639.98px) {
+  .ng-dx:not(.is-open) .ng-dg-zoom,
+  .ng-dx:not(.is-open) .ng-vl-zoom,
+  .ng-dx:not(.is-open) .ng-fw-zoom {
+    display: none;
+  }
+}
