@@ -70,7 +70,7 @@ import { useSkipper, useWalkPlayer } from './walkPlayer.js';
 import {
   SHAPES, allCommitted, commitOf, dotsOf, isCommitted, nextOpen, nextSlot, paramsOf, roundView, slotKey, slotOf, toggle, validSeed,
 } from './predictState.js';
-import { introduction, t, ui } from '../uk.js';
+import { comprehension, introduction, t, ui } from '../uk.js';
 
 const DOT = { ok: '✓', no: '•' };
 
@@ -265,7 +265,7 @@ export default function PredictView({ record, syntax, place, setPlace, head, ski
         </nav>
         <h2 ref={questionRef} tabIndex={-1} className="ng-vl-question">{ui.question({ host: current.from })}</h2>
         <EvidenceTable task={task} source={current.from} highlight={facts.highlight} onFact={facts.onFact} />
-        <ActionLine id="ng-vl-predict-action">{committed ? ui.predictDone : ui.predictAction}</ActionLine>
+        <ActionLine id="ng-vl-predict-action">{committed ? ui.predictDone : comprehension.frameAction}</ActionLine>
         {committed && <span id="ng-vl-choices-locked" className="ng-sr-only">{ui.choicesLocked}</span>}
         <div className={`ng-vl-choices${committed ? ' is-locked' : ''}`} role="group" aria-labelledby={committed ? 'ng-vl-choices-locked' : 'ng-vl-predict-action'}
           {...(verdict && !committed ? { 'data-evidence': 'current' } : {})}>

@@ -1,7 +1,9 @@
 // «Налаштуй порти»: one switch's form (VLAN-1 spec §4, W2), in the syntax
 // the bar's switch chose:
-//   - Cisco: the VLANs to create, then a row per port: its mode (access,
-//     trunk or —) and its access VLAN or allowed list;
+//   - Cisco: a row per port: its mode (access, trunk or —) and its access
+//     VLAN or allowed list, then the VLANs to create (round 5, 5b-2: after
+//     the ports, as MikroTik's VLAN table, so the action line sits right
+//     above the first port row);
 //   - MikroTik: Bridge → Ports (PVID, Frame Types), Bridge → VLANs (a row
 //     per entry: VLAN IDs, Tagged and Untagged ports, as toggles), and the
 //     bridge's «VLAN Filtering».
@@ -31,7 +33,8 @@
 // word over the term («доступ» over access, «транк» over trunk, «не
 // задано»), each named «доступ (access)»; the value column is «VLAN цього
 // порту»; «VLAN, які створити» says «створити на комутаторі (один раз)»
-// under it. With `onFact`, a port's name («fa0/3 — PC1») is a FactLink to
+// under it. Round 5 (5b-2 E): its placeholder (and the allowed lists' and
+// VLAN IDs') is symbolic, «номери VLAN через кому», never numbers. With `onFact`, a port's name («fa0/3 — PC1») is a FactLink to
 // its label on the diagram (device-qualified, label only).
 import Segmented from '../../../ui/components/Segmented.jsx';
 import FactLink from '../../../ui/components/FactLink.jsx';
@@ -41,7 +44,7 @@ import { fieldKey, formatValue, markOn, portOrder, readField } from './portsStat
 import { portCaption } from '../logic/model.js';
 import { portFact } from '../logic/facts.js';
 import { addId, removeId, useRowFocus } from './rowFocus.js';
-import { t, ui, vlanTeaching } from '../uk.js';
+import { comprehension, t, ui, vlanTeaching } from '../uk.js';
 
 /** A mode option: the Ukrainian word over the term in brackets, so its name reads «доступ (access)». */
 const ModeLabel = ({ mode }) => (
@@ -129,19 +132,15 @@ export default function PortsForm({ device, syntax, form, raw, marks, edit, onCh
   const config = form[sw];
   // The first marked row in reading order: its words are the panel's evidence.
   const first = typeof evidence === 'string' && markOn(marks, evidence) ? evidence : evidence ? firstMarked(marks, syntax === 'cisco'
-    ? ['vlans', ...ports.map(p => `ports.${p.id}`)]
+    ? [...ports.map(p => `ports.${p.id}`), 'vlans']
     : [...ports.map(p => `ports.${p.id}`), ...config.vlans.map((_, i) => `vlans.${i}`), '']) : null;
 
   if (syntax === 'cisco') {
     const vlansMark = markOn(marks, 'vlans');
+    // Round 5 (5b-2): the ports first, under the action line (its first control), then the VLANs to
+    // create, as MikroTik's form has its ports, then its VLAN table.
     return (
       <div className="ng-vl-form" data-syntax="cisco">
-        <div className={`ng-vl-form-line${vlansMark ? ' is-marked' : ''}`}>
-          <label className="ng-vl-label" htmlFor={`vl-${sw}-vlans`}>{ui.ciscoVlans}</label>
-          {field('vlans', ui.ciscoVlans, { row: 'vlans', placeholder: ui.listHint, className: 'is-list', describedBy: `vl-${sw}-vlans-what` })}
-          <p id={`vl-${sw}-vlans-what`} className="ng-vl-form-what">{vlanTeaching.createVlans}</p>
-          <MarkWords mark={vlansMark} id={markId('vlans')} evidence={first === 'vlans'} />
-        </div>
         {action}
         <table className="ng-vl-form-table">
           <thead><tr><th scope="col">{ui.portCol}</th><th scope="col">{ui.modeCol}</th><th scope="col">{ui.valueCol}</th></tr></thead>
@@ -164,22 +163,39 @@ export default function PortsForm({ device, syntax, form, raw, marks, edit, onCh
                   <td>
                     {given(p.id) ? <span className="ng-vl-given-value">{formatValue(port.mode === 'trunk' ? port.allowed : port.vlan)}</span> : <>
                       {port.mode === 'access' && field(`${row}.vlan`, ui.accessVlan({ port: label }), { row, className: 'is-vid', numeric: true })}
-                      {port.mode === 'trunk' && field(`${row}.allowed`, ui.allowed({ port: label }), { row, placeholder: ui.listHint, className: 'is-list' })}
-                      {port.mode === 'trunk' && native && (
+                    </>}
+                  </td>
+                </tr>,
+                // A trunk's VLAN list on a line of its own under its row (repair v1, Fable 1): wide enough
+                // for the whole placeholder «номери VLAN через кому», which the value column never is.
+                !given(p.id) && port.mode === 'trunk' && (
+                  <tr key={`${p.id}-allowed`} className={`ng-vl-allowed-row${mark ? ' is-marked' : ''}`}>
+                    <td colSpan={3}><div className="ng-vl-allowed">
+                      <span className="ng-vl-pair">
+                        <label className="ng-vl-label" htmlFor={`vl-${sw}-ports-${p.id}-allowed`}>{ui.allowedShort({ port: label })}</label>
+                        {field(`${row}.allowed`, ui.allowed({ port: label }), { row, placeholder: comprehension.vlansPlaceholder, className: 'is-list' })}
+                      </span>
+                      {native && (
                         <span className="ng-vl-pair ng-vl-native">
                           <label className="ng-vl-label ng-vl-mono" htmlFor={`vl-${sw}-ports-${p.id}-native`}>{ui.nativeShort}</label>
                           {field(`${row}.native`, ui.native({ port: label }), { row, className: 'is-vid', numeric: true, placeholder: '1' })}
                         </span>
                       )}
-                    </>}
-                  </td>
-                </tr>,
+                    </div></td>
+                  </tr>
+                ),
                 mark && <tr key={`${p.id}-mark`} className="ng-vl-mark-row"><td colSpan={3}><MarkWords mark={mark} id={markId(row)} evidence={first === row} /></td></tr>,
                 !mark && noteRow(row, p.id),
               ];
             })}
           </tbody>
         </table>
+        <div className={`ng-vl-form-line${vlansMark ? ' is-marked' : ''}`}>
+          <label className="ng-vl-label" htmlFor={`vl-${sw}-vlans`}>{ui.ciscoVlans}</label>
+          {field('vlans', ui.ciscoVlans, { row: 'vlans', placeholder: comprehension.vlansPlaceholder, className: 'is-list', describedBy: `vl-${sw}-vlans-what` })}
+          <p id={`vl-${sw}-vlans-what`} className="ng-vl-form-what">{vlanTeaching.createVlans}</p>
+          <MarkWords mark={vlansMark} id={markId('vlans')} evidence={first === 'vlans'} />
+        </div>
       </div>
     );
   }
@@ -239,7 +255,7 @@ export default function PortsForm({ device, syntax, form, raw, marks, edit, onCh
               <li key={i} className={`ng-vl-row${mark ? ' is-marked' : ''}`}>
                 <div className="ng-vl-row-head">
                   <label className="ng-vl-label" htmlFor={`vl-${sw}-vlans-${i}-vids`}>{ui.col.vlanIds}</label>
-                  {field(`${path}.vids`, ui.vlanIds({ n }), { row: path, className: 'is-list', placeholder: ui.listHint, invalid: Boolean(mark) })}
+                  {field(`${path}.vids`, ui.vlanIds({ n }), { row: path, className: 'is-list', placeholder: comprehension.vlansPlaceholder, invalid: Boolean(mark) })}
                   <button type="button" id={removeId(sw, 'vlans', i)} className="ng-vl-icon ng-vl-remove" aria-label={ui.removeRow({ n })} title={ui.removeRow({ n })}
                     onClick={() => { rowRemoved(sw, 'vlans', i); edit.removeRow(sw, i); }}>✕</button>
                 </div>

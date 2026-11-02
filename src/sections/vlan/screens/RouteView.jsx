@@ -56,10 +56,12 @@ import DoneMark, { earnedBy } from '../../../ui/components/DoneMark.jsx';
 import Aside, { useAsideFold } from '../../../ui/components/Aside.jsx';
 import TextEquivalent, { TextEquivalentButton } from '../../../ui/components/TextEquivalent.jsx';
 import ActionLine from '../../../ui/components/ActionLine.jsx';
+import WorkedExample from '../../../ui/components/WorkedExample.jsx';
+import { interVlanExample } from '../logic/examples.js';
 import VlanDiagram from './VlanDiagram.jsx';
 import RouteForm from './RouteForm.jsx';
 import Commands from './Commands.jsx';
-import { CommandsFold, failingStep, hostLines, isShort, portIdOf, taskCounts, useHelpInView, useShortAside, EvidenceMark, SCREEN, WalkPointer } from './panel.jsx';
+import { CommandsFold, exampleLines, failingStep, hostLines, isShort, portIdOf, taskCounts, useHelpInView, useShortAside, EvidenceMark, SCREEN, WalkPointer } from './panel.jsx';
 import { compactPcWidth, layout, traceScene, walkScene } from './diagram.js';
 import { interVlanAction } from '../logic/route-action.js';
 
@@ -73,7 +75,7 @@ import {
   traceLines, traceSteps, trunkPort, writeRouteText,
 } from './routeState.js';
 import { firstValidSeed, validSeed } from './predictState.js';
-import { notes, routeNotes, routeText, routeUi, t, ui } from '../uk.js';
+import { comprehension, notes, routeNotes, routeText, routeUi, t, ui } from '../uk.js';
 
 const HINTS = 3;
 const DIRECTIONS = ['request', 'reply'];
@@ -241,6 +243,10 @@ export default function RouteView({ records, syntax, place, setPlace, head, skip
   useShortAside(`route-goal-${task.taskNumber}`, short || (task.taskNumber === 3 && isShort(height, TALL_ASIDE)));
   // Round 5 (R1): what to do first, from the task's own givens (its parent interface, what is left to the learner).
   const action = useMemo(() => interVlanAction(task, syntax), [task, syntax]);
+  // The worked example (5b-2 A): its own instance on reserved addresses, in this syntax; never this task's values.
+  const example = useMemo(() => interVlanExample({ syntax }), [syntax]);
+  // Task 1 is named «Маршрутизатор на паличці»: one line under it says what that means (5b-2 E).
+  const onStick = task.taskNumber === 1;
   // After Enter in a field moves the form to another device's marks, focus goes
   // to the first marked control there (else the form's heading), not the page.
   const focusMark = useRef(false);
@@ -434,6 +440,8 @@ export default function RouteView({ records, syntax, place, setPlace, head, skip
         <div className="ng-vl-intro">
           <p className="ng-vl-task-text"><b>{task.title}.</b> {routeUi.taskOne[task.taskNumber] ?? routeText[task.taskNumber]}</p>
           {task.management && <p className="ng-vl-givens">{routeUi.managementGivens(task.management)}</p>}
+          {/* Round 5 (5b-2 E): what «на паличці» means, under the task that is named so. */}
+          {onStick && <p className="ng-vl-stick">{comprehension.routerOnStick}</p>}
           <Aside screen={SCREEN} id={`route-goal-${task.taskNumber}`} title={routeUi.goalTitle}>
             {/* The task's own words are its line above; task 3 adds its limits (Fable 3: the diagram fits with this open). */}
             {task.taskNumber === 3 && <p className="ng-vl-note">{routeNotes.managementLimits}</p>}
@@ -460,6 +468,7 @@ export default function RouteView({ records, syntax, place, setPlace, head, skip
       <section ref={workRef} className="ng-vl-work" aria-label={ui.exercises.route} {...taskCounts({
         hosts: task.topology.hosts.length, devices: task.topology.devices.filter(d => d.kind !== 'host').length, gateways: task.topology.hosts.filter(h => h.gateway).length })}>
         <ActionLine id="ng-vl-route-action">{action}</ActionLine>
+        <WorkedExample taskKey={`${task.instanceKey}:${syntax}`} context={example.context} rows={exampleLines(example)} />
         <div className="ng-vl-form-head">
           <h2 ref={formHeading} tabIndex={-1} className="ng-vl-caption">{ui.form({ device: device.id })}</h2>
           <Segmented label={routeUi.deviceTabs} value={device.id} onChange={chooseDevice} className="ng-vl-switches"

@@ -8,7 +8,18 @@ import { presentCheck as presentRouting, describeTrace as describeRoutingTrace }
 import { syntaxes } from '../syntax/index.js';
 import { clone, plainRoutes, routeKey, levelCodes, eligibility, publicPolicy, requirements } from './faults.js';
 import { frozenAnalysis, generatorVersion } from './faults-frozen.js';
-import { faultText, faultCauseText, faultExample, networkUi } from '../uk.js';
+import { comprehension, faultText, faultCauseText, faultExample, networkUi } from '../uk.js';
+
+// Round 5 5b-2 (repair v1, Astra 1): the words name the provider and the internet as the diagram's cloud does,
+// «Інтернет (ISP)». Text only: the evidence (params, traces) keeps its device ids.
+const isIsp = (task, id) => task.network.devices.some(d => d.id === id && d.kind === 'isp');
+/** A stop in words: a provider is «Інтернет (ISP)»; `lost`: the packet went off to it. */
+const spoken = (task, stop) => ({ ...stop, lost: isIsp(task, stop.router),
+  router: isIsp(task, stop.router) ? comprehension.internet : stop.router, next: isIsp(task, stop.next) ? comprehension.internet : stop.next });
+/** The network as the walk names it: the providers and the internet endpoint «Інтернет (ISP)». */
+const spokenNetwork = net => ({ ...net,
+  devices: net.devices.map(d => (d.kind === 'isp' ? { ...d, name: comprehension.internet } : d)),
+  endpoints: net.endpoints.map(e => (e.kind === 'internet' ? { ...e, name: comprehension.internet } : e)) });
 
 export const id = 'routing-faults', version = 1;
 export const codes = Object.freeze([...new Set([...routingCodes, 'invalid-config', 'ok', 'form-errors', 'fault-cause-required', 'fault-cause-other', 'invalid-cause',
@@ -175,7 +186,9 @@ export function stopEvidence(task, snapshot) {
 export function hints(task, answer, { result, snapshot: observed, rung = 2, assisted = false } = {}) {
   const snapshot = observed ?? result?.evidence.snapshot ?? pingList(task), stop = stopEvidence(task, snapshot);
   const fixed = !stop && currentPass(task, result, answer ?? initialAnswer(task));
-  const list = [{ rung: 1, code: 'fault-hint-question', text: stop ? faultText.stopped(stop) : faultText.compare, params: stop ?? {} },
+  // Its params are the words' own (t('routing-faults.fault-hint-question', params) === text); the ids stay in repairRouter.
+  const said = stop && spoken(task, stop);
+  const list = [{ rung: 1, code: 'fault-hint-question', text: said ? faultText.stopped(said) : faultText.compare, params: said ?? {} },
     { rung: 2, code: 'fault-hint-evidence', text: fixed ? faultText.causeMove : stop ? faultText.move : faultText.scopeMove,
       params: { fixed, noStop: !stop } }];
   if (rung >= 3 && assisted) list.push({ rung: 3, code: 'fault-hint-example', assisted: true,
@@ -205,7 +218,7 @@ export function feedback(task, result, syntax = 'cisco') {
       && !remote.some(f => f.address.prefix >= r.prefix && contains(r.dst, r.prefix, f.address.ip)));
     if (stop.code === 'no-route' && unrelated.length === 1)
       return faultText.wrongDestination({ router, destination: stop.destination, ...unrelated[0] });
-    return faultText.stopped(stop);
+    return faultText.stopped(spoken(task, stop));
   }
   if (result.code === 'fault-cause-other') return faultText.otherCause;
   if (result.code === 'fault-cause-required') return faultText.chooseCause;
@@ -220,7 +233,7 @@ export function traceFor(task, row, syntax = 'cisco') {
   return presentRouting(metadata(task).internal, result, syntax).lines[0].trace;
 }
 export function describeTrace(task, row, syntax = 'cisco') {
-  return describeRoutingTrace(row, task.network, syntax);
+  return describeRoutingTrace(row, spokenNetwork(task.network), syntax);
 }
 export function describe(task, { answer, result, syntax = 'cisco' } = {}) {
   const lines = [task.title, task.instructions, ...(task.requirements ?? [])];

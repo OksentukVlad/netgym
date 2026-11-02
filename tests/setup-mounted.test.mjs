@@ -32,7 +32,7 @@ try { results = JSON.parse(run.stdout.trim().split('\n').at(-1)).results; } catc
 
 test('mounted setup screen: the scenarios ran to the end', () => {
   assert.equal(run.status, 0, `exit ${run.status} ${run.signal ?? ''}\n${run.stderr}`);
-  assert.ok(Array.isArray(results) && results.length >= 480, `results: ${results?.length}\n${run.stdout.slice(-500)}`);
+  assert.ok(Array.isArray(results) && results.length >= 509, `results: ${results?.length}\n${run.stdout.slice(-500)}`);
 });
 
 for (const r of results ?? []) test(`mounted setup: ${r.name}`, () => assert.ok(r.ok, r.detail));

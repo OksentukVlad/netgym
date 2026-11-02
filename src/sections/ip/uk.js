@@ -140,6 +140,16 @@ export const ui = {
   answerBlock: ({ network, broadcast }) => `Мережа ${network}, широкомовна ${broadcast}.`,
   answerFit: ({ mask, hosts, next, nextHosts }) => `Найменший блок: ${mask}. У ньому ${hosts} ${places(hosts)} для пристроїв${next ? `, а в /${next} лише ${nextHosts} — замало` : ''}.`,
   openCalculator: 'Відкрити в калькуляторі', // step 8
+  // Round 5 5b-2 (spec D): the action line over the fields, by task and input; after the task, in place.
+  action: {
+    block: 'Впиши адресу мережі й широкомовну адресу і натисни «Перевірити».',
+    blockChoose: 'Обери адресу мережі й широкомовну адресу і натисни «Перевірити».',
+    fit: 'Впиши маску найменшої мережі, у якій умістяться всі пристрої, і натисни «Перевірити».',
+    fitChoose: 'Обери маску найменшої мережі, у якій умістяться всі пристрої, і натисни «Перевірити».',
+    done: 'Задачу завершено: «Далі →» дасть нову.',
+  },
+  // After comprehension.maskRulerCaption once the block is shown (solved or revealed).
+  rulerBlock: ({ start, end }) => `Виділений блок: від ${start} до ${end}.`,
   // Round 4 (spec A8, the reference screen): the block rule in an Aside.
   asideBlockTitle: 'Як знайти блок',
   asideBlock: 'Перша адреса блоку — мережа, остання — широкомовна.',
@@ -209,6 +219,8 @@ export const calcUi = {
   // Round 4 (spec R3): copying is off while an input is empty or malformed.
   copyOff: ({ cidr }) => `Копіювання вимкнено: поле заповнене не повністю або з помилкою. Приклад — для останнього правильного запису, ${cidr}.`,
   practise: 'Потренуватися → Маска',
+  // Round 5 5b-2 (spec D): after comprehension.commandCaption, where its address is the example gateway.
+  commandGateway: 'це адреса шлюзу, обрана в блоці «Шлюз»',
 }
 
 // ─── The binary walk (sections/ip/screens/BinaryScreen.jsx) ─────────────────
@@ -290,3 +302,11 @@ export function binaryLevel1Text(task, { step = 0, mode = 'toggles' } = {}) {
   if (!Number.isInteger(step) || step < 0 || step > 3 || !Object.hasOwn(binaryLevel1.actions, mode)) throw new RangeError('invalid-step-or-mode');
   return { question: binaryLevel1.questions[step](task), action: binaryLevel1.actions[mode][step](task), givenBand: binaryLevel1.givenBand };
 }
+
+// Pass describe(...).commandAddress, never the raw input or a guessed gateway.
+export const comprehension = {
+  calculatorAction: 'Після коректної зміни адреси або маски результат оновиться одразу.',
+  commandCaption: commandAddress => commandAddress
+    ? `Команди задають інтерфейсу адресу ${commandAddress.ip}/${commandAddress.prefix}` : null,
+  maskRulerCaption: ({ k, labelStep, prefix, blockSize, value }) => `Лінійка: ${k}-те число адреси, від 0 до 255; позначки через ${labelStep}, блок для /${prefix} — ${blockSize} адрес. Твоя адреса: ${value}.`,
+};

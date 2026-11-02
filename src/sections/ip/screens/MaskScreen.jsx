@@ -40,9 +40,17 @@
 // stays per field. The level switch names each level's skill (mask-core.js
 // levels) and shows the quiet ✓ once a task of that level was solved
 // without a reveal.
+//
+// Round 5 5b-2 (spec A, D): an action line over the fields (typed or chips,
+// block or fit; «завершено» in place once finished), and on block tasks the
+// folded worked example right under it: another address's /26 block on its
+// ruler, with its network and broadcast (logic/examples.js, display data
+// only). An address task's ruler says what it shows: the octet, the label
+// spacing, the block size for this prefix, and the task's address.
 import { useEffect, useRef } from 'react';
 import mask from '../logic/mask.js';
-import { hostCount, parseIp } from '../../../engine/ip.js';
+import { maskExample } from '../logic/examples.js';
+import { blockSize, hostCount, parseIp } from '../../../engine/ip.js';
 import { useExercise } from '../../../ui/useExercise.js';
 import { usePlace, useStore } from '../../../ui/useStore.js';
 import { useNav, useRouteParams } from '../../../ui/useNav.js';
@@ -52,11 +60,12 @@ import Button from '../../../ui/components/Button.jsx';
 import HelpPanel, { bringIntoView } from '../../../ui/components/HelpPanel.jsx';
 import Aside, { useAsideFold } from '../../../ui/components/Aside.jsx';
 import Segmented from '../../../ui/components/Segmented.jsx';
+import WorkedExample from '../../../ui/components/WorkedExample.jsx';
 import DoneMark, { earnedBy } from '../../../ui/components/DoneMark.jsx';
 import { uk as shared } from '../../../ui/uk.js';
 import AddressRuler, { blockOn, rulerFor } from './AddressRuler.jsx';
 import { SECTION, newSeed } from './links.js';
-import { maskOf, t, ui } from '../uk.js';
+import { comprehension, maskOf, t, ui } from '../uk.js';
 import './Mask.css';
 
 const DRAFT = ['text', 'answer'];
@@ -72,6 +81,32 @@ export function calculatorParams(ex) {
   if (task.kind !== 'fit') return { ip: task.ip, prefix: task.prefix };
   const prefix = ex.session.revealed ? ex.solution?.prefix : ex.result?.evidence?.given ?? ex.view.rulerPrefix;
   return Number.isInteger(prefix) ? { ip: task.ip, prefix } : null;
+}
+
+/** An address task's ruler line (round 5 5b-2, spec D): the octet shown, the label spacing, the block size
+ * for the task's prefix and the task's address; the block's ends once it is shown. */
+export function maskRulerCaption(task, ruler) {
+  const line = comprehension.maskRulerCaption({ k: ruler.octet, labelStep: Math.max(ruler.unit, 32), prefix: task.prefix, blockSize: blockSize(task.prefix), value: ruler.value });
+  return ruler.block ? `${line} ${ui.rulerBlock(ruler.block)}` : line;
+}
+
+const EXAMPLE = maskExample();
+/** The worked example (block tasks): another address's /26 block on its ruler, then its network and broadcast,
+ * as the form's two fields. Read-only display data (logic/examples.js); never the task's or the learner's. */
+function MaskExample({ taskKey }) {
+  const { ruler, answer } = EXAMPLE;
+  return (
+    <WorkedExample taskKey={taskKey} context={EXAMPLE.context}>
+      <div className="ng-mask-example-ruler">
+        <AddressRuler octet={4} unit={ruler.blockSize} value={ruler.value} block={{ start: ruler.start, end: ruler.end, size: ruler.blockSize }} caption={null} />
+      </div>
+      {/* The rows in WorkedExample's own table look (its classes): a ruler and the rows together. */}
+      <table className="ng-wex-table">
+        <thead><tr><td className="ng-wex-mark" /><th scope="col">{ui.network}</th><th scope="col">{ui.broadcast}</th></tr></thead>
+        <tbody><tr><td className="ng-wex-mark" aria-hidden="true">✓</td><td className="ng-wex-value">{answer.network}</td><td className="ng-wex-value">{answer.broadcast}</td></tr></tbody>
+      </table>
+    </WorkedExample>
+  );
 }
 
 /** @param {{ route?: { params?: object } | null }} props */
@@ -183,7 +218,8 @@ export default function MaskScreen({ route = null }) {
 
   // The ruler: see the rules at the top. ex.solution exists only once revealed.
   const fitPrefix = session.revealed ? ex.solution?.prefix : view.rulerPrefix;
-  const ruler = !fit ? rulerFor(task.ip, task.prefix, ex.finished)
+  const blockRuler = !fit ? rulerFor(task.ip, task.prefix, ex.finished) : null;
+  const ruler = blockRuler ? { ...blockRuler, caption: maskRulerCaption(task, blockRuler) }
     : fitPrefix != null ? { ...rulerFor('0.0.0.0', fitPrefix, true), subject: 'size' } : null;
 
   // The verdict: a note about the input, or the last check's result (a
@@ -244,6 +280,8 @@ export default function MaskScreen({ route = null }) {
         {session.revealed && ruler && <p className="ng-mask-shown"><span className="ng-shown-chip">{shared.help.shown}</span></p>}
         {!fit && <Aside screen={SCREEN} id="block-rule" title={ui.asideBlockTitle}><p>{ui.asideBlock}</p></Aside>}
       </div>}
+      action={session.revealed ? null : ex.finished ? ui.action.done : ui.action[`${fit ? 'fit' : 'block'}${choosing ? 'Choose' : ''}`]}
+      example={session.revealed || fit ? null : <MaskExample taskKey={ex.key} />}
       answer={session.revealed ? null : (
         <div ref={answerBox} className="ng-mask-answer">
           <div className="ng-mask-fields" {...(about && !aboutField ? { 'data-evidence': 'current' } : {})}>{names.map(field)}</div>

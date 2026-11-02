@@ -25,8 +25,10 @@ const legendOf = html => [...(html.match(/<div class="ng-aside ng-rt-legend[^"]*
 /** Who owns an address in this instance: the device whose interface has it, or null. */
 const ownerOf = (net, ip) => net.devices.find(d => d.interfaces.some(i => i.address?.ip === ip))?.id ?? null;
 
-function screenOf(record, variantId, seed, syntax) {
+function screenOf(record, variantId, seed, syntax, { legendOpen = false } = {}) {
   const store = h.testStore();
+  // The learner's «?»: the legend opened (round 5 5b-2: task 15 starts it folded).
+  if (legendOpen) store.dispatch({ type: 'place', scope: 'routing.tasks', patch: { asides: { legend: true } } });
   store.dispatch({ type: 'pref', name: 'syntax', value: syntax });
   store.dispatch({ type: 'place', scope: 'routing', patch: { taskId: record.id, variants: { [record.id]: variantId }, seeds: { [record.id]: seed } } });
   return unescape(store.render(h.RoutingScreen, { bank: h.routingBank }));
@@ -37,9 +39,12 @@ for (const seed of [null, 51]) test(`R4 on screen: every task, variant and vendo
   for (const record of tasks) for (const variant of record.variants) for (const syntax of ['cisco', 'routeros']) {
     const task = routing.create(record, { variantId: variant.id, seed, bank: h.routingBank });
     const net = task.network, facts = legendFacts(task, syntax), where = `${record.id}/${variant.id}/${syntax}/${seed}`;
-    const html = screenOf(record, variant.id, seed, syntax);
+    // Round 5 5b-2 (spec C): task 15 (a task with `details`) starts its legend folded, like the rest of its condition;
+    // its «?» opens the same legend, checked below.
+    if (variant.details) assert.equal(legendOf(screenOf(record, variant.id, seed, syntax)).length, 0, `${where}: the legend starts folded`);
+    const html = screenOf(record, variant.id, seed, syntax, { legendOpen: Boolean(variant.details) });
     const legend = legendOf(html);
-    assert.ok(legend.length >= 1, `${where}: the legend is open on the first visit`);
+    assert.ok(legend.length >= 1, `${where}: the legend is open on the first visit (task 15: after its «?»)`);
     // The LAN example: its network, its router's port in this vendor and that port's own address.
     const lan = legend.find(p => p.startsWith('У рамці мережі'));
     assert.ok(lan.includes(`(${facts.lan.network})`) && lan.includes(`(${facts.lan.port} .${facts.lan.address.split('.').pop()} = ${facts.lan.address})`), `${where}: ${lan}`);
@@ -135,7 +140,10 @@ test('R4: the placeholders rendered in guided, free and fault rows fail their fi
   assert.equal(h.placeholderOf(routeros, field(routeros, 'dst'), { isDefault: true }), '0.0.0.0/0');
   assert.equal(h.placeholderOf(cisco, field(cisco, 'gw'), { isDefault: true }), 'адреса сусіда');
   assert.equal(h.teachesDistance(routing.create(tasks.find(r => r.displayNumber === 15))), true);
-  assert.equal(h.placeholderOf(cisco, field(cisco, 'dist'), { distanceExample: true }), '1 — основний, 5 — резервний');
+  // Round 5 5b-2 (spec C): task 15's example per row, the main smaller, the backup larger.
+  assert.equal(h.placeholderOf(cisco, field(cisco, 'dist'), { distanceExample: true, role: 'primary' }), 'менша, напр. 1');
+  assert.equal(h.placeholderOf(cisco, field(cisco, 'dist'), { distanceExample: true, role: 'backup' }), 'більша, напр. 5');
+  assert.equal(h.placeholderOf(routeros, field(routeros, 'dst'), {}), 'мережа/префікс, напр. x.x.x.0/24');
   assert.equal(h.placeholderOf(cisco, field(cisco, 'dist'), { distanceExample: false }), 'distance');
 });
 
@@ -256,8 +264,8 @@ test('a long task in a short window: its first sentence, the rest behind «Ус�
   const task15 = tasks.find(r => r.displayNumber === 15).variants[0].text;
   const text = typeof task15 === 'string' ? task15 : task15.cisco ?? Object.values(task15)[0];
   const parts = h.firstSentence(text);
-  assert.equal(parts.first, 'Два аплінки: ISP1 основний, ISP2 резервний.');
-  assert.ok(parts.rest.startsWith('Обидва — маршрути за замовчуванням') && `${parts.first} ${parts.rest}` === text);
+  assert.equal(parts.first, 'Два маршрути за замовчуванням: основний через ISP1 і резервний через ISP2.');
+  assert.ok(parts.rest.startsWith('Резервному дай більшу відстань') && `${parts.first} ${parts.rest}` === text);
   assert.deepEqual(h.firstSentence('Одне речення без продовження.'), { first: 'Одне речення без продовження.', rest: '' });
   assert.deepEqual(h.firstSentence('Відстань 1.5 не буває. Друге.'), { first: 'Відстань 1.5 не буває.', rest: 'Друге.' });
 });

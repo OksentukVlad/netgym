@@ -22,6 +22,14 @@
 // buttons are off, with the reason in words, while an input is empty or
 // malformed (the result shown is the last valid one). The count says what it
 // counts: «254 вузли (без адреси мережі та широкомовної)».
+//
+// Round 5 5b-2 (spec D): the first line over the inputs says the result
+// follows every correct change (it is a tool, not homework), and the
+// configuration example says which address its commands set, from the shown
+// model's `commandAddress` (the last valid one while an input is wrong):
+// «Команди задають інтерфейсу адресу 192.168.1.1/24 — це шлюз, обраний
+// вище» only where that address is the example gateway (/8–/30 unicast);
+// /31 and /32 name the entered address and no gateway; no commands, no line.
 import { useId } from 'react';
 import { choosePrefixes, defaultAddress, describe } from '../logic/calc.js';
 import { parseIp, parsePrefix } from '../../../engine/ip.js';
@@ -38,7 +46,7 @@ import BitRows, { octetsOf } from './BitRows.jsx';
 import CommandBlock from './CommandBlock.jsx';
 import { copyText } from '../../../ui/clipboard.js';
 import { SECTION, newSeed } from './links.js';
-import { calcUi, hostWords, rowNames, t } from '../uk.js';
+import { calcUi, comprehension, hostWords, rowNames, t } from '../uk.js';
 import './Calculator.css';
 
 const renderers = { cisco: ciscoAddress, routeros: routerosAddress };
@@ -74,6 +82,15 @@ export function commandsOf(model) {
   return model.commandVendors
     .map(id => ({ id, label: calcUi.vendors[id], text: renderers[id](model.commandAddress) }))
     .filter(block => block.text);
+}
+
+/** The configuration example's caption: the address its commands set, from
+ * the model's `commandAddress`; «це шлюз, обраний вище» only when that address
+ * is the example gateway shown above; null when there are no commands. */
+export function commandCaptionOf(model) {
+  const caption = comprehension.commandCaption(model.commandAddress);
+  if (!caption) return null;
+  return showsGateway(model) && model.commandAddress.ip === model.gateway ? `${caption} — ${calcUi.commandGateway}.` : `${caption}.`;
 }
 
 /** @param {{ route?: { params?: object } | null, onCopy?: (text: string) => void }} props */
@@ -118,6 +135,7 @@ export default function CalculatorScreen({ route = null, onCopy = copyText }) {
       wide="stage"
       first="work"
       heading={calcUi.heading}
+      action={comprehension.calculatorAction}
       stage={<>
         <section className="ng-calc-result" aria-label={calcUi.result}>
           {/* Always present, so the polite live region announces the label when it appears. */}
@@ -171,7 +189,8 @@ export default function CalculatorScreen({ route = null, onCopy = copyText }) {
         {nav?.has(SECTION.mask) && (
           <Button onClick={() => nav.go({ section: SECTION.mask, params: { seed: newSeed() } })}>{calcUi.practise}</Button>
         )}
-        <CommandBlock heading={calcUi.commands} blocks={commandsOf(model)} note={t(model.commandNoteCode, model.commandNoteParams)} onCopy={onCopy}
+        <CommandBlock heading={calcUi.commands} blocks={commandsOf(model)} caption={commandCaptionOf(model)}
+          note={t(model.commandNoteCode, model.commandNoteParams)} onCopy={onCopy}
           open={Boolean(place.commands)} onToggle={() => setPlace({ commands: !place.commands })}
           disabled={current ? null : calcUi.copyOff({ cidr: model.cidr })} />
       </>}

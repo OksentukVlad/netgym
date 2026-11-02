@@ -98,7 +98,7 @@ import {
   repairWorks, rowEvidence, slotOf, stageOf, toFaultConfig, toFaultForm, toneOf, usesNative,
 } from './faultsState.js';
 import { firstValidSeed, validSeed } from './predictState.js';
-import { faultText, faultsUi, notes, observeText, observedWords, routeNotes, routeUi, t, ui } from '../uk.js';
+import { comprehension, faultText, faultsUi, notes, observeText, observedWords, routeNotes, routeUi, t, ui } from '../uk.js';
 
 const HINTS = 3;
 /** «Ремонт»: the last steps of a walk shown, the earlier ones folded. */
@@ -561,7 +561,7 @@ export default function FaultsView({ records, syntax, place, setPlace, head, ski
         {stage === 'repair' && <ActionLine id="ng-vf-action">{faultsUi.action.repair}</ActionLine>}
         {stage === 'repair' && (
           <div className="ng-vl-form-head">
-            <h2 ref={formHeading} tabIndex={-1} className="ng-vl-caption">{faultsUi.fixTitle({ device: device.id })}</h2>
+            <h2 ref={formHeading} tabIndex={-1} className="ng-vl-caption">{comprehension.inspecting(device.id)}</h2>
             {devices.length > 1 && (
               <Segmented label={faultsUi.devices} value={device.id} onChange={chooseDevice} className="ng-vl-switches"
                 options={devices.map(d => ({ value: d.id, label: `${d.id}${marks[d.id]?.length ? ' •' : ''}` }))} />

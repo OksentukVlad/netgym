@@ -62,11 +62,13 @@ import DoneMark, { earnedBy } from '../../../ui/components/DoneMark.jsx';
 import Aside, { useAsideFold } from '../../../ui/components/Aside.jsx';
 import TextEquivalent, { TextEquivalentButton } from '../../../ui/components/TextEquivalent.jsx';
 import ActionLine from '../../../ui/components/ActionLine.jsx';
+import WorkedExample from '../../../ui/components/WorkedExample.jsx';
+import { portsExample } from '../logic/examples.js';
 import VlanDiagram from './VlanDiagram.jsx';
 import PortsForm from './PortsForm.jsx';
 import { useFactHighlight } from './factHighlight.js';
 import Commands from './Commands.jsx';
-import { CommandsFold, failingStep, hostLines, hostPort, portIdOf, taskCounts, useHelpInView, SCREEN, WalkPointer, WalkWords } from './panel.jsx';
+import { CommandsFold, exampleLines, failingStep, hostLines, hostPort, portIdOf, taskCounts, useHelpInView, SCREEN, WalkPointer, WalkWords } from './panel.jsx';
 import { compactPcWidth, layout } from './diagram.js';
 import { chipsAt, floodMotion, runAt, sceneAt, sequence, stepMsFor, tokensAt } from './walkSteps.js';
 import { useSkipper, useWalkPlayer } from './walkPlayer.js';
@@ -188,6 +190,7 @@ export default function PortsView({ records, syntax, place, setPlace, head, skip
   const tokens = run ? tokensAt(geo, run.run.motion, run.local, lapTone) : [];
   const chips = run ? chipsAt(geo, run.run.motion, run.local) : [];
   const givens = useMemo(() => ports.describe(task, { syntax }), [task, syntax]);
+  const example = useMemo(() => portsExample({ syntax }), [syntax]);
   const walkText = useMemo(() => portsWalkLines(task, syntax, failure?.walk ?? null), [task, syntax, failure?.walk]);
   // The reachability note goes above the numbered steps, not as step 1.
   const abstraction = walkText[0] === t('reachability-abstraction') ? walkText[0] : null;
@@ -389,7 +392,11 @@ export default function PortsView({ records, syntax, place, setPlace, head, skip
         <div ref={boardRef} className="ng-vl-board">
           <PortsForm key={`${ex.key}|${syntax}|${device.id}`} device={device} syntax={syntax} form={form} raw={raw} marks={marks[device.id] ?? []} edit={edit} onCheck={onCheck}
             topology={task.topology} note={note} highlight={facts.highlight} onFact={facts.onFact}
-            action={<ActionLine id="ng-vl-ports-action">{ui.portsAction[syntax]}</ActionLine>}
+            action={<>
+              <ActionLine id="ng-vl-ports-action">{ui.portsAction[syntax]}</ActionLine>
+              {/* The worked example (5b-2 A): one configured port of its own instance, in this syntax. */}
+              <WorkedExample taskKey={`${task.instanceKey}:${syntax}`} context={example.context} rows={exampleLines(example)} />
+            </>}
             evidence={Boolean(result) && !stale && !revealCurrent && formFailure ? (failure.port ? `ports.${failure.port}` : true) : false} edited={editedOut ? edited : null} />
           {walkText.length > 0 && <WalkWords title={`${ui.walkTitle}${previous}`} note={abstraction} steps={steps} mark={failMark} />}
         </div>

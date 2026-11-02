@@ -3,8 +3,9 @@ import { classify } from './classify.js';
 import { evaluate } from './evaluate.js';
 import { renderRule } from './render.js';
 import { only, validateCard, validatePolicy, validateTopology } from './model.js';
-import { assertUniverseDomain, exactPermutation, prepareAnalysis } from './universe.js';
-import { orderGoals } from '../uk.js';
+import { assertUniverseDomain, exactPermutation, prepareAnalysis, buildUniverse } from './universe.js';
+import { traceCaptions } from './trace.js';
+import { orderGoals, comprehension } from '../uk.js';
 
 export const id = 'fw-order', version = 2;
 export const codes = ['order-shadowed', 'order-ok', 'order-invalid', 'order-verdict', 'order-dead', 'order-hint-question', 'order-hint-walk', 'order-hint-example', 'order-reveal-label', 'order-accepted-label'];
@@ -143,10 +144,48 @@ export const solution = (task, record) => prepareOrder(task, record).solution();
 export const walkInput = (task, order, card, record) => prepareOrder(task, record).walkInput(order, card);
 export const acceptedScript = (task, answer, record) => prepareOrder(task, record).acceptedScript(answer);
 export const initialAnswer = task => ({ order: task.rules.map(r => r.id) });
-export function hints() {
+/** Evidence needs only the public task and the order that was checked.
+ * Shadow witnesses match the hidden rule in isolation, then run through the
+ * supplied learner policy. Their final verdict can still be correct.
+ */
+export function witnessFor(task, order, finding) {
+  if (!finding || !['order-verdict', 'order-dead', 'order-shadowed'].includes(finding.code)) return null;
+  if (!exactPermutation(task.rules.map(r => r.id), order)) throw new RangeError('order-invalid');
+  const policy = { id: 'home-basic', rules: order.map(id => task.rules.find(r => r.id === id)) };
+  let card = finding.card;
+  if (!card && finding.ruleId) {
+    const hidden = task.rules.find(r => r.id === finding.ruleId);
+    if (!hidden) return null;
+    card = buildUniverse(policy, task.topology).find(candidate => {
+      const context = classify(task.topology, candidate);
+      const alone = evaluate({ ...policy, rules: [hidden] }, candidate, context);
+      const actual = evaluate(policy, candidate, context);
+      return ['match', 'marked'].includes(alone.steps[0].outcome)
+        && !actual.steps.some(s => s.ruleId === hidden.id && ['match', 'marked'].includes(s.outcome))
+        && (!finding.blockerId || actual.decidedBy === finding.blockerId);
+    });
+  }
+  if (!card) return null;
+  const input = clone({ topology: task.topology, policy, card, walk: evaluate(policy, card, classify(task.topology, card)) });
+  return { ...input, captions: traceCaptions(input, { numberBase: 1 }) };
+}
+
+/** Pass the LAST CHECKED order and finding after an edit, not the new draft.
+ * Undefined finding means no check; { code: 'order-ok' } means solved.
+ * `text` is ready for rendering; `code` remains the existing closed contract.
+ */
+export function hints(task, answer, { finding } = {}) {
+  if (finding?.code === 'order-ok' || finding?.ok === true) return [];
+  const witness = task && answer?.order ? witnessFor(task, answer.order, finding) : null;
+  const step = witness?.walk.steps.find(s => s.ruleId === witness.walk.decidedBy);
+  const params = witness ? { srcIp: witness.card.packet.srcIp, dstIp: witness.card.packet.dstIp,
+    ingress: witness.card.facts.ingress, chain: witness.walk.hook,
+    ruleNumber: step ? step.position : null, verdict: witness.walk.verdict } : {};
+  const text = witness ? comprehension.hintPacket(params)
+    : finding?.code === 'order-invalid' ? comprehension.hintInvalid : comprehension.hintBeforeCheck;
   return [
-    { rung: 1, code: 'order-hint-question', action: 'question', params: {} },
-    { rung: 2, code: 'order-hint-walk', action: 'open-walk', params: {} },
+    { rung: 1, code: 'order-hint-question', action: 'question', params, text, witness },
+    { rung: 2, code: 'order-hint-walk', action: 'open-walk', params: {}, witness },
     { rung: 3, code: 'order-hint-example', action: 'example', params: {} },
   ];
 }
@@ -165,7 +204,8 @@ export function forRecord(record) {
     check: (task, answer) => of(task).check(answer), hints,
     solution: task => of(task).solution(),
     walkInput: (task, order, card) => of(task).walkInput(order, card),
+    witnessFor,
     acceptedScript: (task, answer) => of(task).acceptedScript(answer) };
 }
 
-export default { id, version, codes, create, check, hints, solution, forRecord };
+export default { id, version, codes, create, check, hints, solution, witnessFor, forRecord };

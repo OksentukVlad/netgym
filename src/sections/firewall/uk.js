@@ -151,7 +151,8 @@ export const ui = {
   via: ingress => `→ ${ingress}`,
   ports: ({ protocol, dst, src }) => [protocol, ...(dst ? [`на порт ${dst}`] : []), ...(src ? [`з порту ${src}`] : [])].join(', '),
   port: (port, service) => (service ? `${port} (${service})` : String(port)),
-  icmp: type => ({ 8: 'ICMP echo (ping)', 3: 'ICMP: недосяжно' })[type] ?? (type === undefined ? 'ICMP' : `ICMP, тип ${type}`),
+  // Round 5 (5b-2 B): echo traffic says «ICMP echo — ping» (comprehension.icmpEchoGloss); other ICMP isn't called ping.
+  icmp: type => (type === 8 ? comprehension.icmpEchoGloss : type === 3 ? 'ICMP: недосяжно' : type === undefined ? 'ICMP' : `ICMP, тип ${type}`),
   natYes: ({ address, port, to, toPort }) => `прокинуто з ${address}:${port} на ${to}:${toPort}`,
   // The two choices.
   doors: 'Ланцюжок',
@@ -211,6 +212,8 @@ export const ui = {
   stepBack: 'Крок назад',
   stepForward: 'Крок уперед',
   stepOf: ({ n, total }) => `крок ${n} з ${total}`,
+  // Round 5 (5b-2 B): the stepper's first step, before the trace's own captions (logic/trace.js).
+  stepStart: ({ src, dst }) => `Пакет ${src} → ${dst} вирушає`,
   // The diagram.
   diagramLabel: 'Схема: Інтернет, роутер R1 і локальна мережа',
   diagramCaption: 'СХЕМА',
@@ -270,7 +273,7 @@ export const ui = {
   purpose: {
     'rule.input-replies': 'пропускає відповіді та пов’язані пакети',
     'rule.input-invalid': 'відкидає некоректні пакети',
-    'rule.input-icmp': 'пропускає ICMP (ping) до роутера',
+    'rule.input-icmp': 'пропускає ICMP (зокрема ping) до роутера',
     'rule.input-lan': 'пускає до роутера з LAN',
     'rule.input-rest': 'відкидає решту пакетів до роутера',
     'rule.forward-fasttrack': 'лише позначає з’єднання для FastTrack',
@@ -311,6 +314,9 @@ export const orderUi = {
   yours: 'Твій порядок',
   // The screen (OrderView.jsx): the level switch, the list, the walk toggle.
   level: 'Рівень',
+  // Round 5 (R1; 5b-2 A): the action line over the list (the worked example sits under it).
+  action: 'Перетягни правила (або ↑ ↓) у робочий порядок.',
+  actionDone: 'Порядок прийнято.',
   list: 'Правила фільтра',
   packet: 'Пакет',
   walkShow: 'Показати шлях пакета',
@@ -379,5 +385,25 @@ export const predictStep = {
     input: 'Пакет адресовано самому роутеру → input.',
     forward: 'Пакет іде крізь роутер до іншого вузла → forward.',
   },
-  slowPath: 'Ця прогулянка показує пакет на повільному шляху. Пакети, що пройшли FastTrack, оминають фільтр; деякі пакети все одно йдуть повільним шляхом, тому наступне правило accept потрібне.',
+};
+
+export const comprehension = {
+  icmpGloss: 'ICMP — службові повідомлення, зокрема ping',
+  icmpEchoGloss: 'ICMP echo — ping',
+  ordering: 'У цьому фільтрі порядок важливий усередині кожного ланцюжка; input і forward не заважають одне одному.',
+  fasttrackIntro: 'Ця прогулянка показує пакет на повільному шляху: позначення FastTrack не завершує його перевірку. Наступні TCP/UDP-пакети цього з’єднання можуть оминати фільтр; деякі пакети все одно йдуть повільним шляхом і потребують accept.',
+  hintBeforeCheck: 'Натисни «Перевірити» — підказка покаже, як фільтр обробив пакет.',
+  hintInvalid: 'Поверни кожне правило до списку рівно один раз і натисни «Перевірити».',
+  hintPacket: ({ srcIp, dstIp, ingress, chain, ruleNumber, verdict }) => `Пакет ${srcIp} → ${dstIp} приходить на ${ingress}; ланцюжок ${chain}; ${ruleNumber === null ? 'кінець ланцюжка' : `зупинився на правилі ${ruleNumber}`} → ${{ accept: 'пропустити', drop: 'відкинути', unknown: 'невідомо' }[verdict]}.`,
+  recommendedFirst: 'радимо спершу: IP-адреси й маршрутизацію',
+  traceIngress: ingress => `Пакет приходить на ${ingress}`,
+  traceNat: ({ address, port, dstIp, dstPort }) => `dst-NAT: ${address}:${port} → ${dstIp}:${dstPort}; фільтр бачить змінену адресу призначення`,
+  traceNatKnown: 'dst-NAT уже виконано; фільтр бачить змінену адресу призначення',
+  traceChain: chain => `Ланцюжок ${chain}`,
+  traceRule: ({ number, chain, outcome, action }) => `Правило ${number} · ${chain}: ${{
+    'other-chain': 'інший ланцюжок', disabled: 'вимкнено', mismatch: 'не збігається', unknown: 'бракує факту',
+    marked: 'збігається — позначено FastTrack; цей пакет іде далі',
+    match: action === 'drop' ? 'збігається — відкинути' : 'збігається — пропустити',
+  }[outcome]}`,
+  traceEnd: chain => `Кінець ланцюжка ${chain}: жодне правило не вирішило → пропустити (RouterOS)`,
 };

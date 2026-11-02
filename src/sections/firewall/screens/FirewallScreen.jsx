@@ -67,7 +67,11 @@
 //   - the diagram highlight (label only) follows a FactLink tap until the
 //     next tap, a choice, or another card or level; after a wrong level 1
 //     check the screen sets it to the owner's address label itself;
-//   - the router's own addresses are inside R1 (FirewallDiagram), at every level.
+//   - the router's own addresses are inside R1 (FirewallDiagram), at every level;
+//   - (5b-2 B) «По кроках» names each step under the stepper, in the trace's
+//     words (logic/trace.js: the packet's arrival and dst-NAT, its chain,
+//     each rule by its RouterOS number, the chain's end); the walk's
+//     FastTrack line says the packet shown is on the slow path.
 //
 // Layout by the screen's own width (firewall.css). The page is the one
 // vertical scroller (spec A2):
@@ -80,6 +84,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import fw, { cardView, checkHook, commit as commitCard } from '../logic/predict.js';
 import { classify } from '../logic/classify.js';
+import { traceCaptions } from '../logic/trace.js';
 import { useExercise } from '../../../ui/useExercise.js';
 import { usePlace, usePref, useStore } from '../../../ui/useStore.js';
 import { useReducedMotion, useStepTimer } from '../../../ui/motion.js';
@@ -94,7 +99,7 @@ import ActionLine from '../../../ui/components/ActionLine.jsx';
 import FactLink, { scrollToLabel } from '../../../ui/components/FactLink.jsx';
 import { uk } from '../../../ui/uk.js';
 import { chainText, meanings, predictLevels, predictStep, t, ui } from '../uk.js';
-import { cardLines, chainRows, decidingId, feedbackOf, natRuleOf, tableRows, textSections, walkFrame, walkNotes, walkOutcomes, walkPlan } from './walkView.js';
+import { cardLines, chainRows, decidingId, feedbackOf, natRuleOf, stepCaptions, tableRows, textSections, walkFrame, walkNotes, walkOutcomes, walkPlan } from './walkView.js';
 import { sceneOf } from './diagram.js';
 import { commitOf, dotsOf, earnedLevels, earnedVariants, hookAccepted, isCommitted, nextOpen, nextSeed, roundOf, roundView } from './round.js';
 import { revealCard } from './reveal.js';
@@ -237,6 +242,8 @@ function PredictView({ bank }) {
   const outcomes = useMemo(() => (walk ? walkOutcomes(task, card, walk) : null), [task, card, walk]);
   const plan = useMemo(() => (walk && rows ? walkPlan(task, walk, rows) : null), [task, walk, rows]);
   const context = useMemo(() => (walk ? classify(task.topology, card) : null), [task, card, walk]);
+  // «По кроках» names each step (round 5, 5b-2 B): the trace's captions of this committed walk.
+  const captions = useMemo(() => (walk && plan ? stepCaptions(traceCaptions({ policy: task.policy, card, walk }), card, rows, plan) : null), [task, card, walk, rows, plan]);
 
   // The walk's frame: the stepper's, the timer's, or (navigation) the end.
   // One state object, keyed by the card on screen: `play` is the run a fresh
@@ -302,14 +309,17 @@ function PredictView({ bank }) {
   }, [step, cardKey]);
   // While a walk plays (and at its end), the row being checked stays in
   // view. Stepping through it («По кроках», pressed in the left column), the
-  // rule step and the verdict under it come into view together, so each
-  // step's row and the words about it are seen side by side.
+  // row it lights (or the rule step) and the verdict under it come into
+  // view together, so each step's row and the words about it are seen side by side.
   useEffect(() => {
     if (!playKey && !stepping) return;
     if (!frame) return;
     if (stepping) {
+      // The row this step lights (before any, the rule step) and the verdict under it (5b-2: a long
+      // table and a long verdict needn't fit together, the step's own row does).
       const current = root.current?.querySelector('.ng-fw-work [data-help-current]');
-      bringIntoView([tableRef.current, current].filter(Boolean), reduced ? 'auto' : 'smooth');
+      const row = frame.lit >= 1 ? rowEls.current[frame.lit - 1] : tableRef.current;
+      bringIntoView([row, current].filter(Boolean), reduced ? 'auto' : 'smooth');
       return;
     }
     if (frame.lit >= 1) keepInView(rowEls.current[frame.lit - 1]);
@@ -456,7 +466,7 @@ function PredictView({ bank }) {
             <button type="button" className="ng-fw-btn ng-fw-replay" onClick={replay}>{ui.replay}</button>
             <button type="button" className="ng-fw-btn" aria-pressed={stepping} onClick={toggleSteps}>{ui.steps}</button>
             {stepping && (
-              <span className="ng-fw-stepper" role="group" aria-label={ui.stepsGroup} onKeyDown={onStepKey}>
+              <span className="ng-fw-stepper" role="group" aria-label={ui.stepsGroup} aria-describedby="ng-fw-step-caption" onKeyDown={onStepKey}>
                 <button type="button" className="ng-fw-icon" aria-label={ui.stepBack} aria-disabled={frame.frame <= 0} onClick={() => stepBy(-1)}>◀</button>
                 <span className="ng-fw-step-text">{ui.stepOf({ n: frame.frame + 1, total: plan.last + 1 })}</span>
                 <button type="button" className="ng-fw-icon" aria-label={ui.stepForward} aria-disabled={frame.frame >= plan.last} onClick={() => stepBy(1)}>▶</button>
@@ -464,6 +474,7 @@ function PredictView({ bank }) {
             )}
           </div>
         )}
+        {stepping && <p id="ng-fw-step-caption" className="ng-fw-step-caption" aria-live="polite">{captions?.[frame.frame] ?? ''}</p>}
       </section>
   );
 

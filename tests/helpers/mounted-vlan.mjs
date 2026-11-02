@@ -238,6 +238,8 @@ const portsTask = (m, syntax = m.store.state.prefs.syntax) => {
 };
 /** A port's row by its port name (the cell also names the port's PC: «fa0/3 — PC1», round 4 F4). */
 const row = label => all('.ng-vl-form-table tr').find(tr => text(tr.querySelector('th')).split(' — ')[0] === label);
+/** A Cisco trunk's list: on the line under its port's row (round 5 repair v1). */
+const listOf = label => { const next = row(label)?.nextSibling; return next?.className?.includes('ng-vl-allowed-row') ? next.querySelector('input') : null; };
 const labelOf = (task, device, port, syntax) => task.topology.devices.find(d => d.id === device).ports.find(p => p.id === port).label[syntax];
 /** Fill a Cisco switch's form from an answer, like a student: VLANs, modes, values. */
 function fillCisco(task, sw, config) {
@@ -247,7 +249,8 @@ function fillCisco(task, sw, config) {
   for (const [port, p] of Object.entries(config.ports)) {
     const r = row(labelOf(task, sw, port, 'cisco'));
     click([...r.querySelectorAll('[role="radio"]')].find(b => text(b) === { access: ACCESS, trunk: TRUNK }[p.mode]));
-    const input = row(labelOf(task, sw, port, 'cisco')).querySelector('input');
+    // A trunk's list is on the line under its row (round 5 repair v1).
+    const input = p.mode === 'access' ? row(labelOf(task, sw, port, 'cisco')).querySelector('input') : q(`#vl-${sw}-ports-${port}-allowed`);
     type(input, p.mode === 'access' ? String(p.vlan) : p.allowed.join(','));
     blur(input);
   }
@@ -307,7 +310,7 @@ scenario('ports: Cisco form, failure, success', m => {
   check('ports: no hint button and no «Показати відповідь» once solved', !all('button').some(b => /Підказка|Показати відповідь/.test(text(b))));
   check('ports: the reference was never read', calls.ports === 0, calls);
   // Tips: allowed all on a trunk.
-  const trunk = row('gi0/1').querySelector('input');
+  const trunk = listOf('gi0/1');
   type(trunk, 'all');
   key(trunk, 'Enter');
   check('ports: a tip after success (allowed all)', /^✓ Так/.test(status()) && all('.ng-vl-tips li').some(li => /на транку краще явно перелічити/i.test(text(li))), status());
@@ -342,14 +345,14 @@ scenario('ports: Enter jumps to another switch’s marks with focus; reserved VL
   check('stale: the verdict says «до змін»', /до змін$/.test(status()), status());
   blur(q(`#vl-SW2-ports-${accessPort}-vlan`));
   // Ranges: any span of VLAN numbers expands; an unsafe one stays as typed and is marked, at once.
-  const trunk = row('gi0/1').querySelector('input');
+  const trunk = listOf('gi0/1');
   type(trunk, '10-200');
   blur(trunk);
   check('ranges: 10-200 expands (191 VLANs in the command)', /allowed vlan 10,11,12,.*,199,200$/.test(lines(q('.ng-vl-pre'))) && lines(q('.ng-vl-pre')).split('allowed vlan ')[1].split(',').length === 191);
   type(trunk, '9007199254740992-9007199254740992');
   blur(trunk);
-  key(row('gi0/1').querySelector('input'), 'Enter');
-  const marked = row('gi0/1').querySelector('input');
+  key(listOf('gi0/1'), 'Enter');
+  const marked = listOf('gi0/1');
   check('ranges: a huge range stays as typed and is marked bad-vid', marked.value === '9007199254740992-9007199254740992' && marked.getAttribute('aria-invalid') === 'true'
     && /Номер VLAN має бути цілим числом від 1 до 4094/.test(status()), status());
 });
@@ -497,7 +500,7 @@ scenario('route 1: Cisco, a down parent, no route, success; MikroTik its own for
   check('route: Cisco offers tasks 1–3; no line about task 4 in the header (F5: the diagram fits)', all('.ng-vl-variants [role="radio"]').map(text).join('|') === '1 · На паличці|2 · Транк теж твій|3 · Керування'
     && q('.ng-vl-head .ng-vl-why') === null, all('.ng-vl-variants [role="radio"]').map(text));
   check('route 1: R1’s form opens first; the parent starts shut down; no subinterface rows', text(q('.ng-vl-form-head h2')) === 'Налаштування R1'
-    && radioIn('.ng-vl-states', 'shutdown').getAttribute('aria-checked') === 'true' && text(q('.ng-vl-device-form')).includes('Підінтерфейсів ще немає.'));
+    && radioIn('.ng-vl-states', 'вимкнено (shutdown)').getAttribute('aria-checked') === 'true' && text(q('.ng-vl-device-form')).includes('Підінтерфейсів ще немає.'));
   check('route 1: the live commands are the student’s own (the parent shut), with the parent note', lines(q('.ng-vl-pre')) === `interface ${parent}\n shutdown`
     && text(q('.ng-vl-cmds .ng-vl-note')) === 'Підінтерфейс не працює, поки фізичний інтерфейс вимкнено (shutdown).', lines(q('.ng-vl-pre')));
   check('route 1: the diagram: a router box listing only its parent’s state; each PC’s gateway', JSON.stringify(boxLines('R1')) === JSON.stringify([`${parent} · shutdown`])
@@ -509,7 +512,7 @@ scenario('route 1: Cisco, a down parent, no route, success; MikroTik its own for
   check('route 1: and in words, ending at R1’s port', all('.ng-vl-steps li').some(li => text(li) === `R1 ${parent}: Інтерфейс неактивний: перевір фізичний порт маршрутизатора або наявність порту в таблиці VLAN для SVI.`), all('.ng-vl-steps li').map(text));
   check('route 1: no PC says «✓ отримав» on that failing walk', received().length === 0, received());
   // no shutdown and one subinterface: no route to the other VLAN.
-  click(radioIn('.ng-vl-states', 'no shutdown'));
+  click(radioIn('.ng-vl-states', 'увімкнено (no shutdown)'));
   addSubif(0, a, a, ciscoAddress(netA.gateway));
   check('route 1: the commands follow the form', lines(q('.ng-vl-pre')) === `interface ${parent}\n no shutdown\ninterface ${parent}.${a}\n encapsulation dot1Q ${a}\n ip address ${netA.gateway} 255.255.255.0`, lines(q('.ng-vl-pre')));
   // Repair v1: the compact router joins a subinterface and its address on one line.
@@ -560,7 +563,7 @@ scenario('route 2: a form finding on the other device opens it, with focus; mark
   check('route 2: SW1’s form first, every port editable', text(q('.ng-vl-form-head h2')) === 'Налаштування SW1' && !q('[aria-readonly="true"]'));
   fill('vl-SW1-vlans', '5000');
   click(tab('R1'));
-  click(radioIn('.ng-vl-states', 'no shutdown'));
+  click(radioIn('.ng-vl-states', 'увімкнено (no shutdown)'));
   click(button('+ підінтерфейс'));
   fill('vl-R1-subifs-0-number', String(a));
   type(q('#vl-R1-subifs-0-address'), ciscoAddress(netA.gateway));
@@ -764,14 +767,14 @@ scenario('route: deleting a row keeps focus in its list (keyboard)', m => {
 scenario('route: «Інші номери», hints and the reveal', m => {
   step(() => m.store.dispatch({ type: 'place', scope: 'vlan', patch: routePlace('vlan.route-1') }));
   const before = routeTaskOf(m);
-  click(radioIn('.ng-vl-states', 'no shutdown'));
+  click(radioIn('.ng-vl-states', 'увімкнено (no shutdown)'));
   const more = label => { click(q('.ng-vl .ng-more-button')); return all('.ng-vl [role="menuitem"]').find(b => text(b) === label); };
   click(more('Інші номери VLAN'));
   const after = routeTaskOf(m);
   check('route numbers: a new seed; the old kept as previous; the new instance blank', after.instanceKey !== before.instanceKey && place(m).routePrevious['vlan.route-1'] === ROUTE_SEEDS['vlan.route-1']
-    && radioIn('.ng-vl-states', 'shutdown').getAttribute('aria-checked') === 'true');
+    && radioIn('.ng-vl-states', 'вимкнено (shutdown)').getAttribute('aria-checked') === 'true');
   click(more('← Попередні номери'));
-  check('route numbers: «Попередні номери» returns to the old draft', routeTaskOf(m).instanceKey === before.instanceKey && radioIn('.ng-vl-states', 'no shutdown').getAttribute('aria-checked') === 'true');
+  check('route numbers: «Попередні номери» returns to the old draft', routeTaskOf(m).instanceKey === before.instanceKey && radioIn('.ng-vl-states', 'увімкнено (no shutdown)').getAttribute('aria-checked') === 'true');
   const hintButton = () => all('button').find(b => /Підказка|Підказок/.test(text(b)));
   click(hintButton()); click(hintButton()); click(hintButton());
   const rungs = all('.ng-vl [data-help="hint"]').map(text).sort();
@@ -1015,7 +1018,9 @@ scenario('round 5: predict — a port in the evidence outlines its own label onl
 
 scenario('round 5: ports — a port cell outlines its label on the diagram; another switch clears it', m => {
   step(() => m.store.dispatch({ type: 'place', scope: 'vlan', patch: portsPlace('vlan.ports-2') }));
-  check('ports: the action line above the port rows', text(q('#ng-vl-ports-action')) === ui.portsAction.cisco && nextEl(q('#ng-vl-ports-action'))?.matches('.ng-vl-form-table'));
+  // Round 5 (5b-2 A): only the folded worked example between them.
+  check('ports: the action line above the port rows', text(q('#ng-vl-ports-action')) === ui.portsAction.cisco && nextEl(q('#ng-vl-ports-action'))?.matches('[data-worked-example]')
+    && nextEl(nextEl(q('#ng-vl-ports-action')))?.matches('.ng-vl-form-table'));
   const link = q('.ng-vl-form-table th .ng-fact-link'), label = text(link);
   click(link);
   check('ports: the tap outlines SW1’s port label', highlighted().length === 1 && highlighted()[0].getAttribute('data-hl') === `port:SW1:${label}`, highlighted().map(e => e.getAttribute('data-hl')));
@@ -1052,6 +1057,33 @@ scenario('round 5: «Між VLAN» — the action line follows the task and the 
       const task = route.create(record, { variantId: 'main', seed: ROUTE_SEEDS[id], syntax });
       check(`route: ${id}/${syntax}: the action line`, text(q('#ng-vl-route-action')) === interVlanAction(task, syntax), text(q('#ng-vl-route-action')));
     }
+  }
+  step(() => m.store.dispatch({ type: 'pref', name: 'syntax', value: 'cisco' }));
+});
+
+// Round 5 (5b-2 A): the worked example on «Налаштуй порти» and «Між VLAN»: folded on every first view,
+// opened only by its toggle, its own instance in the current syntax, closed again by a new task or syntax;
+// nothing of it reaches the learner's form.
+scenario('5b-2: the worked examples open by their toggle only and close on a new task or syntax', m => {
+  const wex = () => all('[data-worked-example]');
+  const toggle = () => q('[data-worked-example] .ng-wex-toggle');
+  const card = () => q('[data-worked-example] .ng-wex-card');
+  for (const [exercise, place, action] of [['ports', portsPlace('vlan.ports-1'), '#ng-vl-ports-action'], ['route', routePlace('vlan.route-1'), '#ng-vl-route-action']]) {
+    step(() => m.store.dispatch({ type: 'place', scope: 'vlan', patch: place }));
+    check(`5b-2 ${exercise}: one folded example, the action line's next sibling`, wex().length === 1 && toggle().getAttribute('aria-expanded') === 'false' && card() === null
+      && q(action).nextSibling === wex()[0]);
+    const before = JSON.stringify(m.store.state.instances);
+    click(toggle());
+    check(`5b-2 ${exercise}: opened, the example in Cisco words, on its own VLAN 310; the store untouched`, toggle().getAttribute('aria-expanded') === 'true' && card() !== null
+      && /приклад · інші числа/.test(text(card())) && /\b310\b/.test(text(card())) && /fa0\/1|gi0\/1/.test(text(card())) && JSON.stringify(m.store.state.instances) === before,
+      { card: text(card()), store: JSON.stringify(m.store.state.instances) === before });
+    step(() => m.store.dispatch({ type: 'pref', name: 'syntax', value: 'routeros' }));
+    check(`5b-2 ${exercise}: another syntax closes it; opened again, its MikroTik form`, toggle().getAttribute('aria-expanded') === 'false' && card() === null);
+    click(toggle());
+    check(`5b-2 ${exercise}: MikroTik words`, /ether2|vlan310/.test(text(card())), text(card()));
+    step(() => m.store.dispatch({ type: 'pref', name: 'syntax', value: 'cisco' }));
+    click(all('.ng-vl-variants [role="radio"]')[1]);
+    check(`5b-2 ${exercise}: another task finds it closed`, wex().length === 1 && toggle().getAttribute('aria-expanded') === 'false' && card() === null);
   }
   step(() => m.store.dispatch({ type: 'pref', name: 'syntax', value: 'cisco' }));
 });

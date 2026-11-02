@@ -233,7 +233,7 @@ test('FW-2 lifecycle: reorder clears marks, walk and success; hint 2 opens curre
   assert.throws(() => transition(logic, logic.create(null, { seed: 2 }), state, { type: 'check' }), /invalid-task/);
 });
 
-test('FW-2 hint 2 checks the current list when needed; hint progress caps and dead-only feedback has no packet walk', () => {
+test('FW-2 hint 2 checks the current list when needed; hint progress caps and shadow feedback can open its packet walk', () => {
   const logic = forRecord(record), task = logic.create(null, { variantId: 'all' });
   let state = initialState(task);
   for (let i = 0; i < 5; i++) state = transition(logic, task, state, { type: 'hint' });
@@ -244,7 +244,7 @@ test('FW-2 hint 2 checks the current list when needed; hint progress caps and de
   state = transition(logic, task, initialState(task), { type: 'order', order });
   state = transition(logic, task, state, { type: 'check' });
   state = transition(logic, task, state, { type: 'walk' });
-  assert.equal(state.walkOpen, false);
+  assert.equal(state.walkOpen, true);
 });
 
 test('FW-2 B2/B3 wording: bounded home set, slow path, chain-end difference and goal without ordering', () => {

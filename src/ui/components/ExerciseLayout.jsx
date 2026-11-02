@@ -12,6 +12,9 @@
 // action, rendered as an ActionLine right before the `answer` region (the
 // first control). Give it an `actionId` when a choice group in the answer
 // names itself by it (aria-labelledby).
+//
+// Round 5 (spec 5b-2 A): the `example` slot takes a WorkedExample, rendered
+// directly under the action line and above the answer.
 import ActionLine from './ActionLine.jsx';
 import '../tokens.css';
 import './ExerciseLayout.css';
@@ -19,7 +22,7 @@ import './ExerciseLayout.css';
 /**
  * @param {{
  *   caption?: string, heading: string, controls?: any,
- *   stage?: any, question?: any, action?: any, actionId?: string, answer?: any, help?: any, tools?: any,
+ *   stage?: any, question?: any, action?: any, actionId?: string, example?: any, answer?: any, help?: any, tools?: any,
  *   theme?: 'dark'|'light',
  *   wide?: 'stage',      // two columns: the stage gets 3/5 of the width (bit rows, results)
  *   first?: 'work',      // one column: the work area first (a tool's inputs); in
@@ -28,7 +31,7 @@ import './ExerciseLayout.css';
  *                        // follows the one-column reading order.
  * }} props
  */
-export default function ExerciseLayout({ caption, heading, controls, stage, question, action, actionId, answer, help, tools, theme, wide, first }) {
+export default function ExerciseLayout({ caption, heading, controls, stage, question, action, actionId, example, answer, help, tools, theme, wide, first }) {
   const stageRegion = stage && <section className="ng-exercise-stage" data-region="stage">{stage}</section>;
   return (
     <div className="ng-exercise" data-layout="exercise" data-theme={theme} data-wide={wide} data-first={first}>
@@ -44,9 +47,10 @@ export default function ExerciseLayout({ caption, heading, controls, stage, ques
         <section className="ng-exercise-work" data-region="work">
           {question && <div className="ng-exercise-question" data-region="question">{question}</div>}
           {action ? (
-            // The action line and the answer it introduces, close together (their own gap).
+            // The action line, the folded example under it, and the answer it introduces, close together (their own gap).
             <div className="ng-exercise-act">
               <ActionLine id={actionId}>{action}</ActionLine>
+              {example}
               {answer && <div className="ng-exercise-answer" data-region="answer">{answer}</div>}
             </div>
           ) : answer && <div className="ng-exercise-answer" data-region="answer">{answer}</div>}

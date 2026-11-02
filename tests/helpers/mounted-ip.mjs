@@ -540,6 +540,66 @@ scenario('mask merge', () => mountScreen('mask'), m => {
   check('mask: … and back', Boolean(textbox('Адреса мережі')) && Boolean(textbox('Широкомовна адреса')));
 });
 
+// ── 4d. Round 5 5b-2 (spec A, D): the calculator's first line and command caption; the mask's action line and worked example ──
+const { expectWorkedExample } = await import('./worked-example.mjs');
+const { comprehension: ip5, calcUi: calc5, ui: mask5 } = await import('../../src/sections/ip/uk.js');
+const passes = fn => { try { fn(); return true; } catch (e) { return e.message; } };
+scenario('5b-2 calculator', () => mountScreen('calculator'), () => {
+  const fields = () => all('.ng-field-input');
+  const line = () => q('[data-action-line]');
+  const caption = () => q('.ng-commands-caption')?.textContent ?? null;
+  check('5b-2 calculator: the first line, over the inputs, says a correct change updates the result', line()?.textContent === ip5.calculatorAction
+    && line().nextSibling === q('.ng-exercise-answer') && !q('[data-worked-example]'), line()?.textContent);
+  click(all('button').find(b => b.textContent.startsWith('Приклад конфігурації')));
+  check('5b-2 calculator: the example says which address its commands set: the example gateway', caption() === `Команди задають інтерфейсу адресу 192.168.1.1/24 — ${calc5.commandGateway}.`
+    && q('.ng-commands-caption').nextSibling === q('.ng-commands-blocks'), caption());
+  click(all('[role="radio"]').find(r => r.textContent === 'остання адреса'));
+  check('5b-2 calculator: the other gateway, the other address', caption() === `Команди задають інтерфейсу адресу 192.168.1.254/24 — ${calc5.commandGateway}.`, caption());
+  type(fields()[0], '10.0.0.1'); type(fields()[1], '/31');
+  check('5b-2 calculator: /31 sets the entered address, no gateway named', caption() === 'Команди задають інтерфейсу адресу 10.0.0.1/31.', caption());
+  type(fields()[1], '/32');
+  check('5b-2 calculator: /32 likewise', caption() === 'Команди задають інтерфейсу адресу 10.0.0.1/32.', caption());
+  type(fields()[0], '10.0.0.');
+  check('5b-2 calculator: invalid input keeps the previous result and its caption', caption() === 'Команди задають інтерфейсу адресу 10.0.0.1/32.' && Boolean(q('.ng-commands-off')), caption());
+  type(fields()[0], '127.0.0.1'); type(fields()[1], '/8');
+  check('5b-2 calculator: no commands, no caption (the note says why)', caption() === null && all('.ng-commands-pre').length === 0 && q('.ng-commands-note')?.textContent === 'Для цієї адреси приклад конфігурації не показуємо.', caption());
+});
+scenario('5b-2 mask', () => mountScreen('mask'), m => {
+  step(() => m.store.dispatch({ type: 'place', scope: 'ip.mask', patch: { level: 1, seeds: { 1: 11 } } }));
+  const task = mask.create(null, { seed: 11, level: 1 });
+  const answer = mask.solution(task);
+  const textbox = label => all('.ng-field').find(f => f.querySelector('.ng-field-label')?.textContent === label)?.querySelector('input');
+  const line = () => q('[data-action-line]');
+  const toggle = () => q('[data-worked-example] .ng-wex-toggle');
+  check('5b-2 mask: the action line over the fields; the folded example right under it', line()?.textContent === mask5.action.block && line().nextSibling === q('[data-worked-example]')
+    && q('[data-worked-example]').nextSibling === q('.ng-exercise-answer') && passes(() => expectWorkedExample(document.body)) === true, line()?.textContent);
+  check('5b-2 mask: the ruler says what it shows (the octet, labels, the block size, the address)', q('.ng-mask-stage .ng-ruler-text')?.textContent.startsWith('Лінійка: ')
+    && q('.ng-mask-stage .ng-ruler-text').textContent.includes(`блок для /${task.prefix} — ${2 ** (32 - task.prefix)} адрес`), q('.ng-mask-stage .ng-ruler-text')?.textContent);
+  const before = JSON.stringify(m.store.state.instances);
+  click(toggle());
+  const card = q('[data-worked-example] .ng-wex-card');
+  check('5b-2 mask: opened, another address\'s /26 block on its ruler, then its network and broadcast as the two fields', passes(() => expectWorkedExample(document.body, { open: true, rows: 1 })) === true
+    && Boolean(card.querySelector('.ng-ruler-svg')) && !card.querySelector('figcaption')
+    && card.querySelectorAll('td.ng-wex-value').map(td => td.textContent).join('|') === '198.51.100.64|198.51.100.127'
+    && card.querySelectorAll('th').map(th => th.textContent).join('|') === 'Адреса мережі|Широкомовна адреса' && card.textContent.includes('198.51.100.77/26'), card?.textContent);
+  check('5b-2 mask: opening it writes nothing into the answer', JSON.stringify(m.store.state.instances) === before && textbox('Адреса мережі').value === '' && textbox('Широкомовна адреса').value === '');
+  click(q('.ng-mask-mode'));
+  check('5b-2 mask: chips: the action line says choose; the example stays open (same task)', line()?.textContent === mask5.action.blockChoose && toggle().getAttribute('aria-expanded') === 'true');
+  click(q('.ng-mask-mode'));
+  type(textbox('Адреса мережі'), answer.network); type(textbox('Широкомовна адреса'), answer.broadcast);
+  click(button('Перевірити'));
+  check('5b-2 mask: solved: the action line says so in place; the ruler line adds the block', line()?.textContent === mask5.action.done
+    && q('.ng-mask-stage .ng-ruler-text').textContent.endsWith(mask5.rulerBlock({ start: Number(answer.network.split('.')[3]), end: Number(answer.broadcast.split('.')[3]) })), q('.ng-mask-stage .ng-ruler-text')?.textContent);
+  click(q('.ng-help-next'));
+  check('5b-2 mask: «Далі»: a new task, the example closed again', toggle()?.getAttribute('aria-expanded') === 'false' && !q('.ng-wex-card'));
+  let fitSeed = null;
+  for (let seed = 0; seed < 40 && fitSeed === null; seed++) if (mask.create(null, { seed, level: 2 }).kind === 'fit') fitSeed = seed;
+  step(() => m.store.dispatch({ type: 'place', scope: 'ip.mask', patch: { level: 2, seeds: { ...m.store.state.places['ip.mask'].seeds, 2: fitSeed } } }));
+  check('5b-2 mask: a fit task: its own action line, no example (another task shape)', line()?.textContent === mask5.action.fit && !q('[data-worked-example]'));
+  click(button('Показати відповідь'));
+  check('5b-2 mask: revealed: no action line, no example (no fields under them)', !line() && !q('[data-worked-example]'));
+});
+
 // ── 4b. The theme switch: the shell's, on the start screen and in the bar ──
 scenario('theme switch', mountShell, () => {
   const switches = () => all('button.ng-theme-switch');

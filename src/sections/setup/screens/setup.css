@@ -238,9 +238,13 @@
 
 /* ── The deck's rows ─────────────────────────────────────── */
 
-/* One line per card where the command allows: a long command wraps inside
-   its own cell, the prompt group keeps its place on the right; the purpose
-   and the Winbox path are the lines under them. */
+/* Round 5 (spec 5b-2 F): the purpose first, across the whole row (one line:
+   R2); the command under it (a long command wraps inside its own cell) with
+   the prompt group (or DR-3's «• Ще ні») on the right of the same line, so
+   the mode control stays in one band with the command it is about. (Centred
+   across both lines, the group left the purpose about 280 px at 1280 and
+   most purposes wrapped.) DR-3's Winbox path is a third line under the
+   whole row. */
 .ng-su-row {
   display: grid;
   grid-template-columns: minmax(8em, 1fr) auto;
@@ -249,17 +253,13 @@
   min-width: 0;
 }
 
-/* The purpose (and DR-3's Winbox path) run under the whole row, the prompt
-   group too, so a purpose stays one line (round 5, R2). */
-.ng-su-row > .ng-su-purpose,
-.ng-su-row > .ng-su-path { grid-column: 1 / -1; }
+.ng-su-row > .ng-su-purpose { grid-column: 1 / -1; grid-row: 1; }
+.ng-su-row > .ng-su-path { grid-column: 1 / -1; grid-row: 3; }
 
-.ng-su-first {
+.ng-su-term {
   grid-column: 1;
+  grid-row: 2;
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 2px 8px;
   min-width: 0;
 }
 
@@ -290,8 +290,8 @@
 }
 
 /* The card's purpose (R2, the shared Purpose: normal text colour) on its
-   second line; DR-3's Winbox path a third, muted line. */
-.ng-su-purpose { margin-top: -2px; overflow-wrap: break-word; }
+   first line; DR-3's Winbox path a third, muted line. */
+.ng-su-purpose { overflow-wrap: break-word; }
 
 .ng-su-path {
   color: var(--ng-muted);
@@ -319,10 +319,12 @@
 
 /* The prompts: one quiet group (one frame, the options plain text), the
    chosen one filled; «режим?» before the group until one is chosen. The
-   group keeps its place (right-aligned), so choosing never moves it. */
-.ng-su-choice {
+   group keeps its place (right-aligned, on the command's line), so choosing
+   never moves it. DR-3's «• Ще ні» takes the same place. */
+.ng-su-choice,
+.ng-su-flag {
   grid-column: 2;
-  grid-row: 1;
+  grid-row: 2;
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
@@ -375,7 +377,7 @@
 /* Read-only (the learner's own order after a reveal): the chosen prompt as text. */
 .ng-su-chosen {
   grid-column: 2;
-  grid-row: 1;
+  grid-row: 2;
   justify-self: end;
   color: var(--ng-muted);
   font-family: var(--ng-mono);

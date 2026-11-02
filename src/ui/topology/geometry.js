@@ -83,7 +83,8 @@ export const linkScale=F=>F.net/DIAGRAM_FONT.net;
 function endpointShape(ep,parseAddress,F=DIAGRAM_FONT){
   const k=boxScale(F),ip=String(ep.ip),internet=ep.type==="internet";
   const isp=String(ep.note||"").match(/ISP\s*\d*/i);
-  const label=internet?(isp?isp[0].replace(/\s+/g,""):"Internet"):(ep.note||ep.name);
+  // A caller may name the box too (round 5 5b-2: «Знайди несправність» says «Інтернет (ISP)», as its pings do).
+  const label=ep.label??(internet?(isp?isp[0].replace(/\s+/g,""):"Internet"):(ep.note||ep.name));
   // Show the provider link network so the local address is not mistaken for its gateway.
   const [addr,pfx]=ip.split("/");
   // A caller may say what the box shows (round 4: a LAN's network, a provider's gateway).

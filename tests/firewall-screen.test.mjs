@@ -10,7 +10,7 @@ import { records, resolveRecord, cards, topology } from './helpers/firewall.mjs'
 import fw, { cardView, create, check, commit, generatorVersion, initialCommitState, solution } from '../src/sections/firewall/logic/predict.js';
 import { classify } from '../src/sections/firewall/logic/classify.js';
 import { initialInstance } from '../src/ui/exercise-state.js';
-import { chainText, predictLevels, predictStep, t, ui } from '../src/sections/firewall/uk.js';
+import { chainText, comprehension, predictLevels, predictStep, t, ui } from '../src/sections/firewall/uk.js';
 import { uk } from '../src/ui/uk.js';
 import {
   tableRows, cardLines, walkOutcomes, walkPlan, walkFrame, feedbackOf, textSections, natRuleOf, predicateText, ruleListItems, ROW_MS, WALK_CAP_MS,
@@ -77,7 +77,9 @@ test('firewall view: the card says the givens (S1): ports with services, the giv
   assert.equal(lines('wan-winbox').ports, 'tcp, на порт 8291 (Winbox), з порту 50002');
   assert.equal(lines('wan-ssh').ports, 'tcp, на порт 22 (SSH), з порту 50009');
   assert.equal(lines('reply-to-pc').ports, 'tcp, на порт 50000, з порту 443 (web)');
-  assert.equal(lines('wan-ping-router').ports, 'ICMP echo (ping)');
+  // Round 5 (5b-2 B): echo traffic is «ICMP echo — ping»; other ICMP isn't called ping.
+  assert.equal(lines('wan-ping-router').ports, comprehension.icmpEchoGloss);
+  assert.equal(comprehension.icmpEchoGloss, 'ICMP echo — ping');
   assert.equal(lines('related-icmp-to-pc').ports, 'ICMP: недосяжно');
   assert.deepEqual(lines('wan-winbox').from, { label: 'Звідки', value: '203.0.113.50 → ether1 (WAN)' });
   assert.deepEqual(lines('wan-winbox').to, { label: 'Куди', value: '100.64.0.2' });
@@ -384,9 +386,9 @@ test('firewall screen: the assumption line is under the table after a FastTrack 
     if (position < 0) continue;
     const st = commit(task, initialCommitState(task), 'reply-to-pc', solution(task)['reply-to-pc']);
     const { html } = render({ seed, view: { commit: st, position } });
-    // Round 4 (F1 v2): the corrected slow-path words.
-    assert.ok(region(html, 'class="ng-fw-rules"').includes(`<p class="ng-fw-note">${predictStep.slowPath}</p>`));
-    assert.ok(!region(html, 'role="status"').includes(predictStep.slowPath));
+    // Round 4 (F1 v2): the corrected slow-path words; round 5 (5b-2 B): they name the packet shown as the slow path's.
+    assert.ok(region(html, 'class="ng-fw-rules"').includes(`<p class="ng-fw-note">${comprehension.fasttrackIntro}</p>`));
+    assert.ok(!region(html, 'role="status"').includes(comprehension.fasttrackIntro));
     assert.ok(!html.includes(t('fasttrack-slow-path')), 'the older assumption words are gone from the screen');
     assert.ok(!/title="[^"]*повільний шлях/.test(html));
     return;
@@ -797,5 +799,5 @@ test('round 4 A5: a quiet ✓ (DoneMark) on an earned rule set and level; none a
   assert.equal((sets.match(/розв’язано/g) ?? []).length, 1);
   assert.equal((region(html, 'aria-label="Рівень"').match(/розв’язано/g) ?? []).length, 1);
   assert.deepEqual([...earnedVariants({ [task.instanceKey]: { ...initialInstance() } })], []);
-  assert.deepEqual(walkNotes({ steps: [{ outcome: 'marked' }] }), [predictStep.slowPath]);
+  assert.deepEqual(walkNotes({ steps: [{ outcome: 'marked' }] }), [comprehension.fasttrackIntro]);
 });

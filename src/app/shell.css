@@ -85,9 +85,10 @@
   color: var(--ng-title);
 }
 
+/* Round 5 5b-2: 18 px above and below (was 24), so the advice lines keep seven cards in 1000 × 700. */
 .ng-home-main {
-  padding-top: 24px;
-  padding-bottom: 24px;
+  padding-top: 18px;
+  padding-bottom: 18px;
 }
 
 .ng-home-caption {
@@ -161,6 +162,14 @@
 .ng-card-blurb {
   color: var(--ng-muted);
   font-size: var(--ng-font-small);
+  line-height: 1.4;
+}
+
+/* Round 5 5b-2 (spec G): «радимо спершу: …», advice in the card's quietest words. */
+.ng-card-advice {
+  color: var(--ng-muted);
+  font-size: var(--ng-font-caption);
+  font-style: italic;
   line-height: 1.4;
 }
 

@@ -44,7 +44,9 @@
 
 .ng-rt[data-mode="desk"] .ng-rf-cols,
 .ng-rt[data-mode="wide"] .ng-rf-cols {
-  grid-template-columns: minmax(0, 1fr) minmax(min(488px, 50%), min(560px, 43%));
+  /* Round 5 5b-2 repair: 466 px (was 488) at 1000 px, so the cloud's wider
+     «Інтернет (ISP)» keeps the whole two-router drawing at 12 px. */
+  grid-template-columns: minmax(0, 1fr) minmax(min(466px, 50%), min(560px, 43%));
 }
 
 /* Positioned: a panel that scrolls must be the containing block of what it
@@ -103,6 +105,18 @@
 .ng-rf-ping .ng-rt-checkline-state {
   margin-left: auto;
   font-size: var(--ng-font-body);
+}
+
+.ng-rf-ping .ng-rt-checkline-body {
+  column-gap: 8px;
+}
+
+/* Round 5 5b-2 repair: in the 1000 px window a ping stays one line, «✗ пішов
+   не туди — в Інтернет (ISP)» included, so «Перевірити» stays in view. */
+@media (max-width: 1100px) {
+  .ng-rf-ping .ng-rt-checkline-state {
+    font-size: var(--ng-font-caption);
+  }
 }
 
 /* The drawn ping: a bar at its start and its walk under it, not only a border. */

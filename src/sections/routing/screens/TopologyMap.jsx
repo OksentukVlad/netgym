@@ -2,7 +2,11 @@
 // network through logic/topology.js and the shared geometry.js with
 // NetGym's larger font set, in the active syntax's interface labels. The
 // router buttons under it are the keyboard path; the caller's children
-// («Текстом») end that row.
+// («Текстом») end that row. Round 5 5b-2: a network with one router (task
+// 15) has nothing to choose, so no router row: the children start the tool
+// row instead, at its right end (its height is reserved anyway), and the drawing gets that
+// row's height, which keeps the whole drawing at 12 px under task 15's two
+// sentences at 1000 × 700.
 //
 // The diagram frame (step 7 fix round):
 //   - a tool row: the caller's `tools` («Правила») and the zoom buttons
@@ -131,6 +135,8 @@ const TopologyMap = forwardRef(function TopologyMap({
   tools = null, overlays = null, covered = false, underlay = null, overlay = null, fit = false, children, highlight = null,
 }, ref) {
   const routerNames = Object.keys(topo.routers);
+  // One router: no router row (nothing to choose); the children go to the tool row.
+  const lone = routerNames.length === 1;
   const geo = useMemo(() => diagramGeometry(topo, topo, undefined, F), [topo]);
   const minText = useMemo(() => smallestText(geo), [geo]);
   const arrow = `ng-dg-arrow-${useId().replace(/:/g, '')}`;
@@ -285,6 +291,8 @@ const TopologyMap = forwardRef(function TopologyMap({
               {can.all && <button type="button" className="ng-rt-btn ng-dg-zoom-all" aria-label={z.allLabel} title={z.allLabel} onClick={() => zoomTo('all')}>{z.all}</button>}
             </div>
           )}
+          {/* One router: «Текстом» ends the tool row, at the right edge as under other diagrams (repair v1, Fable). */}
+          {lone && <span className="ng-dg-lone-end">{children}</span>}
         </div>
         <div className={`ng-dg-view${covered ? ' has-overlay' : ''}`}>
           <div
@@ -373,14 +381,16 @@ const TopologyMap = forwardRef(function TopologyMap({
           {overlays}
         </div>
       </div>
-      <div className="ng-rt-routers">
-        {routerNames.map(name => (
-          <button key={name} type="button" aria-pressed={activeRouter === name} onClick={() => setActiveRouter(activeRouter === name ? null : name)} className={`ng-rt-router ${rc(name)}`}>
-            {name}
-          </button>
-        ))}
-        {children}
-      </div>
+      {!lone && (
+        <div className="ng-rt-routers">
+          {routerNames.map(name => (
+            <button key={name} type="button" aria-pressed={activeRouter === name} onClick={() => setActiveRouter(activeRouter === name ? null : name)} className={`ng-rt-router ${rc(name)}`}>
+              {name}
+            </button>
+          ))}
+          {children}
+        </div>
+      )}
     </div>
   );
 });

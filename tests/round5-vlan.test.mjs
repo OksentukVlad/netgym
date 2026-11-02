@@ -165,7 +165,8 @@ test('round 5 VLAN: the evidence columns; ports are fact links; the work column 
 test('round 5 VLAN: the action line names the choices; the choices carry the PC only; after the commit it says so', () => {
   const task = predict.create(bank.predict, { variantId: 'p1', seed: 7, vendor: 'cisco', surprises: 0 });
   const html = predictHtml(task, 'cisco');
-  assert.match(html, /<p id="ng-vl-predict-action" class="ng-action-line" data-action-line="">Познач ПК, які отримають кадр\.<\/p>/);
+  // Round 5 (5b-2 E): it says to go by the table's VLAN, not the addresses.
+  assert.match(html, /<p id="ng-vl-predict-action" class="ng-action-line" data-action-line="">Познач ПК, яким комутатор віддасть цей кадр — за VLAN у таблиці, не за IP-адресами\.<\/p>/);
   assert.match(html, /class="ng-vl-choices" role="group" aria-labelledby="ng-vl-predict-action"/);
   // The action line sits right before the choices, after the evidence.
   assert.ok(html.indexOf('ng-vl-evidence') < html.indexOf('ng-vl-predict-action') && html.indexOf('ng-vl-predict-action') < html.indexOf('ng-vl-choices'));
@@ -210,8 +211,8 @@ test('round 5 VLAN: ports — two-line modes named «доступ (access)», «
   assert.match(html, /<p id="vl-SW1-vlans-what" class="ng-vl-form-what">створити на комутаторі \(один раз\)<\/p>/);
   assert.match(html, /id="vl-SW1-vlans"[^>]*aria-describedby="vl-SW1-vlans-what"/);
   assert.match(html, /<p id="ng-vl-ports-action" class="ng-action-line" data-action-line="">Для кожного порту обери режим, потім VLAN\.<\/p>/);
-  // The action line comes right before the port table.
-  assert.match(html, /ng-vl-ports-action[^]*?<\/p><table class="ng-vl-form-table">/);
+  // The action line comes right before the port table, with only the folded worked example between (5b-2 A).
+  assert.match(html, /ng-vl-ports-action[^]*?<\/p><div class="ng-wex" data-worked-example="">[^]*?<\/div><\/div><table class="ng-vl-form-table">/);
   const mt = portsHtml(1, 'routeros');
   assert.ok(mt.includes(`>${ui.portsAction.routeros}</p>`));
 });

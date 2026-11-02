@@ -7,7 +7,8 @@
 //     «Інші маршрути»: routes no row takes (deletable, checked with the
 //     network).
 //   - «Самостійно»: the router's own list, each route its fields with «#n»
-//     and «✕»; «+ Маршрут» adds an empty one. Enter runs the network check.
+//     and «✕»; a quiet link under it, «+ ще один маршрут (якщо потрібен)»
+//     (round 5 5b-2, spec C), adds an empty one. Enter runs the network check.
 //
 // MikroTik rows offer the «blackhole (відкидати)» box only where discard
 // routes are taught (polish-2 P2): in guided mode on the scaffold's discard
@@ -22,7 +23,10 @@
 // reasons under its fields. The fields' labels and example placeholders are
 // the screen's words (uk.js ui.shared.fieldLabels; round 5, R4: the
 // placeholders are symbols, uk.js routingPlaceholders, never an address that
-// could pass this task's checker; task 15 keeps its distance example). The row
+// could pass this task's checker; task 15 keeps its distance example, per row
+// since 5b-2: «менша, напр. 1» on the main route, «більша, напр. 5» on the
+// backup; MikroTik's destination shows its shape, «мережа/префікс, напр.
+// x.x.x.0/24», uk.js comprehension). The row
 // the panel's verdict (or a stale verdict's edit) is about carries
 // data-evidence="current" (`evidenceKey`). The first router is always
 // selected, so there is no «pick a router» line.
@@ -33,7 +37,7 @@
 // (useRouteAnswers.noteOf). The screen's single role="status" announcement
 // is elsewhere.
 import { useEffect, useRef, useState } from 'react';
-import { routingPlaceholders, t, ui } from '../uk.js';
+import { comprehension, routingPlaceholders, t, ui } from '../uk.js';
 import { rowFacts, teachesDiscard } from './facts.js';
 import Rich, { plain } from './Rich.jsx';
 import { routeSerialOf } from './useRouteAnswers.js';
@@ -77,13 +81,16 @@ export function labelOf(syntax, field) {
 }
 /** A field's placeholder: a symbol (round 5, R4), never the syntax
  * adapter's example; a default-route row's network the constant 0.0.0.0/0.
- * `facts.distanceExample`: the task teaches distance by its example (task 15). */
+ * `facts.distanceExample`: the task teaches distance by its example (task 15),
+ * per row (5b-2): `facts.role` 'backup' gets the larger example, any other row
+ * the smaller one. MikroTik's destination shows the shape of its answer. */
 export function placeholderOf(syntax, field, facts = {}) {
   const words = routingPlaceholders[syntax.id];
   // A default-route row: the one allowed constant (repair v1, Fable 2), 0.0.0.0 0.0.0.0 in Cisco's two fields.
   if (facts.isDefault && ['net', 'mask', 'dst'].includes(field.name)) return syntax.id === 'routeros' ? routingPlaceholders.defaultRoute : routingPlaceholders.defaultRoute.split('/')[0];
   if (field.name === 'gw' && facts.discard && words.gwDiscard) return words.gwDiscard;
-  if (field.name === 'dist' && facts.distanceExample) return routingPlaceholders.distanceExample;
+  if (field.name === 'dist' && facts.distanceExample) return facts.role === 'backup' ? comprehension.distanceBackupPlaceholder : comprehension.distancePrimaryPlaceholder;
+  if (field.name === 'dst' && syntax.id === 'routeros') return comprehension.dstPlaceholder;
   return words[field.name];
 }
 /** True for the task whose distance placeholder keeps its example (task 15). */
@@ -252,7 +259,7 @@ export function FreeRow({ syntax, answers, item, onNetwork, inputRef, discard = 
         <h4 className={`ng-rt-row-head${quietHead ? ' ng-sr-only' : ''}`} id={rowHeadId(item.key)} tabIndex={-1}><span className="ng-rt-row-n">#{item.n}</span></h4>
         {!readOnly && !onEdit && <button type="button" className="ng-rt-icon ng-rt-delete" aria-label={ui.shared.deleteRoute(item.n)} title={ui.shared.deleteRoute(item.n)} onClick={() => answers.removeRoute(item)}>✕</button>}
       </div>
-      <Fields syntax={syntax} names={names} values={values} id={id} placeholderFacts={{ isDefault: false, distanceExample }} needDist={item.needDist} inputRef={inputRef} offerBlackhole={discard}
+      <Fields syntax={syntax} names={names} values={values} id={id} placeholderFacts={{ isDefault: false, distanceExample, role: item.n > 1 ? 'backup' : 'primary' }} needDist={item.needDist} inputRef={inputRef} offerBlackhole={discard}
         invalid={field => (mark ? mark.fields.includes(field.name) : undefined)} onEdit={onEdit ?? ((name, value) => answers.edit(item, name, value))} onEnter={onNetwork}
         describedBy={describedByOf(id, note, mark)} readOnly={readOnly} quietLabels={quietLabels} />
       <ConvertNote id={`${id}-note`} name={note} />
@@ -262,7 +269,8 @@ export function FreeRow({ syntax, answers, item, onNetwork, inputRef, discard = 
   );
 }
 
-/** Free mode: the router's list and «+ Маршрут» (the new row takes focus).
+/** Free mode: the router's list and the quiet «+ ще один маршрут (якщо
+ * потрібен)» link under it (the new row takes focus; round 5 5b-2, spec C).
  * Round 5 (R1): an empty list shows one blank row #1 to fill (the action
  * line names it); it becomes a route of the list at its first keystroke and
  * stores nothing before that. */
@@ -293,7 +301,7 @@ function FreeList({ syntax, answers, router, onNetwork, discard, distanceExample
         {shown.map((item, i) => <FreeRow key={item.key} syntax={syntax} answers={answers} item={item} onNetwork={onNetwork} inputRef={i === shown.length - 1 ? lastInput : undefined} discard={discard}
           distanceExample={distanceExample} target={item.key === targetKey} evidence={item.key === evidenceKey} onEdit={item === blank ? fill : null} />)}
       </ol>
-      <button type="button" className="ng-rt-btn ng-rt-add" onClick={add}>{ui.shared.addRoute}</button>
+      <button type="button" className="ng-rt-link ng-rt-add is-quiet" onClick={add}>{comprehension.addRoute}</button>
     </>
   );
 }

@@ -605,8 +605,15 @@ button.ng-vl-choice::before {
 
 .ng-vl-input::placeholder { color: var(--ng-muted); }
 .ng-vl-input.is-vid { width: 4.2em; }
-.ng-vl-input.is-list { width: 8em; max-width: 100%; }
-.ng-vl-form-table td .ng-vl-input.is-list { width: 100%; min-width: 4.2em; max-width: 9em; }
+/* Round 5 (5b-2 E): the symbolic placeholder «номери VLAN через кому» in
+   the caption's words (sans, 14 px), whole in the field. */
+.ng-vl-input.is-list { width: 13em; max-width: 100%; }
+.ng-vl-input.is-list::placeholder { color: var(--ng-muted); font-family: var(--ng-sans); font-size: var(--ng-font-caption); }
+.ng-vl-allowed-row td { border-top: 0; padding-top: 0; }
+.ng-vl-allowed { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.ng-vl-allowed .ng-vl-native { margin-top: 0; }
+.ng-vl-allowed > .ng-vl-pair { flex-wrap: wrap; }
+.ng-vl-allowed-row .ng-vl-label { font-size: var(--ng-font-caption); }
 
 .ng-vl-input.is-invalid {
   border: 2px solid var(--ng-amber);
@@ -1025,6 +1032,31 @@ tr.is-marked > th,
 .ng-vl-states .ng-segmented-options { flex-wrap: wrap; }
 
 .ng-vl-chip.is-cpu { font-style: italic; }
+
+/* Round 5 (5b-2 A): in a ports form the worked example's 44 px target is
+   mostly its own space above and below its words, so it takes the form's
+   gaps instead of adding to them (the action line over it and the table
+   under it are not controls); a hint's port note stays in view with the
+   panel in a 1000 × 700 window. */
+.ng-vl-form > .ng-wex { margin: -8px 0; }
+
+/* Round 5 (5b-2 E): the physical interface's administrative state, headed
+   like «Підінтерфейси» under it (the port in its own words); its note sits
+   beside the two options, wrapping in its own box rather than taking a line
+   of its own. */
+.ng-vl-admin-label { flex: 1 1 100%; }
+.ng-vl-admin-label .ng-vl-port {
+  color: var(--ng-text);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.ng-vl-admin-note {
+  flex: 1 1 9em;
+  min-width: 9em;
+  font-size: var(--ng-font-caption);
+  line-height: 1.3;
+}
 
 .ng-vl-mgmt {
   padding-top: 6px;
@@ -1524,4 +1556,5 @@ tr.is-marked > th,
   .ng-vl-form-table .ng-vl-input.is-vid { width: 3.6em; }
   .ng-vl-form-table th, .ng-vl-form-table td { padding: 3px 5px; }
   .ng-vl-form-table thead th { font-size: 12px; }
+  .ng-vl-form-table caption.ng-vl-caption { padding: 0; }
 }

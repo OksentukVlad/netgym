@@ -391,7 +391,8 @@ test('routing screen: the mode switch, the check area and the Rules’ best-prac
   assert.equal((html.match(/role="status"/g) ?? []).length, 1, 'one status: the panel\'s');
   store.dispatch({ type: 'pref', name: 'mode', value: 'free' });
   html = unescape(store.render(h.RoutingScreen, { bank: h.routingBank }));
-  assert.ok(html.includes('>+ Маршрут<') && !html.includes('Маршрут до '));
+  // Round 5 5b-2 (spec C): free mode's add control is the quiet link «+ ще один маршрут (якщо потрібен)».
+  assert.ok(html.includes('>+ ще один маршрут (якщо потрібен)<') && !html.includes('>+ Маршрут<') && !html.includes('Маршрут до '));
   for (const syntax of syntaxList) {
     const rules = normalise(surfaces.renderRules(syntax));
     for (const line of [ui.shared.rulesDefaultDirection, ui.shared.rulesExactSummary, ui.shared.rulesDefaultSafety]) assert.ok(rules.includes(line), `${syntax.id}: ${line}`);

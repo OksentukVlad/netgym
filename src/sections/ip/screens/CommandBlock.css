@@ -208,3 +208,10 @@
   color: var(--ng-muted);
   font-size: var(--ng-font-small);
 }
+
+/* Round 5 5b-2 (spec D): which address the commands set, above the blocks. */
+.ng-commands-caption {
+  margin: 0;
+  color: var(--ng-text);
+  font-size: var(--ng-font-small);
+}

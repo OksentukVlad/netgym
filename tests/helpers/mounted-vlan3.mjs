@@ -157,6 +157,16 @@ scenario('start', m => {
   goStage('repair');
   check('repair: the form holds the given configuration (SW1’s VLANs)', q('#vl-SW1-vlans').value === task.initialConfiguration.SW1.vlans.join(','), q('#vl-SW1-vlans')?.value);
   check('repair: its own action line, one at a time', text(q('.ng-vf-work .ng-action-line')) === faultsUi.action.repair && all('.ng-vf-work .ng-action-line').length === 1);
+  // Round 5 (5b-2 E): the form's heading says which device is being looked at, not which one to fix.
+  const inspected = () => text(q('.ng-vl-form-head h2'));
+  check('repair: «Зараз: <device>», never «Виправ: …»', /^Зараз: SW\d$/.test(inspected()) && !/Виправ:/.test(text(q('.ng-vf-work'))), inspected());
+  const otherTab = all('.ng-vl-form-head .ng-vl-switches [role="radio"]').find(b => b.getAttribute('aria-checked') !== 'true');
+  if (otherTab) {
+    const before = inspected();
+    click(otherTab);
+    check('repair: another device tab, its own name', inspected() === `Зараз: ${text(otherTab).replace(/ •$/, '')}` && inspected() !== before, inspected());
+    click(all('.ng-vl-form-head .ng-vl-switches [role="radio"]').find(b => text(b).replace(/ •$/, '') === before.replace('Зараз: ', '')));
+  }
   check('repair: every port editable (no read-only group)', all('.ng-vl-modes [aria-readonly="true"]').length === 0 && all('.ng-vl-modes').length > 0);
   check('repair: the live commands are the given configuration’s', /switchport mode trunk/.test(text(q('.ng-vl-cmds .ng-vl-pre'))));
   check('repair: the given configuration beside the form, nothing struck yet', Boolean(q('.ng-vf-original')) && all('.ng-vf-original .is-changed').length === 0);

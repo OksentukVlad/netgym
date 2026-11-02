@@ -11,7 +11,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { cardText, render, scriptForState } from '../src/sections/setup/logic/render.js';
 import { tips } from '../src/sections/setup/logic/hints.js';
-import { section, ui, copy, deckUi, modesExample, text } from '../src/sections/setup/uk.js';
+import { section, ui, copy, deckUi, modesExample, text, comprehension } from '../src/sections/setup/uk.js';
+import { setupExample } from '../src/sections/setup/logic/examples.js';
+import { expectWorkedExample } from './helpers/worked-example.mjs';
 import { expectPurposes } from './helpers/purposes.mjs';
 import { uk as shared } from '../src/ui/uk.js';
 import { section as firewallSection } from '../src/sections/firewall/uk.js';
@@ -201,13 +203,13 @@ test('setup first view (server), every deck: no leaks in text or attributes, lea
       const raw = unescape(h.renderScreen(h.storeFor({ seed, deck: record.id })));
       const shown = render(task, h.initialState(task));
       const { purposes, found, rest } = seconds(raw);
-      assert.deepEqual(purposes, shown.map(r => r.purpose), `${record.id} seed ${seed}: each row's own purpose, in the learner's order`);
+      assert.deepEqual(purposes, shown.map(r => (r.kind === 'checkpoint' ? comprehension.checkpointPurpose : r.purpose)), `${record.id} seed ${seed}: each row's own purpose (the login check: a step), in the learner's order`);
       assert.deepEqual(found, shown.filter(r => r.secondary).map(r => `${ui.winbox} ${r.secondary}`), `${record.id} seed ${seed}: Winbox paths`);
       expectPurposes(raw, { expected: task.cards.length });
       const html = withoutModeQ(withoutExample(rest));
       const label = `${record.id} seed ${seed}`;
       assert.deepEqual(setupLeaks(html), [], label);
-      assert.doesNotMatch(html, /\sdata-(?!theme=|layout=|help(?:-[\w]+)?=|term=""|purpose=""|action-line="")[\w-]+=/, `${label}: a data attribute (only the panel's hooks and round 5's empty markers)`);
+      assert.doesNotMatch(html, /\sdata-(?!theme=|layout=|help(?:-[\w]+)?=|term=""|purpose=""|action-line=""|worked-example="")[\w-]+=/, `${label}: a data attribute (only the panel's hooks and round 5's empty markers)`);
       assert.doesNotMatch(html, /data-evidence|data-help-current/, `${label}: nothing is current before a check`);
       assert.deepEqual(identityLeaks(html, task), [], `${label}: card identity in an attribute`);
       const deck = deckOf(html);
@@ -215,6 +217,16 @@ test('setup first view (server), every deck: no leaks in text or attributes, lea
       assert.equal((deck.match(/role="radiogroup"/g) ?? []).length, dr3 ? 0 : task.cards.length);
       assert.equal((deck.match(/<li class="ng-reorder-item/g) ?? []).length, { 'dr-1': 12, 'dr-2': 5, 'dr-3': 13 }[record.id]);
       if (!dr3) assert.equal(deck.split(`>${ui.noPrompt}<`).length - 1, task.cards.length, `${label}: «режим?» on every row`);
+      // 5b-2 F: each row starts with its purpose, its command (or the step) after it.
+      for (const item of deck.split('<li class="ng-reorder-item').slice(1)) {
+        assert.ok(item.indexOf('data-purpose=""') < item.search(/class="ng-su-(?:cmd|step)"/), `${label}: the purpose before the command`);
+      }
+      // 5b-2 A: one worked example, folded, right after the action line and before the deck; nothing of it in the markup yet.
+      expectWorkedExample(raw, { open: false });
+      assert.match(raw, /data-action-line="">(?:(?!<\/p>).)*<\/p><div class="ng-wex" data-worked-example="">/, `${label}: the example is the action line's next sibling`);
+      assert.ok(raw.indexOf('data-worked-example') < raw.indexOf('<ol class="ng-reorder"'), `${label}: the example above the deck`);
+      const ex = setupExample({ syntax: dr3 ? 'routeros' : 'cisco' });
+      for (const words of [ex.context, ...ex.rows.map(r => r[1])]) assert.ok(!raw.includes(words), `${label}: the folded example shows nothing: «${words}»`);
       let at = 0;
       for (const row of shown) {
         const next = deck.indexOf(row.text, at);

@@ -14,3 +14,4 @@ tests/vlan2-screens.test.mjs	assessment	for (const words of [routeUi, routeNotes
 pages/OFL.txt	email	Copyright 2016 The Nunito Project Authors (contact@sansoxygen.com),
 pages/THIRD_PARTY_NOTICES.md	email	Copyright 2016 The Nunito Project Authors (contact@sansoxygen.com),
 pages/third-party-notices.html	email	Copyright 2016 The Nunito Project Authors (contact@sansoxygen.com),
+tests/round5b2-content.test.mjs	assessment	for (const copy of [ip, routing, vlan, fw, setup]) for (const value of Object.values(copy)) if (typeof value === 'string') assert.doesNotMatch(value, /іспит|екзамен|\bклас\b/iu);

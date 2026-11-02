@@ -82,8 +82,7 @@ export const ui = {
   intro: 'Як рухається кадр',
   question: ({ host }) => `${host} надсилає широкомовний кадр (як ARP-запит). Хто з ПК його отримає?`,
   choices: 'ПК, які отримають кадр',
-  // Round 5 (R1): the action line above the choices; after the commit its words say so (same place).
-  predictAction: 'Познач ПК, які отримають кадр.',
+  // Round 5 (R1): after the commit the action line's words say so (same place); before it, comprehension.frameAction.
   predictDone: 'Вибір зафіксовано.',
   choicesLocked: 'ПК, які отримають кадр: вибір зафіксовано',
   // Round 5 (§4 v2): the port evidence under the question, from the given configuration only.
@@ -174,7 +173,6 @@ export const ui = {
   previous: 'Попередня перевірка',
   form: ({ device }) => `Налаштування ${device}`,
   ciscoVlans: 'VLAN, які створити',
-  listHint: 'напр. 10,20',
   portCol: 'Порт',
   modeCol: 'Режим',
   valueCol: 'VLAN цього порту',
@@ -191,6 +189,8 @@ export const ui = {
   mode: ({ port }) => `${port}: режим`,
   accessVlan: ({ port }) => `${port}: VLAN доступу`,
   allowed: ({ port }) => `${port}: дозволені VLAN (або all)`,
+  // Its visible label on the trunk's own line under the port row (repair v1).
+  allowedShort: ({ port }) => `${port}: дозволені VLAN`,
   native: ({ port }) => `${port}: native VLAN (порожньо — 1)`,
   nativeShort: 'native',
   pvid: ({ port }) => `${port}: PVID`,
@@ -303,10 +303,8 @@ export const routeUi = {
   givenSwitch: 'SW1 уже налаштовано за умовою. Нижче його команди.',
   fixedPorts: 'Порти доступу задано умовою.',
   fixedRow: 'задано',
-  // Cisco router.
-  physical: 'Фізичний інтерфейс',
-  physicalState: ({ port }) => `${port}: стан інтерфейсу`,
-  states: { off: 'shutdown', on: 'no shutdown' },
+  // Cisco router: the physical interface's administrative state (round 5, 5b-2 E: comprehension.adminState*).
+  physicalState: ({ port }) => `${port}: адміністративний стан`,
   subifs: 'Підінтерфейси',
   col: { name: 'Name', vlanId: 'VLAN ID', on: 'Interface', rosAddress: 'Address' },
   cli: { interface: ({ parent }) => `interface ${parent}.`, encap: 'encapsulation dot1Q', address: 'ip address' },
@@ -536,7 +534,6 @@ export const faultsUi = {
   rowWords: ({ what, ok, detail = [] }) => `${what}: ${ok ? 'проходить' : 'не проходить'}${detail.length ? ` (${detail.join('; ')})` : ''}.`,
   // The answer's two parts.
   causeLead: 'Яка зміна в налаштуваннях зламала мережу?',
-  fixTitle: ({ device }) => `Виправ: ${device}`,
   devices: 'Пристрій',
   // The walk on demand.
   walkWhere: {
@@ -594,3 +591,14 @@ export const introduction = [
   vlanTeaching.trunk,
   'З порту доступу кадр виходить без тега.',
 ];
+
+export const comprehension = {
+  vlansPlaceholder: 'номери VLAN через кому',
+  frameAction: 'Познач ПК, яким комутатор віддасть цей кадр — за VLAN у таблиці, не за IP-адресами.',
+  routerOnStick: '„На паличці": у цій схемі один транк до комутатора; на роутері — логічний інтерфейс з адресою шлюзу для кожного VLAN, між якими маршрутизуємо.',
+  adminStateLabel: 'Адміністративний стан інтерфейсу',
+  adminStateOptions: [{ value: false, label: 'вимкнено', command: 'shutdown' }, { value: true, label: 'увімкнено', command: 'no shutdown' }],
+  adminStateNote: '(лінк ще має бути фізично піднятий)',
+  inspecting: device => `Зараз: ${device}`,
+  recommendedFirst: 'радимо спершу: IP-адреси',
+};

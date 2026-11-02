@@ -7,10 +7,15 @@
 // no order. Without the word «режим» the «?» goes at the end, never inside a
 // word.
 //
+// Round 5 (spec 5b-2 A): the worked example (`children`) is the action
+// line's next sibling, between the line and the popover; the popover is
+// placed at the line's bottom edge when it opens, so it still opens right
+// under the line, over the folded example and the deck.
+//
 // The popover is a non-modal dialog: opening it moves focus into it; Escape
 // (anywhere in it or on «?») closes it and focus returns to «?»; a press
 // outside or focus leaving both closes it without moving focus.
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import ActionLine from '../../../ui/components/ActionLine.jsx';
 import { ui } from '../uk.js';
 
@@ -30,12 +35,15 @@ export function ModesWords() {
   );
 }
 
+const useIsoLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
+
 /**
- * @param {{ sentence: string, onFull: () => void }} props
+ * @param {{ sentence: string, onFull: () => void, children?: any }} props
  * `sentence`: the action line; `onFull`: open the full example (the aside)
- * and move focus there.
+ * and move focus there; `children`: what goes right under the line (the
+ * worked example).
  */
-export default function ModeHelp({ sentence, onFull }) {
+export default function ModeHelp({ sentence, onFull, children = null }) {
   const [open, setOpen] = useState(false);
   const button = useRef(null);
   const panel = useRef(null);
@@ -43,7 +51,19 @@ export default function ModeHelp({ sentence, onFull }) {
   const titleId = useId();
   const at = helpAt(sentence);
 
+  // Under the line itself (not under the whole block): its bottom edge, before the paint.
+  useIsoLayoutEffect(() => {
+    const line = button.current?.closest?.('[data-action-line]');
+    if (open && panel.current && line?.offsetHeight) panel.current.style.top = `${line.offsetTop + line.offsetHeight + 2}px`;
+  });
   useEffect(() => { if (open) panel.current?.focus(); }, [open]);
+  // A resize can re-wrap the action line: close rather than leave the popover stale.
+  useEffect(() => {
+    if (!open || typeof window === 'undefined') return undefined;
+    const onResize = () => setOpen(false);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [open]);
   useEffect(() => {
     if (!open || typeof document === 'undefined') return undefined;
     const outside = e => {
@@ -76,6 +96,7 @@ export default function ModeHelp({ sentence, onFull }) {
         </button>
         {at < sentence.length && <>{' '}{sentence.slice(at).trimStart()}</>}
       </ActionLine>
+      {children}
       <div ref={panel} id={panelId} role="dialog" aria-labelledby={titleId} tabIndex={-1} hidden={!open}
         className="ng-su-modes-pop" onKeyDown={onKeyDown} onBlur={onBlur}>
         {open && <>

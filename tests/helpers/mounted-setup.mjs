@@ -33,6 +33,7 @@ import { installDom } from './mini-dom.mjs';
 import { copyFindings, disclosureFindings, hiddenFindings, recallFindings, rowTexts, scriptText, statusWords, structureFindings, verdictWords, words } from './setup-gate.mjs';
 import { setupLeaks } from './setup-leaks.mjs';
 import { expectPurposes } from './purposes.mjs';
+import { expectWorkedExample } from './worked-example.mjs';
 
 const { document, fire } = installDom({ focusEvents: true });
 // React's select-event plugin asks the window for the selection once a field has the focus
@@ -48,7 +49,7 @@ const copies = [];
 Object.defineProperty(globalThis, 'navigator', { value: { clipboard: { writeText: async value => { copies.push(value); } } }, configurable: true, writable: true });
 
 const H = await import('../../.test-bundles/harness/mounted-setup.mjs');
-const { act, drill, ciscoRouter, cisco2960, cardText, recallRows, render, scriptForState, check: checkAnswer, explanation, hints, initialState, successTips, lineSummary, deckUi, text, ui, shared } = H;
+const { act, drill, ciscoRouter, cisco2960, cardText, recallRows, render, scriptForState, check: checkAnswer, explanation, hints, initialState, successTips, lineSummary, deckUi, text, ui, shared, comprehension, setupExample } = H;
 const results = [];
 const check = (name, ok, detail = '') => results.push({ name, ok: Boolean(ok), detail: typeof detail === 'string' ? detail : JSON.stringify(detail) });
 /** A gate's violations: none passes. */
@@ -117,6 +118,10 @@ const purposesOk = n => { try { expectPurposes(q('.ng-su-board'), { expected: n 
 const modeQ = () => all('.ng-su-modes-q');
 const modePop = () => q('.ng-su-modes-pop');
 const popOpen = () => Boolean(modePop()) && !modePop().hasAttribute('hidden');
+// The worked example (round 5, 5b-2 A): one per screen, folded unless opened.
+const exampleToggle = () => q('[data-worked-example] .ng-wex-toggle');
+/** expectWorkedExample as a check: '' when it holds. */
+const exampleOk = (options = {}) => { try { expectWorkedExample(document, options); return ''; } catch (e) { return e.message; } };
 
 /** Put the deck in `target` order with the ↑ buttons, as a learner would. */
 function arrange(m, target) {
@@ -177,12 +182,16 @@ await scenario('first view', m => {
   check('first: one action line, the deck’s, right above the deck, the «?» its last thing after the full stop', action.length === 1 && actionWords() === ui.action
     && words(action[0]) === `${ui.action} ?` && action[0].lastChild === q('.ng-su-modes-q')
     && (board[0] === action[0] || board[0].contains(action[0])) && (board[1]?.localName === 'ol' || Boolean(q('ol.ng-reorder', board[1]))), words(action[0]));
+  // 5b-2 A: the folded worked example is the action line's next sibling, above the deck.
+  check('first: the worked example folded, right under the action line, before the deck', exampleOk() === '' && action[0].nextSibling === q('[data-worked-example]')
+    && !q('ol.ng-reorder', board[0]), exampleOk());
   const missing = purposesOk(12);
   check('first: twelve rows with a term, each with its own card’s purpose', !missing && rows().every((li, i) => words(q('[data-purpose]', li)) === render(task, stateOf(m))[i].purpose), missing);
-  check('first: the purpose is the row’s second line (the command, its prompt group, then the purpose), never a muted note', rows().every(li => {
+  check('first: the purpose is the row’s first line (the purpose, the command, its prompt group), never a muted note', rows().every(li => {
     const parts = [...q('.ng-su-row', li).childNodes].filter(n => n.nodeType === 1);
-    return parts.length === 3 && parts[0].className === 'ng-su-first' && parts[1].className.startsWith('ng-su-choice') && parts[2].hasAttribute('data-purpose');
+    return parts.length === 3 && parts[0].hasAttribute('data-purpose') && parts[1].className === 'ng-su-term' && Boolean(q('.ng-su-cmd', parts[1])) && parts[2].className.startsWith('ng-su-choice');
   }));
+  check('first: each handle is named by its card’s purpose', all('.ng-reorder-handle').every((h, i) => h.getAttribute('aria-label') === shared.reorder.handle({ n: i + 1, name: render(task, stateOf(m))[i].purpose })));
   check('first: one mode «?» (in the action line), none in the task sentence or per card', modeQ().length === 1 && Boolean(q('.ng-action-line .ng-su-modes-q'))
     && !q('.ng-su-task .ng-su-modes-q') && !q('.ng-reorder .ng-su-modes-q')
     && modeQ()[0].getAttribute('aria-expanded') === 'false' && modeQ()[0].getAttribute('aria-label') === ui.modesTitle && !popOpen());
@@ -225,6 +234,64 @@ await scenario('mode help', m => {
   check('mode help: the deck untouched by the help (only the check changed it)', JSON.stringify(stateOf(m).answer) === JSON.stringify(JSON.parse(before).answer));
 });
 
+// ── The worked example (round 5, spec 5b-2 A and F) ──────────────────────
+
+/** The opened example's words: the context, the column labels and each row's cells. */
+const exampleShown = () => ({
+  context: words(q('.ng-wex-context')),
+  head: all('.ng-wex-table th').map(words),
+  rows: all('.ng-wex-table tbody tr').map(tr => all('.ng-wex-value', tr).map(words)),
+});
+const sameExample = syntax => {
+  const e = setupExample({ syntax });
+  return JSON.stringify(exampleShown()) === JSON.stringify({ context: e.context, head: e.columns, rows: e.rows });
+};
+
+await scenario('worked example', m => {
+  solutionCalls = 0;
+  const store = () => JSON.stringify(m.store.state);
+  check('example: folded at first, its quiet toggle in words', exampleOk() === '' && words(exampleToggle()) === `${shared.example.toggle} ▸ ${shared.example.toggleRest}`, words(exampleToggle()));
+  const before = store();
+  click(exampleToggle());
+  check('example (Cisco): opened by its toggle, one finished card with its mode, the tag', exampleOk({ open: true, rows: 1 }) === '' && sameExample('cisco'), [exampleOk({ open: true, rows: 1 }), exampleShown()]);
+  check('example (Cisco): the purpose first, then the command and its mode, as the cards read', JSON.stringify(exampleShown().head) === JSON.stringify(['Призначення', 'Команда', 'Режим']));
+  check('example: its command is in no card of the deck', !rowTexts(root()).some(t => exampleShown().rows.some(r => r.includes(t))));
+  check('example: opening it changes nothing in the store (no answer, draft, hint or assistance)', store() === before && !instOf(m)?.session?.assisted);
+  gates(m, 'example open', { unchecked: true });
+  // The mode help still opens right under the action line, over the example.
+  click(modeQ()[0]);
+  check('example: the mode popover comes after it in the block, and opens', popOpen() && q('.ng-su-action').children.indexOf(modePop()) === q('.ng-su-action').children.indexOf(q('[data-worked-example]')) + 1);
+  key(modePop(), 'Escape');
+  click(exampleToggle());
+  check('example: its toggle folds it again', exampleOk() === '');
+  // Never opened by a check, a hint or the asides' fold.
+  click(checkButton());
+  click(hintButton());
+  check('example: a check and a hint leave it folded', exampleOk() === '' && stateOf(m).phase === 'sorting');
+  click(exampleToggle());
+  click(checkButton());
+  check('example: a check leaves an opened example open (the same task)', exampleOk({ open: true, rows: 1 }) === '');
+  // A new task (values or deck) folds it; coming back finds it folded.
+  click(nextButton());
+  check('example: «Далі →» (new values) folds it', exampleOk() === '' && seedOf(m) !== 1);
+  click(exampleToggle());
+  pick('Роутер MikroTik');
+  check('example: another deck shows its own, folded', exampleOk() === '' && deckOf(m) === 'dr-3');
+  click(exampleToggle());
+  check('example (MikroTik): two cards in create-before-use order, no mode column, the reason in the context', exampleOk({ open: true, rows: 2 }) === '' && sameExample('routeros')
+    && JSON.stringify(exampleShown().head) === JSON.stringify(['Призначення', 'Команда']) && /міст/u.test(exampleShown().context), exampleShown());
+  gates(m, 'example open (MikroTik)', { unchecked: true });
+  pick('Роутер Cisco');
+  check('example: back on the router deck it is folded', exampleOk() === '');
+  click(exampleToggle());
+  m.remount();
+  check('example: leaving the section and coming back finds it folded', exampleOk() === '');
+  // Only while sorting, with the action line: none on the passed deck's script.
+  solve(m);
+  check('example: none once the deck is sorted (no action line either)', stateOf(m).phase === 'sorted' && !q('[data-worked-example]') && !q('.ng-action-line'));
+  check('example: the reference was never read', solutionCalls === 0, { solutionCalls });
+});
+
 /** A key on a native button as a browser does it: Enter clicks on keydown, Space on keyup, unless the keydown was prevented. */
 function keyActivate(el, k) {
   let prevented = false;
@@ -260,7 +327,7 @@ await scenario('mode help by keyboard and pointer (repair v1)', () => {
 await scenario('keyboard', m => {
   const start = [...stateOf(m).answer.order];
   const id = start[2];
-  const nameOf = () => render(taskOf(m), stateOf(m)).find(r => r.id === id).text;
+  const nameOf = () => render(taskOf(m), stateOf(m)).find(r => r.id === id).purpose;   // 5b-2 F: rows are named by their purpose
   const own = () => handle(stateOf(m).answer.order.indexOf(id));
   handle(2).focus();
   key(handle(2), ' ');
@@ -322,7 +389,7 @@ await scenario('buttons', m => {
   click(moves(0)[1]);
   check('↓: the first card goes one down', stateOf(m).answer.order[1] === order[0]);
   check('↓: focus stays on that card’s ↓', document.activeElement === moves(1)[1]);
-  check('↓: announced', live() === shared.reorder.placed({ name: render(taskOf(m), stateOf(m))[1].text, n: 2, total: 12 }), live());
+  check('↓: announced', live() === shared.reorder.placed({ name: render(taskOf(m), stateOf(m))[1].purpose, n: 2, total: 12 }), live());
   click(moves(1)[0]);
   check('↑: back up, focus on its ↑ (now aria-disabled, still focused)', stateOf(m).answer.order[0] === order[0] && document.activeElement === moves(0)[0] && moves(0)[0].getAttribute('aria-disabled') === 'true');
   click(moves(0)[0]);
@@ -794,10 +861,11 @@ for (const id of ['dr-2', 'dr-3']) {
       check('dr-2 start: no SSH or user card (they are the router’s)', !rowTexts(root()).some(t => /^(?:crypto|username|enable secret|ip ssh|transport|login)/.test(t)));
     } else {
       check('dr-3 start: no prompt choice, no CLI example', all('.ng-su-board [role="radiogroup"]').length === 0 && !q('.ng-su-modes') && !q('.ng-su-empty'));
-      check('dr-3 start: every card in three lines: the command (or the step), its purpose, its Winbox path (muted)', rows().every((li, i) => {
+      check('dr-3 start: every card in three lines: its purpose (the login check: a step, not a command), the command (or the step), its Winbox path (muted)', rows().every((li, i) => {
         const row = render(task, stateOf(m))[i];
         const lines = [...q('.ng-su-row', li).childNodes].filter(n => n.nodeType === 1);
-        return lines.length === 3 && lines[0].className === 'ng-su-first' && words(lines[1]) === row.purpose && lines[1].hasAttribute('data-purpose') && lines[2] === q('.ng-su-path', li)
+        const purpose = row.kind === 'checkpoint' ? comprehension.checkpointPurpose : row.purpose;
+        return lines.length === 3 && words(lines[0]) === purpose && lines[0].hasAttribute('data-purpose') && lines[1].className === 'ng-su-term' && lines[2] === q('.ng-su-path', li)
           && words(q('.ng-su-path', li)) === `${ui.winbox} ${row.secondary}` && (row.kind === 'checkpoint' ? Boolean(q('.ng-su-step', li)) && !q('.ng-su-cmd', li) : Boolean(q('.ng-su-cmd', li)));
       }));
       const missing = purposesOk(13);
@@ -807,7 +875,11 @@ for (const id of ['dr-2', 'dr-3']) {
         && rows().filter(li => /^\/(?:tool mac-server mac-winbox|ip neighbor)/.test(words(q('.ng-su-cmd', li)))).every(li => words(q('[data-purpose]', li)).includes('потрібен')));
       check('dr-3 start: the login check is a step (✋, words, no monospace)', all('.ng-su-step').length === 1 && words(q('.ng-su-hand')) === '✋' && rowTexts(root()).some(t => t.startsWith(STEP)));
       check('dr-3 start: no «міст» chip (the purposes say «міст»)', !q('.ng-su-tag'));
-      check('dr-3 start: the handles name the step by its words', all('.ng-reorder-handle').every((h, i) => h.getAttribute('aria-label') === shared.reorder.handle({ n: i + 1, name: rowTexts(root())[i] })));
+      check('dr-3 start: the handles name each row by its purpose, the login check as a step', all('.ng-reorder-handle').every((h, i) => {
+        const row = render(task, stateOf(m))[i];
+        return h.getAttribute('aria-label') === shared.reorder.handle({ n: i + 1, name: row.kind === 'checkpoint' ? comprehension.checkpointPurpose : row.purpose });
+      }) && all('.ng-reorder-handle').some(h => h.getAttribute('aria-label').endsWith(comprehension.checkpointPurpose)));
+      check('dr-3 start: the worked example folded, right under the action line', exampleOk() === '' && q('.ng-action-line').nextSibling === q('[data-worked-example]'), exampleOk());
     }
   });
 
@@ -1021,6 +1093,14 @@ await injected('a purpose on another card’s row', () => {
   const [a, b] = [q('[data-purpose]', rows()[0]), q('[data-purpose]', rows()[1])];
   [a.textContent, b.textContent] = [b.textContent, a.textContent];
 }, 'purpose', 'dr-2');
+// 5b-2 F: the purpose leads the row and names it.
+await injected('a row whose command comes before its purpose', () => {
+  const row = q('.ng-su-row', rows()[1]);
+  row.insertBefore(q('.ng-su-term', row), q('[data-purpose]', row));
+}, 'purpose');
+await injected('a handle named by its command, not its purpose', (m, task) => {
+  q('.ng-reorder-handle', rows()[0]).setAttribute('aria-label', shared.reorder.handle({ n: 1, name: render(task, stateOf(m))[0].text }));
+}, 'name', 'dr-3');
 await injected('a row without its purpose', () => {
   const a = q('[data-purpose]', rows()[2]);
   a.parentNode.removeChild(a);

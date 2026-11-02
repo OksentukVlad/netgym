@@ -8,7 +8,9 @@
 //     link: the next hop for a route to the internet; `ispGateway` on the
 //     endpoint), when the network has one; a DHCP uplink stays «DHCP»;
 //   - a link between routers names both ends' whole addresses
-//     («10.0.0.1 ↔ 10.0.0.2», geometry.js `full`).
+//     («10.0.0.1 ↔ 10.0.0.2», geometry.js `full`);
+//   - `internet` (round 5 5b-2): the provider's cloud takes that name
+//     («Знайди несправність»: «Інтернет (ISP)», the word its pings use).
 // Pure: no React.
 import { network as networkOf } from '../../../engine/ip.js';
 import { topology } from '../logic/topology.js';
@@ -30,7 +32,7 @@ function gateways(net) {
  * @param {'cisco'|'routeros'} syntax
  * @returns {{ routers: object, links: object[], endpoints: object[] }} topology() with labels
  */
-export function diagramTopology(net, syntax = 'cisco') {
+export function diagramTopology(net, syntax = 'cisco', { internet = null } = {}) {
   const topo = topology(net, syntax);
   const gw = gateways(net);
   // Each endpoint's segment, by its router and interface label (as topology() builds them).
@@ -42,7 +44,8 @@ export function diagramTopology(net, syntax = 'cisco') {
     const [ip, prefix] = String(ep.ip).split('/');
     if (ep.type === 'internet') {
       const gateway = gw[segmentOf[`${ep.router}|${ep.name}`]];
-      return gateway && prefix ? { ...ep, shown: ui.shared.ispGateway(gateway), ispGateway: gateway } : ep;
+      const named = internet ? { ...ep, label: internet } : ep;
+      return gateway && prefix ? { ...named, shown: ui.shared.ispGateway(gateway), ispGateway: gateway } : named;
     }
     if (!prefix) return ep;
     return { ...ep, shown: networkOf(ip, Number(prefix)), portLines: [ep.name, `.${lastOctet(ip)}`] };

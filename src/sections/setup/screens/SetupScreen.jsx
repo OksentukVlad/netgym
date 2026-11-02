@@ -6,11 +6,15 @@
 //
 // The flow (logic/state.js): sorting → sorted → recall → done.
 //   - sorting: the action line (round 5, R1) above the deck (ReorderList: ≡
-//     and ↑ ↓, keyboard grab); each card's purpose under its command (R2,
-//     the bank's data), each row's prompt as one quiet group with «режим?»
-//     until chosen; on the Cisco decks one «?» at the end of the action line
-//     (after «режим.») opens the modes in words (ModeHelp.jsx). «Перевірити»
-//     gives one finding: missing modes first, then one rule; only its cards
+//     and ↑ ↓, keyboard grab); each card's purpose first, its command under
+//     it (R2, the bank's data; 5b-2 F), each row's prompt as one quiet group
+//     with «режим?» until chosen; on the Cisco decks one «?» at the end of
+//     the action line (after «режим.») opens the modes in words
+//     (ModeHelp.jsx). Right under the action line, the folded worked example
+//     (5b-2 A: one finished card with its mode on Cisco, two cards in
+//     create-before-use order on MikroTik; commands in no deck,
+//     logic/examples.js), closed again on new values or another deck.
+//     «Перевірити» gives one finding: missing modes first, then one rule; only its cards
 //     get «• Ще ні», and the first of them is the evidence the panel names.
 //     An edit keeps that verdict, dimmed («до змін»), and marks the edited
 //     row, so the panel anchors right after it. «Далі →» skips (secondary).
@@ -51,12 +55,13 @@
 // Layout by the screen's own width (setup.css): desk (≥ 1200) puts the board
 // on the left and the panel with the asides on the right; narrow is one
 // column. The page is the only scroll; nothing is sticky.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import drill from '../logic/deck.js';
 import { capabilities } from '../logic/model.js';
 import { recallRows, render, scriptForState } from '../logic/render.js';
 import { initialState, transition } from '../logic/state.js';
 import { explanation, hints as hintsOf, tips } from '../logic/hints.js';
+import { setupExample } from '../logic/examples.js';
 import { useExercise } from '../../../ui/useExercise.js';
 import { usePlace, usePref, useStore } from '../../../ui/useStore.js';
 import Segmented from '../../../ui/components/Segmented.jsx';
@@ -65,9 +70,10 @@ import HelpPanel, { bringIntoView } from '../../../ui/components/HelpPanel.jsx';
 import MoreMenu from '../../../ui/components/MoreMenu.jsx';
 import Aside, { useAside, useAsideFold } from '../../../ui/components/Aside.jsx';
 import ActionLine from '../../../ui/components/ActionLine.jsx';
+import WorkedExample from '../../../ui/components/WorkedExample.jsx';
 import DoneMark, { earnedBy } from '../../../ui/components/DoneMark.jsx';
 import { uk as shared } from '../../../ui/uk.js';
-import CardRow from './CardRow.jsx';
+import CardRow, { purposeOf } from './CardRow.jsx';
 import ModeHelp, { ModesWords } from './ModeHelp.jsx';
 import Recall, { lineSummary } from './Recall.jsx';
 import Script, { OwnDeck } from './Script.jsx';
@@ -146,6 +152,8 @@ export default function SetupScreen({ bank }) {
   const sorting = phase === 'sorting';
   const recalling = RECALL.includes(phase);
   const prompted = caps.prompts.length > 0;
+  // The worked example: display data only (its own task and answer stay in examples.js).
+  const example = useMemo(() => setupExample({ syntax: prompted ? 'cisco' : 'routeros' }), [prompted]);
   const words = deckUi[deckId] ?? deckUi['dr-1'];
   const okCode = `ok.${deckId}` in copy ? `ok.${deckId}` : 'ok';
   const fold = useAsideFold(SCREEN);
@@ -323,6 +331,9 @@ export default function SetupScreen({ bank }) {
       : null;
   const continueAction = ['sorted', 'sorted-shown'].includes(phase) && task.typedIds.length > 0 ? { label: ui.continue, onClick: onContinue } : null;
 
+  // Closed again on every new deck or values (the instance), never in the store.
+  const workedExample = <WorkedExample taskKey={task.instanceKey} context={example.context} head={example.columns} rows={example.rows} />;
+
   const deckOptions = decks.map(deck => ({ value: deck.id, label: <>{deck.label}<DoneMark done={earned.has(deck.id)} /></> }));
   const taskLine = recalling ? ui.recallTask : phase === 'sorted' ? ui.sortedTask : phase === 'sorted-shown' ? ui.shownTask : ui.task;
 
@@ -343,9 +354,11 @@ export default function SetupScreen({ bank }) {
 
       <div className="ng-su-work">
         <section ref={boardRef} className="ng-su-board" aria-label={sorting ? ui.deck : recalling ? ui.recallLabel : shownBoard ? ui.answerHeading : ui.scriptHeading}>
-          {sorting && (prompted ? <ModeHelp sentence={ui.action} onFull={onFullExample} /> : <ActionLine>{ui.actionOrder}</ActionLine>)}
+          {sorting && (prompted
+            ? <ModeHelp sentence={ui.action} onFull={onFullExample}>{workedExample}</ModeHelp>
+            : <div className="ng-su-action"><ActionLine>{ui.actionOrder}</ActionLine>{workedExample}</div>)}
           {sorting && (
-            <ReorderList items={rows} label={ui.deck} name={row => row.text} showHelp={false}
+            <ReorderList items={rows} label={ui.deck} name={purposeOf} showHelp={false}
               onReorder={(order, moved) => edit({ type: 'order', order }, moved)}
               rowClassName={row => (marked.has(row.id) ? 'is-marked' : '')}>
               {(row, index) => (

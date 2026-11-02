@@ -2,7 +2,9 @@
 // the bar's switch chose. The switch's ports and a MikroTik bridge are
 // «Налаштуй порти»'s form (PortsForm.jsx), with the task's given ports
 // read-only and bridge1 offered as a member; this adds the L3 parts:
-//   - Cisco router: «Фізичний інтерфейс» (shutdown / no shutdown) and the
+//   - Cisco router: the physical interface's administrative state (round 5,
+//     5b-2 E: «вимкнено» over shutdown, «увімкнено» over no shutdown, and a
+//     note that no shutdown alone doesn't bring the link up) and the
 //     subinterfaces, a row each shaped as its commands read (interface
 //     gi0/N.[number], encapsulation dot1Q [VLAN], ip address [IP and mask]);
 // Every row is one line where the panel is wide enough (label and field
@@ -25,7 +27,7 @@ import { WinboxTables } from './GivenConfig.jsx';
 import { fieldKey, markOn } from './portsState.js';
 import { fixedOf, formatAddress, routeValue, trunkPort } from './routeState.js';
 import { addId, removeId, useRowFocus } from './rowFocus.js';
-import { routeUi } from '../uk.js';
+import { comprehension, routeUi } from '../uk.js';
 
 /** The control a row-wide mark is about (the rest of its row is described by its words). */
 function rowControl(row, code) {
@@ -99,14 +101,16 @@ export default function RouteForm({ task, device, syntax, form, raw, marks, edit
     const given = fixed.rows.subifs;
     return (
       <div className="ng-vl-form" data-syntax="cisco">
-        <div className={`ng-vl-form-line${upMark ? ' is-marked' : ''}`}>
-          <span className="ng-vl-label">{r.physical}</span>
-          <span className="ng-vl-port">{parentLabel}</span>
+        <div className={`ng-vl-form-line ng-vl-admin${upMark ? ' is-marked' : ''}`}>
+          <span className="ng-vl-caption ng-vl-admin-label">{comprehension.adminStateLabel} <span className="ng-vl-port">{parentLabel}</span></span>
           <Segmented label={r.physicalState({ port: parentLabel })} value={c.interfaces?.[parent]?.up === true} readOnly={upGiven}
             invalid={Boolean(upMark)} describedBy={upMark ? markId(upField) : undefined} className="ng-vl-states"
             onChange={value => edit.set(dev, `${upField}.up`, value)}
-            options={[{ value: false, label: r.states.off }, { value: true, label: r.states.on }]} />
+            options={comprehension.adminStateOptions.map(o => ({ value: o.value, label: (
+              <span className="ng-vl-mode"><span className="ng-vl-mode-word">{o.label}</span>{' '}<span className="ng-vl-mode-term">{`(${o.command})`}</span></span>
+            ) }))} />
           {upGiven && <span className="ng-vl-fixed">{r.fixedRow}</span>}
+          <span className="ng-vl-muted ng-vl-admin-note">{comprehension.adminStateNote}</span>
           <MarkWords mark={upMark} id={markId(upField)} />
           {!upMark && noteAt('physical')}
         </div>

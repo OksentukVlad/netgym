@@ -155,6 +155,9 @@ export const ui = {
       routeros: { dst: 'Мережа призначення (dst-address)', gw: 'Шлюз — адреса сусіда (gateway)', dist: 'Відстань (distance)' },
     },
     // Round 5 (R4): the placeholders are symbols, routingPlaceholders below (no example addresses).
+    // Round 5 5b-2 (spec A): the worked example's columns, the form's own field names, short.
+    exampleHead: { cisco: ['Мережа', 'Маска', 'Адреса сусіда'], routeros: ['Мережа (dst-address)', 'Шлюз (gateway)'] },
+    exampleDistance: 'Відстань',
     rowOk: 'правильно',
     // Round 4 (spec R1): the «⋯» menu and the reveal applied to the rows.
     menuRules: 'Правила',
@@ -404,11 +407,16 @@ export const faultText = Object.freeze({
   chooseCause: 'Мережа працює. Що було не так?',
   complete: 'Мережа працює, причину знайдено.',
   compare: 'Пінги проходять. Порівняй зміни з налаштуваннями на початку.',
-  stopped: ({ direction, router, destination, code, next }) => {
-    const packet = direction === 'reply' ? 'Відповідь' : 'Пакет';
+  stopped: ({ direction, router, destination, code, next, lost = false }) => {
+    const reply = direction === 'reply';
+    const packet = reply ? 'Відповідь' : 'Пакет';
+    // Gender agrees with «Відповідь» (f.) / «Пакет» (m.).
+    const g = (f, m) => (reply ? f : m);
+    // Round 5 5b-2: lost at the provider (`router` is then «Інтернет (ISP)», the cloud's name).
+    if (lost) return `${packet} ${g('пішла', 'пішов')} не туди — в ${router}, а ${g('мала', 'мав')} дійти до адреси ${destination}.`;
     if (code === 'no-route') return `${packet} зупиняється на ${router}: немає маршруту, що підходить до адреси ${destination}.`;
-    if (code === 'loop') return `${packet} ходить по колу: ${router} передає його до ${next}, де він уже був.`;
-    if (code === 'ttl-exceeded') return `${packet} пройшов забагато роутерів і не дійшов до адреси ${destination}.`;
+    if (code === 'loop') return `${packet} ходить по колу: ${router} передає ${g('її', 'його')} до ${next}, де ${g('вона вже була', 'він уже був')}.`;
+    if (code === 'ttl-exceeded') return `${packet} ${g('пройшла', 'пройшов')} забагато роутерів і не ${g('дійшла', 'дійшов')} до адреси ${destination}.`;
     if (code === 'no-device') return `${packet} зупиняється на ${router}: наступний пристрій недоступний.`;
     return `${packet} зупиняється на ${router}.`;
   },
@@ -480,6 +488,8 @@ export const faultsUi = {
   sides: { before: 'до виправлення', after: 'після виправлення' },
   // Round 4 (spec R2 with v2): one line per failing ping, the start or now.
   pingStop: (router, reply) => `${reply ? 'назад зупинився' : 'зупинився'} на ${router}`,
+  // Round 5 5b-2 (spec C): a ping lost at the provider, in the cloud's word («Інтернет (ISP)»).
+  pingToInternet: (internet, reply) => `${reply ? 'назад пішов' : 'пішов'} не туди — в ${internet}`,
   pingFails: '✗ не проходить',
   pingFailsWords: 'не проходить',
   passingFold: n => (n === 1 ? 'ще 1 проходить' : `ще ${n} проходять`),
@@ -509,4 +519,16 @@ export const routingPlaceholders = {
   // Task 15 keeps its distance teaching example (R4 exempt).
   distanceExample: '1 — основний, 5 — резервний',
   defaultRoute: '0.0.0.0/0',
+};
+
+// Round 5b-2: additive contract for the section writer.
+export const comprehension = {
+  dstPlaceholder: 'мережа/префікс, напр. x.x.x.0/24',
+  distancePrimaryPlaceholder: 'менша, напр. 1',
+  distanceBackupPlaceholder: 'більша, напр. 5',
+  addRoute: '+ ще один маршрут (якщо потрібен)',
+  task15First: 'спершу задачі 1–3',
+  fullCondition: 'Уся умова',
+  internet: 'Інтернет (ISP)',
+  recommendedFirst: 'радимо спершу: IP-адреси',
 };

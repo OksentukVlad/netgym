@@ -7,6 +7,10 @@
 // Step 8: any prefix /0–/32 (the calculator), so the strip can be any of the
 // four octets; where blocks are narrower than 4 values (/31, /32) the ticks
 // are thinned to every 4th value, and the block is still shaded exactly.
+//
+// Round 5 5b-2 (spec D): the screen may word the line under it (`caption`:
+// the mask's address tasks), or leave it out (null: the worked example's
+// ruler, whose card says it).
 import { blockSize, broadcast, network } from '../../../engine/ip.js';
 import { ui } from '../uk.js';
 import '../../../ui/tokens.css';
@@ -39,10 +43,11 @@ export function rulerWith(ip, prefix, first, last) {
 }
 
 /**
- * @param {{ octet: number, unit: number, value: number, block?: { start: number, end: number, size: number } | null, subject?: 'task'|'input' }} props
+ * @param {{ octet: number, unit: number, value: number, block?: { start: number, end: number, size: number } | null, subject?: 'task'|'input'|'size', caption?: string|null }} props
  * `subject`: whose address is marked (the task's, or the calculator's input).
+ * `caption`: the line under the ruler in the screen's words; null leaves it out; by default the ruler's own.
  */
-export default function AddressRuler({ octet, unit, value, block = null, subject = 'task' }) {
+export default function AddressRuler({ octet, unit, value, block = null, subject = 'task', caption }) {
   // `subject: 'size'` (the mask's network-size task, which has no address):
   // no address marker; the caption names the block's size.
   const marked = subject !== 'size';
@@ -67,7 +72,7 @@ export default function AddressRuler({ octet, unit, value, block = null, subject
         {marked && <polygon className="ng-ruler-marker" points={`${x - 7},26 ${x + 7},26 ${x},40`} />}
         {marked && <text className="ng-ruler-value" x={x} y={18} textAnchor={x < 24 ? 'start' : x > 304 ? 'end' : 'middle'}>{value}</text>}
       </svg>
-      <figcaption className="ng-ruler-text">{marked ? ui.rulerText({ octet, value, step: labelStep, block, subject }) : ui.rulerSizeText({ octet, step: labelStep, block })}</figcaption>
+      {caption !== null && <figcaption className="ng-ruler-text">{caption ?? (marked ? ui.rulerText({ octet, value, step: labelStep, block, subject }) : ui.rulerSizeText({ octet, step: labelStep, block }))}</figcaption>}
     </figure>
   );
 }

@@ -90,9 +90,11 @@ function open(m, n, variantId) {
   const record = tasks[n - 1];
   step(() => m.store.dispatch({ type: 'place', scope: 'routing', patch: { taskId: record.id, router: null, variants: { ...m.store.state.places.routing?.variants, ...(variantId ? { [record.id]: variantId } : {}) } } }));
 }
-/** Select a router (its button toggles, so only when it isn't selected). */
+/** Select a router (its button toggles, so only when it isn't selected). A one-router task (task 15) has no
+ * router row (round 5 5b-2): its router is always selected, and asking for another one fails. */
 function selectRouter(router) {
   const button = all('.ng-rt-router').find(b => b.textContent.trim() === router);
+  if (!button && !q('.ng-rt-routers') && q('.ng-rt-work .ng-rt-card .ng-rt-caption')?.textContent.endsWith(`— ${router}`)) return;
   if (button.getAttribute('aria-pressed') !== 'true') click(button);
 }
 /** Tick (or untick) a MikroTik row's blackhole box, as a click does. */
@@ -269,9 +271,14 @@ scenario('round 4: the task screen', m => {
   click(q('.ng-rt-help .ng-help-next'));
   check('R1: «Далі» opens the next task, focus on its first field', title().startsWith('#2 ') && document.activeElement === q('.ng-rt-rows input'), document.activeElement?.getAttribute?.('id'));
   open(m, 15);
-  check('task 15: the simulated failure is said beside the task', q('.ng-rt-failover')?.textContent.includes('Якщо лінк до ISP1 недоступний'));
+  // Round 5 5b-2 (spec C): the failure case is part of the rest of the condition, under «Уся умова».
+  check('task 15: the simulated failure is not on the first view', !q('.ng-rt-failover'));
+  click(q('.ng-rt-details'));
+  check('task 15: «Уся умова» says the simulated failure, beside the task', q('.ng-rt-full .ng-rt-failover')?.textContent.includes('Якщо лінк до ISP1 недоступний'));
   check('task 15: both ISP gateways on the diagram', all('.ng-dg-ep-ip').map(t => t.textContent).filter(t => t.startsWith('шлюз ')).length === 2, all('.ng-dg-ep-ip').map(t => t.textContent));
-  check('task 15: the distance field\'s placeholder is an example, primary and backup', q('#rt-R1-0-dist')?.getAttribute('placeholder') === '1 — основний, 5 — резервний');
+  // Round 5 5b-2 (spec C): an example per row, the main route's smaller, the backup's larger.
+  check('task 15: the distance fields\' placeholders are examples, primary smaller and backup larger', q('#rt-R1-0-dist')?.getAttribute('placeholder') === 'менша, напр. 1'
+    && q('#rt-R1-1-dist')?.getAttribute('placeholder') === 'більша, напр. 5');
 });
 
 // ── 4. Reduced motion renders the animated end state ──
@@ -351,12 +358,14 @@ scenario('round 5: one address world on the task screen', m => {
   check('R5 addresses: «адреси цього роутера», a link names the router at its other end', q('.ng-rt-card h3')?.textContent === 'АДРЕСИ ЦЬОГО РОУТЕРА — R1'
     && all('.ng-rt-ifaces li').map(li => li.textContent).join('|') === 'g0/0 · LAN-A · 192.168.1.1/24|g0/1 · до R2 · 10.0.0.1/30' && q('.ng-rt-ifaces').getAttribute('data-count') === '2');
   const actionLine = () => q('.ng-rt-work .ng-action-line');
-  check('R5 action line: one, under the router\'s addresses, right above the routes', all('.ng-action-line').length === 1 && actionLine()?.textContent === 'Заповни маршрут #1 і натисни «Перевірити».'
-    && actionLine().previousSibling === q('.ng-rt-card') && actionLine().nextSibling === q('.ng-rt-rows'));
+  // Round 5 5b-2 (A): the folded worked example sits between the action line and the routes.
+  check('R5 action line: one, under the router\'s addresses, right above the routes (the folded example between)', all('.ng-action-line').length === 1 && actionLine()?.textContent === 'Заповни маршрут #1 і натисни «Перевірити».'
+    && actionLine().previousSibling === q('.ng-rt-card') && actionLine().nextSibling === q('[data-worked-example]') && q('[data-worked-example]').nextSibling === q('.ng-rt-rows'));
   check('R5 placeholders: symbols, never an address', ['net', 'mask', 'gw'].map(n => q(`#rt-R1-0-${n}`).getAttribute('placeholder')).join('|') === 'адреса мережі|маска|адреса сусіда');
   pref(m, 'syntax', 'routeros');
   check('R5 legend (MikroTik): the same LAN in its port name', paras()[1] === `У рамці мережі — адреса мережі (192.168.1.0/24); біля роутера — його порт і адреса в цій мережі (${task.network.devices[0].interfaces[0].labels.routeros} .1 = 192.168.1.1).`, paras()[1]);
-  check('R5 placeholders (MikroTik): symbols', ['dst', 'gw'].map(n => q(`#rt-R1-0-${n}`).getAttribute('placeholder')).join('|') === 'адреса мережі/префікс|адреса сусіда');
+  // Round 5 5b-2 (spec C): the destination shows the shape of its answer, never an address that could pass.
+  check('R5 placeholders (MikroTik): symbols', ['dst', 'gw'].map(n => q(`#rt-R1-0-${n}`).getAttribute('placeholder')).join('|') === 'мережа/префікс, напр. x.x.x.0/24|адреса сусіда');
   // Free mode: a blank row #1 to fill (no «Маршрутів ще немає»), stored only once typed in.
   pref(m, 'syntax', 'cisco');
   pref(m, 'mode', 'free');
@@ -371,7 +380,7 @@ scenario('round 5: one address world on the task screen', m => {
   check('R5 free mode: typing in it makes it route #1 (its element and focus kept, «✕» now there)', free().length === 1 && answer.length === 1 && free()[0].querySelector('input') === first
     && document.activeElement === first && first.value === '192.168.2.0' && Boolean(free()[0].querySelector('.ng-rt-delete')), answer);
   click(q('.ng-rt-rows .ng-rt-add'));
-  check('R5 free mode: «+ Маршрут» adds #2 after it', free().length === 2 && free()[1].querySelector('.ng-rt-row-n')?.textContent === '#2');
+  check('R5 free mode: «+ ще один маршрут (якщо потрібен)» adds #2 after it', free().length === 2 && free()[1].querySelector('.ng-rt-row-n')?.textContent === '#2');
   click(free()[0].querySelector('.ng-rt-delete'));
   click(free()[0].querySelector('.ng-rt-delete'));
   check('R5 free mode: with every route deleted, the blank row is back', free().length === 1 && !free()[0].querySelector('.ng-rt-delete') && free()[0].querySelector('input').value === '');
@@ -382,6 +391,59 @@ scenario('round 5: a short window starts with the legend folded', m => {
   click(q('.ng-rt-legend .ng-aside-q'));
   check('R5 short window: «?» opens it, and the choice holds', Boolean(q('.ng-rt-legend .ng-aside-body')) && m.store.state.places['routing.tasks']?.asides?.legend === true);
 }, { height: 700 });
+
+// ── 3d. Round 5 5b-2 (spec A, C): the worked example, task 15's condition, the one-router diagram ──
+const { comprehension: rt5 } = await import('../../src/sections/routing/uk.js');
+const { expectWorkedExample } = await import('./worked-example.mjs');
+const passes = fn => { try { fn(); return true; } catch (e) { return e.message; } };
+const exToggle = () => q('[data-worked-example] .ng-wex-toggle');
+const exText = () => (q('[data-worked-example] .ng-wex-card')?.textContent ?? '').replace(/\s+/g, ' ');
+const exRows = () => all('[data-worked-example] tbody tr').map(tr => tr.querySelectorAll('td.ng-wex-value').map(td => td.textContent));
+scenario('round 5b-2: the worked example opens only by its toggle, closes on navigation, and never touches the answer', m => {
+  check('5b-2 example: folded on the first view, right under the action line', passes(() => expectWorkedExample(document.body)) === true
+    && q('.ng-rt-work .ng-action-line').nextSibling === q('[data-worked-example]'), passes(() => expectWorkedExample(document.body)));
+  const before = JSON.stringify(m.store.state.instances);
+  click(exToggle());
+  check('5b-2 example (Cisco): opened, one finished route of another network, in the form\'s field names', passes(() => expectWorkedExample(document.body, { open: true, rows: 1 })) === true
+    && JSON.stringify(exRows()) === JSON.stringify([['198.51.100.64', '255.255.255.192', '192.0.2.254']])
+    && all('[data-worked-example] thead th').map(th => th.textContent).join('|') === 'Мережа|Маска|Адреса сусіда' && exText().includes('LAN-C 198.51.100.64/26'), [exRows(), exText()]);
+  check('5b-2 example: opening it writes nothing into the answer or the store, and the rows stay empty', JSON.stringify(m.store.state.instances) === before
+    && all('.ng-rt-rows input').every(input => input.value === ''), JSON.stringify(m.store.state.instances).slice(0, 200));
+  pref(m, 'syntax', 'routeros');
+  check('5b-2 example: a vendor switch closes it', exToggle().getAttribute('aria-expanded') === 'false' && !q('.ng-wex-card'));
+  click(exToggle());
+  check('5b-2 example (MikroTik): the destination with its prefix, then the gateway', JSON.stringify(exRows()) === JSON.stringify([['198.51.100.64/26', '192.0.2.254']])
+    && all('[data-worked-example] thead th').map(th => th.textContent).join('|') === 'Мережа (dst-address)|Шлюз (gateway)', exRows());
+  open(m, 2);
+  check('5b-2 example: another task closes it', exToggle()?.getAttribute('aria-expanded') === 'false' && !q('.ng-wex-card'));
+  open(m, 1);
+  check('5b-2 example: back on the first task, it is still closed', exToggle()?.getAttribute('aria-expanded') === 'false');
+  pref(m, 'syntax', 'cisco');
+  pref(m, 'mode', 'free');
+  check('5b-2 example (free mode): there too, under the action line, folded', passes(() => expectWorkedExample(document.body)) === true
+    && q('.ng-rt-work .ng-action-line').nextSibling === q('[data-worked-example]'));
+  check('5b-2 free mode: the quiet add link reads «+ ще один маршрут (якщо потрібен)»', q('.ng-rt-rows .ng-rt-add')?.textContent === rt5.addRoute && q('.ng-rt-rows .ng-rt-add').className.includes('ng-rt-link'));
+});
+scenario('round 5b-2: task 15 — two sentences, «Уся умова», two example routes, no router row', m => {
+  open(m, 15);
+  const task = routing.create(tasks[14]);
+  check('5b-2 task 15: its two sentences whole, «Уся умова» closed', q('.ng-rt-desc')?.textContent === task.variant.text && q('.ng-rt-details')?.textContent === rt5.fullCondition
+    && q('.ng-rt-details').getAttribute('aria-expanded') === 'false' && q('.ng-rt-full').hasAttribute('hidden'), q('.ng-rt-desc')?.textContent);
+  click(q('.ng-rt-details'));
+  check('5b-2 task 15: «Уся умова» opens the rest and the failure case, under the two sentences', q('.ng-rt-details').getAttribute('aria-expanded') === 'true' && !q('.ng-rt-full').hasAttribute('hidden')
+    && q('.ng-rt-full').textContent.includes(task.variant.details.cisco) && Boolean(q('.ng-rt-full .ng-rt-failover')) && q('.ng-rt-details').textContent === 'Згорнути умову');
+  pref(m, 'syntax', 'routeros');
+  check('5b-2 task 15: in MikroTik, its own rest', q('.ng-rt-full').textContent.includes(task.variant.details.routeros));
+  click(q('.ng-rt-details'));
+  check('5b-2 task 15: and closed again', q('.ng-rt-full').hasAttribute('hidden') && !q('.ng-rt-full').textContent);
+  check('5b-2 task 15: distance placeholders per row', q('#rt-R1-0-dist')?.getAttribute('placeholder') === rt5.distancePrimaryPlaceholder && q('#rt-R1-1-dist')?.getAttribute('placeholder') === rt5.distanceBackupPlaceholder);
+  click(exToggle());
+  check('5b-2 task 15 example: the main and the backup default route, the backup with the larger distance', passes(() => expectWorkedExample(document.body, { open: true, rows: 2 })) === true
+    && JSON.stringify(exRows()) === JSON.stringify([['0.0.0.0/0', '192.0.2.1', '1'], ['0.0.0.0/0', '192.0.2.5', '5']]) && exText().includes('ISP2'), exRows());
+  check('5b-2 one router: no router row; «Текстом» starts the diagram\'s tool row', !q('.ng-rt-routers') && Boolean(q('.ng-dg-tools .ng-te-button')));
+  open(m, 1);
+  check('5b-2 two routers: the router row is back, with «Текстом» at its end', all('.ng-rt-routers .ng-rt-router').length === 2 && Boolean(q('.ng-rt-routers .ng-te-button')) && !q('.ng-dg-tools .ng-te-button'));
+});
 
 scenario('blackhole checkbox', m => {
   pref(m, 'syntax', 'routeros');
@@ -1196,7 +1258,8 @@ const announced = () => rfText(q('[role="status"]'));
 const againButton = () => q('.ng-rf-help .ng-help-next');
 const pingsOf = (list = q('.ng-rf-pings')) => list?.querySelectorAll('.ng-rf-ping') ?? [];
 const pingLabel = li => rfText(li.querySelector('.ng-rt-checkline-label'));
-const labelsOf = (task, rows) => rows.map(r => probeLabel(task.network, r.from, r.to));
+// Round 5 5b-2 (spec C): the pings name the internet «Інтернет (ISP)», the word of where they stop.
+const labelsOf = (task, rows) => rows.map(r => probeLabel(task.network, r.from, r.to, { internet: rt5.internet }));
 const rfCheckButton = () => q('.ng-rf-help .ng-help-check');
 const rfCheck = () => { click(rfCheckButton()); settle(); };
 const causeLabels = () => all('.ng-rf-cause').map(rfText);
@@ -1259,8 +1322,9 @@ rfScenario('RF: the entry', m => {
   click(q('.ng-rf-fold'));
   check('RF entry: the pings are the start, labelled so: failing open, then the working ones folded, each in probe order, the internet named', rfText(q('.ng-rf-pings-caption')) === `${faultsUi.pings} · ${faultText.initial}`
     && pingsOf().map(pingLabel).join('|') === labelsOf(i.task, [...failing, ...passing]).join('|') && failing.length > 0 && passing.length > 0
-    && pingsOf().filter(li => li.className.includes('is-fail')).every(li => rfText(li).includes(faultsUi.pingFailsWords) && rfText(li).includes('зупинився на'))
-    && pingsOf().map(pingLabel).some(l => l.endsWith(`→ ${networkUi.internet}`)), pingsOf().map(pingLabel));
+    && pingsOf().filter(li => li.className.includes('is-fail')).every(li => rfText(li).includes(faultsUi.pingFailsWords) && (rfText(li).includes('зупинився на') || rfText(li).includes(`пішов не туди — в ${rt5.internet}`)))
+    && pingsOf().every(li => !/зупинився на ISP|→ Інтернет$/.test(rfText(li)))
+    && pingsOf().map(pingLabel).some(l => l.endsWith(`→ ${rt5.internet}`)), pingsOf().map(rfText));
   const first = i.task.network.devices.find(d => d.kind === 'router').id;
   check('RF entry: the first router\'s routes in the free mode\'s rows, as given', rfText(q('.ng-rf-rows-caption')) === faultsUi.routes(first)
     && JSON.stringify(rowInputs()) === JSON.stringify(i.task.initialRoutes[first].map(r => Object.values(syntaxes.cisco.fromRoute(r, false)).filter(v => v !== ''))), rowInputs());
@@ -1287,6 +1351,30 @@ rfScenario('RF: the entry', m => {
 
 const rfInternetPing = rfFind((w, code, i) => faults.pingList(i.task).rows.some(r => !r.ok && r.to === 'internet'));
 check('RF paths: some witness fails a ping to the internet', Boolean(rfInternetPing), rfWitnesses.map(w => `${w.level}/${w.taskId}`));
+// Round 5 5b-2 (spec C): a ping lost at the provider says so in the cloud's word, «Інтернет (ISP)».
+{
+  const ispStop = (task, r) => { const leg = r.request?.ok ? r.reply : r.request; return task.network.devices.find(d => d.id === leg?.stop?.deviceId)?.kind === 'isp'; };
+  const found = rfFind((w, code, i) => faults.pingList(i.task).rows.some(r => !r.ok && ispStop(i.task, r)));
+  check('5b-2 RF: a witnessed fault loses a ping at the provider', Boolean(found));
+  if (found) rfScenario('5b-2 RF: a ping lost at the provider', m => {
+    openFaults(m, found.w, found.code);
+    tick(BUILD);
+    const rows = faults.pingList(found.i.task).rows.filter(r => !r.ok);
+    const lost = pingsOf().filter((li, n) => n < rows.length && ispStop(found.i.task, rows[n]));
+    check('5b-2 RF: «✗ пішов не туди — в Інтернет (ISP)», never «зупинився на ISP»', lost.length > 0 && lost.every(li => rfText(li.querySelector('.ng-rt-checkline-state')).endsWith(`пішов не туди — в ${rt5.internet}`))
+      && !rfText(q('.ng-rf-pings')).includes('зупинився на ISP'), pingsOf().map(rfText));
+    // Repair v1 (Astra 1): the cloud, the walk and the hints use the same name.
+    check('5b-2 RF: the cloud says «Інтернет (ISP)», never «Internet»', all('.ng-rf-stage svg text').some(t => t.textContent === rt5.internet)
+      && !all('.ng-rf-stage svg text').some(t => /Internet/.test(t.textContent)), all('.ng-rf-stage svg text').map(t => t.textContent).slice(0, 8));
+    click(lost[0].querySelector('button'));
+    settle();
+    const walk = rfText(q('.ng-rf-walk'));
+    check('5b-2 RF: the walk names it «Інтернет (ISP)» too', walk.includes(rt5.internet) && !/\bISP\b(?! ?\))/.test(walk.replaceAll(rt5.internet, '')), walk);
+    const hint = faults.hints(found.i.task, null, { snapshot: faults.pingList(found.i.task), rung: 1 })[0].text;
+    const firstLost = ispStop(found.i.task, rows[0]);
+    check('5b-2 RF: hint 1 names it «Інтернет (ISP)» where the first failing ping is lost there', !firstLost || (hint.includes(`не туди — в ${rt5.internet}`) && !/на ISP\b/.test(hint)), hint);
+  });
+}
 rfScenario('RF: paths on demand', m => {
   const { w, code, i } = rfInternetPing;
   openFaults(m, w, code);
@@ -1304,9 +1392,9 @@ rfScenario('RF: paths on demand', m => {
   settle();
   check('RF paths: the same tap again draws it again (still pressed)', pingsOf()[at].querySelector('button').getAttribute('aria-pressed') === 'true' && drawn() > 0);
   check('RF paths: a tap draws a ping to the internet, its words under it, labelled with its snapshot', drawn() > 0
-    && pingsOf()[at].querySelector('button').getAttribute('aria-pressed') === 'true' && pingLabel(pingsOf()[at]).endsWith(`→ ${networkUi.internet}`)
+    && pingsOf()[at].querySelector('button').getAttribute('aria-pressed') === 'true' && pingLabel(pingsOf()[at]).endsWith(`→ ${rt5.internet}`)
     && rfText(q('.ng-rf-walk')) === faults.describeTrace(i.task, row, 'cisco').join('')
-    && rfText(q('.ng-rf-stage .ng-rt-stage-head .ng-rt-caption')) === faultsUi.pathOf(probeLabel(i.task.network, row.from, row.to), faultText.initial)
+    && rfText(q('.ng-rf-stage .ng-rt-stage-head .ng-rt-caption')) === faultsUi.pathOf(labelsOf(i.task, [row])[0], faultText.initial)
     && Boolean(q('.ng-path-legend')) && !q('.ng-rf-note'), { drawn: drawn(), caption: rfText(q('.ng-rf-stage .ng-rt-caption')), walk: rfText(q('.ng-rf-walk')) });
   const working = pingsOf().find(li => li.className.includes('is-pass'));
   click(working.querySelector('button'));

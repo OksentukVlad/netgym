@@ -39,6 +39,18 @@
   align-items: start;
 }
 
+/* Split (round 5, 5b-2 B): the task beside the list, so the list starts at
+   the top of a 1000 × 700 window; the whole diagram under both. */
+.ng-fwo[data-layout="split"] {
+  grid-template-columns: minmax(300px, 1fr) minmax(420px, 2fr);
+  grid-template-areas: "side work" "stage stage";
+  align-items: start;
+}
+
+/* The browser keeps the list's rows in place when the panel above them
+   changes height (an edit folds a long verdict), never the task beside it. */
+.ng-fwo[data-layout="split"] .ng-fwo-side { overflow-anchor: none; }
+
 /* Two columns: the left column stays in view while the list scrolls with the page. */
 .ng-fwo[data-layout="two"] .ng-fwo-side {
   position: sticky;
@@ -58,6 +70,23 @@
   padding-left: 10px;
   border-left: 3px solid var(--ng-cyan);
 }
+
+/* Round 5 (5b-2 B): the ordering line and, in one column, the router's own
+   addresses (the diagram is after the list there), in the task's words. */
+.ng-fwo-intro .ng-fwo-ordering,
+.ng-fwo-intro .ng-fwo-strip {
+  margin-top: 2px;
+}
+
+.ng-fwo-strip {
+  font-family: var(--ng-mono);
+  font-weight: 700;
+}
+
+.ng-fwo-pair { white-space: nowrap; }
+
+/* The ICMP gloss is an explanation, not a goal the check tests (repair v1, Fable). */
+.ng-fwo-gloss { color: var(--ng-muted); }
 
 /* ── The list ────────────────────────────────────────────── */
 
@@ -95,9 +124,10 @@
   outline-offset: 2px;
 }
 
-/* A row's content: chain, action and conditions on the first line (the
-   conditions wrap under them where the column is narrow), the description
-   (or, with the walk open, this packet's outcome) on the next. */
+/* A row's content (round 5, 5b-2 B): the chain and the rule's description
+   (its purpose) on the first line, «Ще ні» or this packet's outcome after
+   it; the native rule (action and conditions) on the second, monospace and
+   smaller. */
 .ng-fwo-rule {
   display: flex;
   flex-direction: column;
@@ -108,13 +138,30 @@
   line-height: 1.25;
 }
 
-.ng-fwo-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 2px 6px;
+.ng-fwo-line {
   min-width: 0;
+  font-size: var(--ng-font-small);
+  line-height: 1.3;
 }
+
+.ng-fwo-line .ng-fwo-chain {
+  margin-right: 6px;
+  vertical-align: 1px;
+}
+
+.ng-fwo-native {
+  min-width: 0;
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  line-height: 1.35;
+}
+
+/* The conditions run on after the action, wrapping like text. */
+.ng-fwo-native .ng-fw-action { display: inline-block; margin-right: 6px; }
+.ng-fwo-native .ng-fw-conds,
+.ng-fwo-native .ng-fw-cond { display: inline; }
+.ng-fwo-native .ng-fw-cond + .ng-fw-cond::before { margin: 0 6px; }
 
 /* The chain, prominent: a pill in words and colour, on its own background
    so it reads the same on a walk's tinted row. */
@@ -140,8 +187,14 @@
   line-height: 1.35;
 }
 
-.ng-fwo-desc {
+.ng-fwo-native .ng-fw-action {
+  min-width: 0;
+  padding: 0 6px;
+}
+
+.ng-fwo .ng-fwo-desc {
   color: var(--ng-text);
+  font-size: var(--ng-font-small);
 }
 
 /* «• Ще ні»: in words on its own amber tint (never colour alone), after
@@ -149,6 +202,7 @@
 .ng-fwo-mark {
   display: inline-block;
   padding: 0 6px;
+  font-size: var(--ng-font-caption);
   background: var(--ng-amber-bg);
   border-radius: 10px;
   color: var(--ng-amber);
@@ -180,7 +234,7 @@
 }
 
 /* The walk on the learner's rows (FW-1's states and words). */
-.ng-fwo-out { font-weight: 700; }
+.ng-fwo-out { font-size: var(--ng-font-caption); font-weight: 700; }
 .ng-fwo .is-walk-other-chain .ng-fwo-out,
 .ng-fwo .is-walk-not-reached .ng-fwo-out { color: var(--ng-muted); font-weight: 400; }
 .ng-fwo .ng-reorder-item.is-walk-mismatch,
@@ -281,10 +335,10 @@
 .ng-fwo[data-layout="two"] .ng-fw-view { flex: 1 1 0; min-height: 220px; }
 .ng-fwo[data-layout="two"] .ng-fw-frame { flex: 1 1 0; min-height: 0; }
 
-/* One column: a frame tall enough for the drawing at its 12 px text, and no
-   taller (it would follow the drawing's width). */
-.ng-fwo[data-layout="one"] .ng-fw-frame { height: 340px; }
-.ng-fwo[data-layout="one"] .ng-fw-view.has-overlay { min-height: min(70vh, 560px); }
+/* One column and split: a frame tall enough for the drawing at its 12 px
+   text, and no taller (it would follow the drawing's width). */
+.ng-fwo:not([data-layout="two"]) .ng-fw-frame { height: 340px; }
+.ng-fwo:not([data-layout="two"]) .ng-fw-view.has-overlay { min-height: min(70vh, 560px); }
 
 /* A marked row where the chain changes keeps both: the divider and the amber outline. */
 .ng-fwo .ng-reorder-item.is-chain-change.is-marked { box-shadow: 0 -5px 0 -3px var(--ng-muted), inset 0 0 0 1px var(--ng-amber); }

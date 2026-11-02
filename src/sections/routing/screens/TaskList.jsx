@@ -3,12 +3,14 @@
 // task shows a ✓ (step 6: a variant was earned, its network check passed
 // before any reveal; a later failure keeps it). A task's level is its colour, with the name for
 // screen readers; the filter buttons and the task bar say it in words.
+// Round 5 5b-2 (spec C): task 15 keeps its «Експерт» level and says, under
+// its title, «спершу задачі 1–3» (advice, not a lock).
 //
 // A column from 1440 px of content; below that a drawer («☰ Задачі»): it
 // takes focus when opened, keeps Tab inside, and Escape closes it (the
 // screen returns focus to its button).
 import { useEffect, useRef } from 'react';
-import { ui } from '../uk.js';
+import { comprehension, ui } from '../uk.js';
 import { levelClass } from './theme.js';
 import DoneMark from '../../../ui/components/DoneMark.jsx';
 
@@ -61,7 +63,7 @@ export default function TaskList({ tasks, titleOf, current, filterLevel, setFilt
             <li key={t.id}>
               <button type="button" aria-current={active ? 'true' : undefined} onClick={() => onOpen(t.id)} className={`ng-rt-task ${levelClass(t.level)}`}>
                 <span className="ng-sr-only">{ui.shared.levelLabels[t.level]}: </span>
-                <span className="ng-rt-task-title">#{t.displayNumber} {titleOf(t)}</span>
+                <span className="ng-rt-task-title">#{t.displayNumber} {titleOf(t)}{t.displayNumber === 15 && <>{' '}<span className="ng-rt-task-advice">{comprehension.task15First}</span></>}</span>
                 <DoneMark done={solved(t)} />
               </button>
             </li>

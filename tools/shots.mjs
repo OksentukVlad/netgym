@@ -119,6 +119,17 @@ export function expectedTargets(id, raw) {
   // Round 4 2b: a variant of a state (the mask's chips or fit task, a binary
   // level) has its base state's targets.
   const state = id === 'mask-type' ? raw.replace(/^(?:choices|fit)-/, '') : id === 'binary' ? raw.replace(/^l[12]-/, '') : raw;
+  // Round 5 (spec 5b-2 A): the worked example opened by its toggle, a view the learner asks for (gate-only).
+  if (raw === 'example-open') {
+    return { kind: null, row: false, evidence: [], targets: ['[data-worked-example] .ng-wex-card'], waive: {
+      evidence: 'opening the worked example is a view toggle, not a check: its declared target is the opened example itself (full checks)',
+      message: 'opening the worked example is not an event of the help panel: nothing scrolls to it',
+    } };
+  }
+  // Round 5 (5b-2 B): «Порядок правил» hint 1 before any check asks for a check; it names no packet or rule.
+  if (id.startsWith('fw-order') && raw === 'hint-unchecked') {
+    return { kind: 'hint', row: true, evidence: [], waive: { evidence: 'hint 1 before any check asks for a check: it names no packet or rule, so no row is current' } };
+  }
   if (id.startsWith('setup-')) { const setup = setupTargets(state); if (setup) return setup; }
   // The old «вибір» states that are their own: the offer and a partly right answer after a check, a level's fit chips.
   if (id === 'mask-type' && ['offer', 'partial', 'choices'].includes(state)) return { kind: 'verdict', row: true, evidence: ['.ng-exercise-answer [aria-invalid="true"], .ng-exercise-answer input, .ng-exercise-answer [role="radiogroup"]'] };
@@ -256,13 +267,14 @@ const fwPredictEssentials = level => [
   { sel: fwLabel('fw-label-internet-address'), count: 1 },
   ...(level === 2 ? [{ sel: fwLabel('fw-label-server-address'), count: 1 }] : []),
 ];
-/** Setup decks (5b-1 §3, matrix): the task, the action line, Cisco's mode «?», cards 1–3 each
- * with its text, its purpose and (Cisco) its prompt group, and «Перевірити». */
+/** Setup decks (5b-1 §3, matrix; 5b-2 F): the task, the action line, Cisco's mode «?» (at both
+ * sizes), cards 1–3 each with its purpose (first line), its command and (Cisco) its prompt
+ * group, and «Перевірити». The folded worked example under the action line is never one. */
 const setupEssentials = prompted => [
   { sel: '.ng-su-intro .ng-su-task', count: 1 },
   { sel: '.ng-su-board .ng-action-line', count: 1 },
   ...(prompted ? [{ sel: '.ng-su-board .ng-action-line .ng-su-modes-q', count: 1 }] : []),
-  ...[1, 2, 3].flatMap(n => ['.ng-su-first', '[data-purpose]', ...(prompted ? ['.ng-su-choice'] : [])]
+  ...[1, 2, 3].flatMap(n => ['[data-purpose]', '.ng-su-term', ...(prompted ? ['.ng-su-choice'] : [])]
     .map(part => ({ sel: `.ng-su-board .ng-reorder > .ng-reorder-item:nth-child(${n}) ${part}`, count: 1 }))),
   { sel: '.ng-help-check', count: 1 },
 ];
@@ -376,8 +388,20 @@ const vlEssentials = {
     ...vlCommon,
   ],
 };
+// «Порядок правил» · увесь фільтр (spec 5b-2 B, v2): the router's own
+// addresses (below two columns: the strip under the task; two: the
+// diagram's block beside the list), the port-forward line of the task, and the first five
+// rows, each with its chain, its description and its native rule.
+const fwOrderEssentials = () => [
+  { sel: '.ng-fwo-task', count: 1 },
+  { sel: '.ng-fwo:not([data-layout="two"]) .ng-fwo-strip, .ng-fwo[data-layout="two"] .ng-fw-svg [data-hl~="label:fw-label-router-addresses"]', count: 1 },
+  { sel: '.ng-fwo-goal [data-nat]', count: 1 },
+  { sel: '.ng-fwo-list .ng-action-line', count: 1 },
+  ...[1, 2, 3, 4, 5].flatMap(n => ['.ng-fwo-chain', '.ng-fwo-desc', '.ng-fwo-native']
+    .map(part => ({ sel: `.ng-fwo-list .ng-reorder > .ng-reorder-item:nth-child(${n}) ${part}`, count: 1 }))),
+];
 /** Recipes whose first views must declare essentials (a first view without them fails). */
-export const essentialRecipes = new Set(['fw-predict', 'setup-router', 'setup-switch', 'setup-mikrotik', 'rt-guided', 'rt-hard', 'rt-free', 'rt-mikrotik', 'rt-fault', 'binary', ...Object.keys(vlEssentials)]);
+export const essentialRecipes = new Set(['fw-predict', 'fw-order2', 'setup-router', 'setup-switch', 'setup-mikrotik', 'rt-guided', 'rt-hard', 'rt-free', 'rt-mikrotik', 'rt-fault', 'binary', ...Object.keys(vlEssentials)]);
 /** Gate-only first views of later cards: each destination's card is measured fresh (level 1 and level 2). */
 const laterCard = /^l[12]-card\d$/;
 /** The first views of a recipe. */
@@ -387,6 +411,7 @@ export function essentialsOf(id, state) {
   id = baseOf(id);
   if (id === 'fw-predict' && (state === 'first' || /^l2-card\d$/.test(state))) return fwPredictEssentials(2);
   if (id === 'fw-predict' && (state === 'l1-first' || /^l1-card\d$/.test(state))) return fwPredictEssentials(1);
+  if (id === 'fw-order2' && state === 'first') return fwOrderEssentials();
   if (id.startsWith('setup-') && state === 'first') return setupEssentials(id !== 'setup-mikrotik');
   if (['rt-guided', 'rt-free', 'rt-hard'].includes(id) && state === 'first') return rtEssentials(id, 3);
   if (id === 'rt-mikrotik' && state === 'first') return rtEssentials(id, 2);
@@ -422,6 +447,104 @@ export function declaredEssentials(id, state) {
   const list = essentialsOf(id, state);
   if (essentialRecipes.has(baseOf(id)) && isFirstView(state) && !list?.length) return { list: [], failures: [{ element: 'recipe', role: 'essential', reason: 'first view declares no essentials', distance: null }] };
   return { list: list ?? [], failures: [] };
+}
+
+// ── The worked example's row (round 5, spec 5b-2 A, v2) ─────────────────
+// A screen that adopts WorkedExample adds its recipe here: it then gets the
+// gate-only state `example-open` (the recipe opens the example by its toggle;
+// the opened card is a declared target: in view, unclipped). On every gated
+// state of every screen, `checkExample` checks the worked example:
+//   - registration both ways: an example on a screen whose recipe is not
+//     listed fails (its opened state would never be gated), and a listed
+//     recipe's first view without one fails;
+//   - one per screen; closed unless the state is `example-open` (it never
+//     opens by itself);
+//   - on first views: directly under the action line, its toggle's target
+//     disjoint from every other control's, no essential inside it (it is
+//     never an essential), and the folded label itself measured as an
+//     essential is (painted, at least 12 px, in view, unclipped, not painted
+//     over), separately from the declared essentials, which are measured
+//     with the folded row in place.
+/** Recipes whose screens carry a worked example (the section writers add theirs). */
+export const exampleRecipes = new Set(['setup-router', 'setup-switch', 'setup-mikrotik', 'rt-guided', 'rt-hard', 'rt-free', 'rt-mikrotik', 'mask-type', 'fw-order1', 'fw-order2', 'vl-ports', 'vl-route']);
+/** The folded row's words (measured on first views). */
+export const EXAMPLE_LABEL = '[data-worked-example] > .ng-wex-toggle .ng-wex-label';
+/** What `exampleRow` checks on a state: 'first' (a first view), 'open' (example-open) or 'closed' (any other). */
+export const exampleMode = state => (state === 'example-open' ? 'open' : isFirstView(state) ? 'first' : 'closed');
+/**
+ * The worked example's row in the page (self-contained: Playwright sends its
+ * source). `mode`: exampleMode(state); `essentials`: the state's declared
+ * essentials; `registered`: the recipe is in exampleRecipes. Returns
+ * { present, failures }.
+ * @param {{ mode: 'first'|'open'|'closed', essentials?: Array<string|{ sel: string }>, registered?: boolean }} args
+ */
+export function exampleRow({ mode, essentials = [], registered = false }) {
+  const failures = [];
+  const rows = [...document.querySelectorAll('[data-worked-example]')];
+  const fail = (reason, element = '[data-worked-example]') => failures.push({ element, role: 'worked example', reason, distance: null });
+  if (rows.length && !registered) fail('a worked example on a screen whose recipe is not in exampleRecipes (its opened state would never be gated)');
+  if (registered && mode === 'first' && !rows.length) fail('no worked example on this first view (its recipe is in exampleRecipes)');
+  if (registered && mode === 'open' && !rows.length) fail('no worked example to open on this screen');
+  if (rows.length > 1) fail(`${rows.length} worked examples on one screen (one at most)`);
+  for (const ex of rows) {
+    const toggle = [...ex.children].find(el => el.matches('button.ng-wex-toggle'));
+    const body = toggle && document.getElementById(toggle.getAttribute('aria-controls'));
+    const card = ex.querySelector('.ng-wex-card');
+    const open = toggle?.getAttribute('aria-expanded') === 'true';
+    if (!toggle) fail('no toggle button (button.ng-wex-toggle)');
+    else if (!body || !ex.contains(body) || body.getAttribute('aria-live') !== 'polite') fail('the toggle controls no polite live region inside the example');
+    if (mode === 'open') {
+      if (!open || !card) fail('the toggle did not open the example');
+      else if (!/приклад · інші числа/u.test(card.textContent)) fail('the opened example has no «приклад · інші числа» tag');
+    } else if (open || card) fail('the example is open without the learner asking (it opens only by its toggle, on the gate-only state example-open)');
+    // Read-only: nothing inside the content takes focus or input.
+    for (const el of body ? body.querySelectorAll('*') : []) {
+      if (el.matches('input, select, textarea, button, a[href], [tabindex], [contenteditable]:not([contenteditable="false"])')) fail(`a focusable or input element inside the example: ${el.tagName.toLowerCase()}`, '[data-worked-example] .ng-wex-body');
+    }
+    // Never an essential: no declared essential is the example or inside it.
+    for (const entry of essentials) {
+      const sel = typeof entry === 'string' ? entry : entry.sel;
+      if ([...document.querySelectorAll(sel)].some(el => ex === el || ex.contains(el))) fail(`the essential ${sel} is inside the worked example (it is never an essential)`);
+    }
+    // The slot (first views): directly under the action line (its next sibling), above the first control.
+    if (mode === 'first') {
+      const line = ex.previousElementSibling;
+      if (!line?.matches('[data-action-line]')) fail('not directly under the action line (the WorkedExample is the ActionLine\'s next sibling)');
+      else if (toggle) {
+        const label = toggle.querySelector('.ng-wex-label') ?? toggle;
+        if (label.getBoundingClientRect().top < line.getBoundingClientRect().bottom - 1) fail('the toggle\'s words are not below the action line');
+      }
+      // Disjoint targets: no other control's box meets the toggle's (a click on either edge reaches the intended one).
+      if (toggle) {
+        const t = toggle.getBoundingClientRect();
+        for (const other of document.querySelectorAll('button, input, select, textarea, a[href], summary, [role="button"], [role="radio"], [role="checkbox"], [role="tab"], [role="switch"], [tabindex]:not([tabindex="-1"])')) {
+          if (other === toggle || toggle.contains(other) || other.contains(toggle)) continue;
+          const o = other.getBoundingClientRect();
+          if (o.width && o.height && o.left < t.right && o.right > t.left && o.top < t.bottom && o.bottom > t.top) {
+            fail(`the toggle's target overlaps another control's: ${other.tagName.toLowerCase()}${other.className ? `.${String(other.className).trim().split(/\s+/).join('.')}` : ''}`);
+          }
+        }
+      }
+    }
+  }
+  return { present: rows.length > 0, failures };
+}
+
+/**
+ * The gate's worked-example check of one state (Playwright `page`): the row
+ * (exampleRow, with the recipe's registration) and, on first views, the
+ * folded label measured on its own (measureEssentials). Returns
+ * { mode, present, failures }.
+ */
+export async function checkExample(page, { id, state, essentials = [] }) {
+  const mode = exampleMode(state);
+  const row = await page.evaluate(exampleRow, { mode, essentials, registered: exampleRecipes.has(baseOf(id)) });
+  const failures = [...row.failures];
+  if (row.present && mode === 'first') {
+    const label = await page.evaluate(measureEssentials, { essentials: [{ sel: EXAMPLE_LABEL, count: 1 }], minFont: MIN_FONT_PX });
+    failures.push(...label.failures.map(f => ({ ...f, role: 'worked example label' })));
+  }
+  return { mode, present: row.present, failures };
 }
 
 /**
@@ -705,7 +828,12 @@ export function gateStates(exercise) {
   return [...new Set([...exercise.states, ...(hasHints(exercise) ? ['hint2', 'reveal', 'reveal-next', 'restore'] : []),
     // Round 5 (R5): level 1's other cards are first views too (each L1 destination's card is measured).
     ...(baseOf(exercise.id) === 'fw-predict' ? ['l1-card2', 'l1-card3', 'l2-card2', 'l2-card3', 'l2-card4', 'l2-card5', 'l2-card6'] : []),
+    // Round 5 (5b-2 B, verification): the stepper's named steps; hint 1 before a check; the shadowing's packet walk.
+    ...(baseOf(exercise.id) === 'fw-predict' ? ['step3', 'step-end'] : []),
+    ...(exercise.id.startsWith('fw-order') ? ['hint-unchecked'] : []),
+    ...(exercise.id === 'fw-order2' ? ['shadow-walk'] : []),
     ...(['vl-ports', 'vl-route', 'vl-fault'].includes(baseOf(exercise.id)) || routerSwitch(exercise.id) ? ['device-tab'] : []),
+    ...(exampleRecipes.has(baseOf(exercise.id)) ? ['example-open'] : []),
     ...(replays.has(exercise.id) || ['mask-type', 'binary', 'rt-guided', 'rt-free', 'rt-mikrotik'].includes(exercise.id) ? ['success-edit', 'success-recheck'] : [])])]
     .filter(state => !notApplicable[exercise.id]?.[state]);
 }
@@ -1046,6 +1174,13 @@ class Driver {
       result.failures.push(...declared.failures, ...must.failures);
       result.pass = result.failures.length === 0;
     }
+    // The worked example's row, wherever a screen has one (and the gate-only example-open state).
+    const example = await checkExample(this.page, { id: this.exercise.id, state, essentials: declared.list });
+    if (example.present || example.failures.length) {
+      result.example = { mode: example.mode, present: example.present };
+      result.failures.push(...example.failures);
+      result.pass = result.failures.length === 0;
+    }
     this.gates.push({ exercise: this.exercise.id, state, theme, viewport: this.page.viewportSize(), commit, seed, steps: [...this.steps], ...result });
     // NETGYM_SHOTS_SEEN=1: also keep the view exactly as the gate measured it (before any
     // screenshot scrolling), for honest before/after pictures. Not part of the gate.
@@ -1156,6 +1291,9 @@ async function binaryLevelShots(exercise, withDriver) {
   }
 }
 
+/** Free mode's quiet link that adds a route (round 5 5b-2, spec C); «Знайди несправність» keeps «+ Маршрут». */
+const FREE_ADD = '+ ще один маршрут (якщо потрібен)';
+
 async function routingShots(d) {
   await d.press('Перевірити', 'Check the empty routing table');
   await d.shot('wrong'); await d.hint(); await d.shot('hint');
@@ -1180,7 +1318,7 @@ async function routingShots(d) {
     const link = theirs.find(x => own.some(o => o.net === x.net && o.prefix === x.prefix));
     if (!remote || !link) throw new Error('Cannot derive the remote LAN/shared link from shown interfaces');
     await d.click(d.page.locator('.ng-rt-routers').getByRole('button', { name: name.trim(), exact: true }), `Select ${name} to enter its route`);
-    if (d.exercise.id === 'rt-free') await d.press('+ Маршрут', 'Add a route');
+    if (d.exercise.id === 'rt-free') await d.press(FREE_ADD, 'Add a route');
     if (d.exercise.id === 'rt-mikrotik') {
       await d.page.getByRole('textbox', { name: 'Мережа призначення (dst-address)', exact: true }).fill(`${dotted(remote.net)}/${remote.prefix}`);
       await d.page.getByRole('textbox', { name: 'Шлюз — адреса сусіда (gateway)', exact: true }).fill(link.ip);
@@ -1268,7 +1406,13 @@ async function firewallShots(d) {
       await firewallReplay(d, order, false);
       await d.page.locator('[data-help-current][data-help-tone="no"]').waitFor();
       await d.shot('shadow');
+      // Round 5 (5b-2 B): the shadowing has its packet too, and its walk on the learner's rows (gate only).
+      await d.press('Показати шлях пакета', 'Open the walk of the packet the hidden rule never gets');
+      await d.page.locator('.ng-fwo .ng-reorder-item.is-walk').first().waitFor();
+      await d.gate('shadow-walk');
     }
+    // Round 5 (5b-2 B): hint 1 before any check (it asks for a check), gate only.
+    await d.open(); await d.hint(); await d.gate('hint-unchecked');
     return;
   }
   // Level 2. Hint 1 before any choice (the packet card is its evidence).
@@ -1282,6 +1426,10 @@ async function firewallShots(d) {
   await d.press('Перевірити', 'Commit the wrong rule after the right chain'); await d.feedback(); await d.shot('wrong');
   await d.press('По кроках', 'Open the packet walk stepper');
   await d.press('Крок уперед', 'Advance the packet walk by one step'); await d.shot('step2');
+  // Round 5 (5b-2 B): every step is named in words under the stepper; the next one and the last, gate only.
+  await d.press('Крок уперед', 'Advance the packet walk to the chain'); await d.gate('step3');
+  for (let i = 0; i < 20 && await d.page.locator('.ng-fw-stepper button[aria-label="Крок уперед"][aria-disabled="false"]').count(); i++) await d.press('Крок уперед', 'Advance the packet walk');
+  await d.gate('step-end');
   // A packet the end-of-chain row decides: forward packets answered with the
   // chain end until one is right; other packets are revealed to move on.
   await d.open(); d.note('Restart the same seeded round to find a packet decided by the end of forward');
@@ -1442,14 +1590,28 @@ async function enterRoute(d, row, route, mikrotik = false) {
   if (await distance.count()) await fill(d, distance, route.distance);
   else if (route.distance !== '1') throw new Error('Displayed route needs distance but its field is missing');
 }
+/** The task's routers: the router row's buttons; a one-router task has no row (round 5 5b-2), its rows' heading names it. */
+async function routerNames(d) {
+  const names = (await d.page.locator('.ng-rt-routers .ng-rt-router').allTextContents()).map(clean);
+  if (names.length) return names;
+  const heading = clean(await d.page.locator('.ng-rt-work .ng-rt-card .ng-rt-caption').first().innerText());
+  const lone = heading.match(/—\s*(\S+)$/u)?.[1];
+  if (!lone) throw new Error(`Cannot read the router's name from «${heading}»`);
+  return [lone];
+}
+/** Select a router by its button (a one-router task has none: it is always selected). */
+async function selectRouter(d, name, description) {
+  const button = d.page.locator('.ng-rt-routers').getByRole('button', { name, exact: true });
+  if (await button.count()) await d.click(button, description);
+}
 async function routingReference(d) {
   if (d.exercise.id === 'rt-mikrotik') await d.radio('Cisco', 'Read reference routes in Cisco syntax');
-  const names = (await d.page.locator('.ng-rt-routers .ng-rt-router').allTextContents()).map(clean);
+  const names = await routerNames(d);
   const routes = [];
   // Round 4: one reveal, applied to the rows; each router shows its own.
   await d.reveal();
   for (const name of names) {
-    await d.click(d.page.locator('.ng-rt-routers').getByRole('button', { name, exact: true }), `Read reference for ${name}`);
+    await selectRouter(d, name, `Read reference for ${name}`);
     routes.push({ name, routes: linesOf(await d.page.locator('.ng-rt-commands').innerText()).filter(s => s.startsWith('ip route ')).map(parseRoute) });
   }
   if (!routes.some(r => r.routes.length)) throw new Error('Reference contains no routes');
@@ -1459,10 +1621,10 @@ async function routingReplay(d, reference, mistake = false) {
   if (d.exercise.id === 'rt-hard') await d.radio('Без готових рядків', 'Replay the revealed routes in the free route editor');
   let changed = false;
   for (const router of reference) {
-    await d.click(d.page.locator('.ng-rt-routers').getByRole('button', { name: router.name, exact: true }), `Select ${router.name}`);
+    await selectRouter(d, router.name, `Select ${router.name}`);
     for (const [i, route] of router.routes.entries()) {
       const free = ['rt-hard', 'rt-free'].includes(d.exercise.id);
-      if (free) await d.press('+ Маршрут', 'Add the reference route');
+      if (free) await d.press(FREE_ADD, 'Add the reference route');
       const row = free ? d.page.locator('.ng-rt-free-row').last() : d.page.locator('.ng-rt-rowlist .ng-rt-row').nth(i);
       const entered = { ...route };
       if (mistake && !changed) {
@@ -1923,10 +2085,11 @@ async function vlanCommands(d, commands, device) {
         // Round 5: a mode is named «доступ (access)», «транк (trunk)».
         if ((m = line.match(/^switchport mode (access|trunk)$/))) await d.click(group.getByRole('radio', { name: `${{ access: 'доступ', trunk: 'транк' }[m[1]]} (${m[1]})`, exact: true }), `Set ${device} ${s.iface} to ${m[1]}`);
         else if ((m = line.match(/^switchport access vlan (\d+)$/))) await fill(d, row.getByRole('textbox').first(), m[1]);
-        else if ((m = line.match(/^switchport trunk allowed vlan (.+)$/))) await fill(d, row.getByRole('textbox').first(), m[1]);
+        // Round 5 repair v1: a trunk's list (and its native VLAN) are on the line under its row.
+        else if ((m = line.match(/^switchport trunk allowed vlan (.+)$/))) await fill(d, trunkLine(row).getByRole('textbox').first(), m[1]);
         else if ((m = line.match(/^switchport trunk native vlan (\d+)$/))) {
-          if (await row.getByRole('textbox').count() < 2) throw new Error('Native VLAN field is absent');
-          await fill(d, row.getByRole('textbox').nth(1), m[1]);
+          if (await trunkLine(row).getByRole('textbox').count() < 2) throw new Error('Native VLAN field is absent');
+          await fill(d, trunkLine(row).getByRole('textbox').nth(1), m[1]);
         } else if (line !== 'switchport nonegotiate') throw new Error(`Unmapped switchport command: ${line}`);
       }
       continue;
@@ -1961,14 +2124,17 @@ async function vlanCommands(d, commands, device) {
       }
       continue;
     }
-    const physical = d.page.locator('.ng-vl-states').getByRole('radiogroup', { name: `${s.iface}: стан інтерфейсу`, exact: true });
+    const physical = d.page.locator('.ng-vl-states').getByRole('radiogroup', { name: `${s.iface}: адміністративний стан`, exact: true });
     if (!await physical.count()) throw new Error(`Cannot map interface ${device} ${s.iface} to an editor`);
     for (const line of s.lines) {
       if (!['shutdown', 'no shutdown'].includes(line)) throw new Error(`Unmapped physical interface command: ${line}`);
-      if (await physical.getAttribute('aria-readonly') !== 'true') await d.click(physical.getByRole('radio', { name: line, exact: true }), `Set ${device} ${s.iface}: ${line}`);
+      // Round 5 (5b-2 E): the option reads «увімкнено» over «(no shutdown)» (its name has both).
+      if (await physical.getAttribute('aria-readonly') !== 'true') await d.click(physical.getByRole('radio', { name: `${line === 'shutdown' ? 'вимкнено' : 'увімкнено'} (${line})`, exact: true }), `Set ${device} ${s.iface}: ${line}`);
     }
   }
 }
+/** A Cisco trunk port's own line under its row: its allowed list and native VLAN (round 5 repair v1). */
+const trunkLine = row => row.locator('xpath=following-sibling::tr[1][contains(concat(" ", @class, " "), " ng-vl-allowed-row ")]');
 /** VLAN-3 (round 4): the repair is typed in the «Ремонт» stage. */
 async function vlanRepair(d, reference) {
   await d.click(d.page.locator('.ng-vf-stepper').getByRole('button', { name: /Ремонт/ }), 'Open the repair stage');
@@ -2104,7 +2270,22 @@ async function successEdit(d) {
   await d.click(check, 'Recheck the edited successful answer'); await d.gate('success-recheck');
 }
 
+/** Open the screen's worked example by its toggle (none: exampleRow fails the state). */
+async function openExample(d) {
+  const toggle = d.page.locator('[data-worked-example] > .ng-wex-toggle');
+  if (await toggle.count() === 1) await d.click(toggle, 'Open the worked example («Приклад ▸ готова відповідь (інші числа)»)');
+}
+
 async function lifecycleGates(exercise, withDriver) {
+  // Round 5 (spec 5b-2 A): the worked example, opened by its toggle on the untouched screen (gate-only).
+  if (exampleRecipes.has(baseOf(exercise.id))) await withDriver('example-open', async d => {
+    await d.open(); await openExample(d); await d.gate('example-open');
+    // The opened card in the light theme too, on one firewall and one VLAN screen (5b-2 repair v1, Fable 5).
+    if (['fw-order2', 'vl-route'].includes(exercise.id)) {
+      await d.press('Світла тема', 'Switch to light theme with the shell button'); await d.gate('example-open', 'light');
+      await d.press('Темна тема', 'Switch back to dark theme with the shell button');
+    }
+  });
   if (!hasHints(exercise)) return;
   await withDriver('reveal-next', async d => {
     await d.open(); await d.reveal();
@@ -2169,7 +2350,7 @@ export async function writeIndex(out, selected, records, gaps, seconds, fatal, o
   await writeFile(path.join(out, 'gate.json'), `${JSON.stringify({ recipe: 'v3-visibility', commit, seed, mode: options.gate, sizes: options.sizes, summary, notApplicable: na, states: gates }, null, 2)}\n`);
   const lines = ['# NetGym review screenshots', '', `Recipe v3 (v2 screenshot names retained) · commit ${commit ?? 'unavailable'} (working tree) · seed ${seed} · Chromium ${browserVersion ?? 'unavailable'} · ${options.sizes.map(s => `${s.width}×${s.height}`).join(', ')} · scale 1 · reduced motion · ${seconds.toFixed(1)} seconds.`, '',
     `Visibility gate: **${summary.passed} passed, ${summary.failed} failed, ${summary.skipped} unsupported/skipped**; ${summary.partial} partial baseline states; ${summary.waived} states with declared waivers; ${na.length} states not applicable by design (listed in gate.json). Mode: ${options.gate}. [gate.json](gate.json) records every state and size before screenshot scrolling. Legacy screens use fallback selectors: this baseline is partial, including evidence approximations.`, '',
-    'The first requested size saves screenshots; other sizes run all action states as gate-only views (use `--narrow-shots` to save them). The six historical narrow first views are still saved when 1000×700 is a secondary size. Hint 2 and lifecycle probes are gate-only.', '',
+    'The first requested size saves screenshots; other sizes run all action states as gate-only views (use `--narrow-shots` to save them). The six historical narrow first views are still saved when 1000×700 is a secondary size. Hint 2, lifecycle probes and an opened worked example (`example-open`) are gate-only; a worked example on any state is checked: its recipe registered (and present on a registered recipe\'s first views), one per screen, closed unless opened by its toggle; on first views directly under the action line, its target disjoint from other controls, its folded label visible, never an essential.', '',
     'Viewport PNGs in review order. Scroll images continue the same state; independently scrolling columns are traversed separately. `done` may be a reference reveal, not an earned solve; read the recorded steps. Light first views use the shell switch, once per selected section.', '',
     'The calculator starts with a result; empty inputs retain its stale result. VLAN prediction discloses the answer after each check and has no hint/reveal. VLAN fault finding asks the cause from the start; its step2 shows that existing question.', '',
     '`solved` is a checked replay in a fresh context after reading the reveal in another context with the same seed. It is earned through UI checks, with prior reference knowledge. `done` retains the v1 reveal. New states run independently. VLAN routing mistake uses task 2 because task 1 gives the whole switch read-only.', '',

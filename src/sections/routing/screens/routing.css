@@ -314,6 +314,16 @@
   flex: 1;
 }
 
+/* Round 5 5b-2 (spec C): task 15's advice under its title («спершу задачі 1–3»). */
+.ng-rt-task .ng-rt-task-advice {
+  display: block;
+  margin-top: 2px;
+  color: var(--ng-muted);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-caption);
+  font-style: italic;
+}
+
 
 /* ── Task bar and description ────────────────────────────── */
 
@@ -590,6 +600,16 @@
   display: flex;
   gap: 6px;
   margin-left: auto;
+}
+
+/* Round 5 5b-2: a one-router diagram's «Текстом», at the tool row's right end (after the zoom group when shown). */
+.ng-dg-lone-end {
+  display: flex;
+  margin-left: auto;
+}
+
+.ng-dg-zoom + .ng-dg-lone-end {
+  margin-left: 0;
 }
 
 .ng-rt .ng-dg-zoom-step {
@@ -967,6 +987,10 @@
 .ng-rt-add {
   align-self: flex-start;
   margin-top: 2px;
+}
+
+/* «Знайди несправність» keeps «+ Маршрут» as a button. */
+.ng-rt-btn.ng-rt-add {
   background: var(--ng-button-bg);
   border-color: var(--ng-blue);
   color: var(--ng-button-text);
@@ -1354,6 +1378,25 @@ button.ng-rt-checkline-body:hover,
   color: var(--ng-text);
 }
 
+/* Round 5 5b-2 (spec C): task 15's whole condition, opened under its two sentences by «Уся умова». */
+.ng-rt-full {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 120ch;
+  font-size: var(--ng-font-body);
+  line-height: 1.35;
+  color: var(--ng-text);
+}
+
+.ng-rt-full[hidden] {
+  display: none;
+}
+
+.ng-rt-full p {
+  margin: 0;
+}
+
 /* Repair v2: the legend's «?» and «Уся умова» share one row. */
 .ng-rt-asides {
   display: flex;
@@ -1425,6 +1468,16 @@ button.ng-rt-checkline-body:hover,
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
+}
+
+/* Round 5 5b-2 (repair v1, Fable 1): a quiet link (free mode's «+ ще один маршрут»), in the worked example toggle's look. */
+.ng-rt-link.is-quiet {
+  color: var(--ng-muted);
+  font-size: var(--ng-font-caption);
+}
+
+.ng-rt-link.is-quiet:hover {
+  color: var(--ng-text);
 }
 
 .ng-rt-link:focus-visible {

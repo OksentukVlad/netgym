@@ -870,6 +870,14 @@
   font-size: var(--ng-font-small);
 }
 
+/* Round 5 (5b-2 B): what this step of the walk is, in words, under the stepper. */
+.ng-fw-step-caption {
+  margin: 4px 0 0;
+  color: var(--ng-text);
+  font-size: var(--ng-font-small);
+  line-height: 1.35;
+}
+
 .ng-fw-rules-list {
   margin: 0 0 8px;
   padding: 0 0 0 1.2em;

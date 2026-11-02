@@ -8,7 +8,7 @@ import { firewallLeaks } from './helpers/firewall-leaks.mjs';
 import { prepareAnalysis } from '../src/sections/firewall/logic/universe.js';
 import { resolveOrderRecord } from '../src/banks/firewall/order.js';
 import { create as createOrder, prepareOrder } from '../src/sections/firewall/logic/order.js';
-import { t as fwText, chainText, orderText, predictStep } from '../src/sections/firewall/uk.js';
+import { t as fwText, chainText, comprehension, orderText } from '../src/sections/firewall/uk.js';
 import { record as predictRecord } from '../src/banks/vlan/predict.js';
 import { records as portsRecords } from '../src/banks/vlan/ports.js';
 import { records as routeRecords } from '../src/banks/vlan/route.js';
@@ -103,7 +103,8 @@ test('F1: level-2 hook retries disclose no rule evidence, consume no attempt/hin
     assert.deepEqual(FW.checkHook(task, card.id, selection), { ok: false, code: 'invalid-selection', assisted: false, params: {} });
   }
   assert.equal(FW.checkHook(task, 'missing', { hook: 'input' }).code, 'invalid-selection');
-  assert.match(predictStep.slowPath, /деякі пакети.*повільним шляхом.*accept потрібне/);
+  // Round 5 (5b-2 B): the walk's slow-path words (comprehension.fasttrackIntro) keep the qualification.
+  assert.match(comprehension.fasttrackIntro, /повільному шляху.*деякі пакети.*повільним шляхом.*accept/);
 });
 
 const orderTask = () => {

@@ -68,4 +68,10 @@ export const uk = {
   fact: {
     show: ({ value }) => `${value} — показати на схемі`,
   },
+  // WorkedExample (round 5, spec 5b-2 A): one finished answer on other values, folded.
+  example: {
+    toggle: 'Приклад',                          // «Приклад ▸ готова відповідь (інші числа)»
+    toggleRest: 'готова відповідь (інші числа)',
+    tag: 'приклад · інші числа',
+  },
 };

@@ -75,7 +75,7 @@ test('orderView: a FastTrack-marked forward packet brings the slow-path words; a
   const walk = walkRows(p.walkInput(reference, reply));
   assert.ok(Object.values(walk.byId).some(o => o.state === 'marked'));
   // Round 4 (spec F1 v2): the corrected slow-path words, as FW-1's walk says them.
-  assert.ok(walk.assumptions.length > 0 && /повільному шляху/.test(walk.assumptions[0]) && /наступне правило accept потрібне/.test(walk.assumptions[0]));
+  assert.ok(walk.assumptions.length > 0 && /повільному шляху/.test(walk.assumptions[0]) && /не завершує його перевірку.*потребують accept/.test(walk.assumptions[0]));
   const lanOut = variant('all').cards.find(c => c.id === 'lan-web-out');
   const end = walkRows(p.walkInput(reference, lanOut)).end;
   assert.deepEqual(end && end.chain, 'forward');

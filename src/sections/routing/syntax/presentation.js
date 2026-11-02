@@ -11,7 +11,8 @@ const deviceName = (net, id) => net.devices.find(d => d.id === id)?.name ?? (net
 const segmentName = (net, id) => net.segments.find(s => s.id === id)?.name ?? text.unknown;
 const nameOf = (net, id) => {
   const endpoint = net.endpoints.find(e => e.id === id);
-  if (endpoint) return endpoint.kind === 'internet' ? text.internet : segmentName(net, endpoint.segmentId);
+  // An internet endpoint may carry the name the screen gives the cloud («Знайди несправність»: «Інтернет (ISP)»).
+  if (endpoint) return endpoint.kind === 'internet' ? endpoint.name ?? text.internet : segmentName(net, endpoint.segmentId);
   for (const d of net.devices) {
     const iface = d.interfaces.find(f => f.id === id || f.address?.ip === id);
     if (iface) return text.interface(deviceName(net, d.id), segmentName(net, iface.segmentId));
@@ -23,8 +24,11 @@ const sourceName = (net, id) => {
   return owner ? deviceName(net, owner.id) : nameOf(net, id);
 };
 /** A probe's label as the check list words it («LAN1 → LAN3», «LAN3 → R1
- * (лінк R1–R2)», «LAN1 → Інтернет»): names only, never endpoint ids. */
-export const probeLabel = (net, from, to) => text.label(sourceName(net, from), nameOf(net, to));
+ * (лінк R1–R2)», «LAN1 → Інтернет»): names only, never endpoint ids.
+ * `internet`: another name for the internet («Знайди несправність» says
+ * «Інтернет (ISP)», as its stops do; round 5 5b-2). */
+export const probeLabel = (net, from, to, { internet = null } = {}) => text.label(sourceName(net, from),
+  internet && net.endpoints.some(e => e.id === to && e.kind === 'internet') ? internet : nameOf(net, to));
 const repairStop = (net, leg) => {
   const escapedToIsp = net.devices.some(d => d.id === leg?.stop?.deviceId && d.kind === 'isp');
   const routerId = escapedToIsp ? leg?.hops.findLast(h => net.devices.some(d => d.id === h.deviceId && d.kind === 'router'))?.deviceId : leg?.stop?.deviceId;
@@ -192,6 +196,9 @@ export function describeTrace(evidence, net, syntax = 'cisco') {
   });
 }
 
+/** Hint 3's main and backup default routes: the same values as the worked example (logic/examples.js, task 15). */
+const DISTANCE_EXAMPLE = Object.freeze([{ dst: '0.0.0.0', prefix: 0, via: '192.0.2.1', distance: 1 }, { dst: '0.0.0.0', prefix: 0, via: '192.0.2.5', distance: 5 }]);
+
 /** Build a three-rung ladder from the current parsed answer's first failure.
  * Called by logic.hints; unparseable/null rows have already been discarded.
  * Rung 3 alone is designated example content; commands use documentation ranges.
@@ -216,15 +223,14 @@ export function hintLadder(task, result, syntax = 'cisco') {
   if (kind === 'summary' && objective?.destinations.length === 4) kind = 'summaryFour';
   if (code === 'unknown-space-loops' && params.cycleCause === 'summary'
     && task.record.demonstrations?.some(d => d.kind === 'summary-hole')) kind = 'discard';
-  const route = { dst: kind === 'reply' || kind.startsWith('summary') ? '192.0.2.0' : ['default', 'distance'].includes(kind) ? '0.0.0.0' : '198.51.100.0', prefix: ['default', 'distance'].includes(kind) ? 0 : 24, via: kind === 'specific' ? '203.0.113.2' : '203.0.113.1' };
+  // Round 5 5b-2 (repair v1, Fable 3): the distance example uses the worked example's values (main 192.0.2.1 at 1, backup 192.0.2.5 at 5).
+  const route = kind === 'distance' ? DISTANCE_EXAMPLE[0]
+    : { dst: kind === 'reply' || kind.startsWith('summary') ? '192.0.2.0' : kind === 'default' ? '0.0.0.0' : '198.51.100.0', prefix: kind === 'default' ? 0 : 24, via: kind === 'specific' ? '203.0.113.2' : '203.0.113.1' };
   const commands = ['loop', 'coverage'].includes(kind) ? [] : [adapter(syntax).command(kind === 'discard' ? { dst: '192.0.2.0', prefix: 24, discard: true } : route)];
-  if (kind === 'distance') commands.push(adapter(syntax).command({ dst: '0.0.0.0', prefix: 0, via: '198.51.100.9', distance: 10 }));
+  if (kind === 'distance') commands.push(adapter(syntax).command(DISTANCE_EXAMPLE[1]));
   // Task 15 teaches distance in both command languages, even when its first
   // failure is a missing route rather than a distance-order finding.
-  const commandsBySyntax = distanceTask ? Object.fromEntries(syntaxList.map(s => [s.id, [
-    s.command({ dst: '0.0.0.0', prefix: 0, via: '203.0.113.1', distance: 1 }),
-    s.command({ dst: '0.0.0.0', prefix: 0, via: '198.51.100.9', distance: 10 }),
-  ]])) : null;
+  const commandsBySyntax = distanceTask ? Object.fromEntries(syntaxList.map(s => [s.id, DISTANCE_EXAMPLE.map(r => s.command(r))])) : null;
   const exampleText = commandsBySyntax ? text.distanceExample(commandsBySyntax) : text.exampleLabel(text.examples[kind](commands.join('\n')));
   return [
     { code: 'hint-question', params: { text: evidence }, rung: 1, provenance: 'evidence' },

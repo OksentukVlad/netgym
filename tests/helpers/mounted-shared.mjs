@@ -18,9 +18,14 @@
 //     form with `evidence()`, recall lines with their own Enter;
 //   - MoreMenu keyboard, outside click, copy label, disclosure focus;
 //   - Aside open on the first visit, folded after the first check, «?» holds;
-//   - DoneMark's name.
+//   - DoneMark's name;
+//   - WorkedExample (round 5, 5b-2): closed by default, opened only by its
+//     toggle into the live region already there, read-only, its own state
+//     (not first-visit folding, not the learner's answers), closed again on
+//     a task change and after navigation.
 import { mock } from 'node:test';
 import { installDom } from './mini-dom.mjs';
+import { expectWorkedExample } from './worked-example.mjs';
 
 const { window, document, fire } = installDom({ focusEvents: true });
 mock.timers.enable({ apis: ['setTimeout'] });
@@ -583,6 +588,51 @@ scenario('DoneMark', () => h.mountDone(true), () => {
 });
 scenario('DoneMark off', () => h.mountDone(false), () => {
   check('DoneMark: nothing while not earned', q('.ng-done') === null && text(q('.task')) === 'Задача 1');
+});
+
+// ── 9. WorkedExample (round 5, spec 5b-2 A) ───────────────────────────
+const passes = fn => { try { fn(); return true; } catch (e) { return e.message; } };
+scenario('WorkedExample', () => h.mountExample({ taskKey: 't1' }), m => {
+  const toggle = () => q('.ng-wex-toggle'), body = () => q('.ng-wex-body'), card = () => q('.ng-wex-card');
+  const region = body();
+  const before = JSON.stringify(m.store.state);
+  check('WorkedExample: closed by default: aria-expanded="false", the live region there and empty, nothing of the example in the page', toggle().getAttribute('aria-expanded') === 'false'
+    && region.getAttribute('aria-live') === 'polite' && region.childNodes.length === 0 && toggle().getAttribute('aria-controls') === region.getAttribute('id') && !text(q('.example-screen')).includes('192.0.2'));
+  check('WorkedExample: closed: the toggle reads «Приклад ▸ готова відповідь (інші числа)», the arrow aria-hidden', text(toggle()) === 'Приклад ▸ готова відповідь (інші числа)' && q('.ng-wex-toggle [aria-hidden="true"]').textContent === '▸');
+  check('WorkedExample: closed: expectWorkedExample passes', passes(() => expectWorkedExample(document.body)) === true, passes(() => expectWorkedExample(document.body)));
+  check('WorkedExample: the slot: directly under the action line, before the first control', q('.ng-action-line').nextSibling === q('[data-worked-example]') && q('[data-worked-example]').nextSibling === q('.answer'));
+  click(toggle());
+  check('WorkedExample: the toggle opens it into the same live region (announced once): the tag, the context, the row', toggle().getAttribute('aria-expanded') === 'true' && body() === region && region.contains(card())
+    && text(q('.ng-wex-tag')) === 'приклад · інші числа' && text(q('.ng-wex-context')) === 'R1 → LAN-C 192.0.2.0/24, сусід 198.51.100.2'
+    && text(q('.ng-wex-table tbody tr')) === '✓192.0.2.0255.255.255.0198.51.100.2' && all('.ng-wex-table th').length === 3);
+  check('WorkedExample: opened: the arrow turns (▾); focus stays on the toggle', q('.ng-wex-toggle [aria-hidden="true"]').textContent === '▾' && document.activeElement === toggle());
+  check('WorkedExample: opened: read-only — no input, button, link or tabindex inside; one ✓ row', passes(() => expectWorkedExample(document.body, { open: true, rows: 1 })) === true, passes(() => expectWorkedExample(document.body, { open: true, rows: 1 })));
+  check('WorkedExample: opening touches no learner state (store unchanged: no answer, draft or place)', JSON.stringify(m.store.state) === before);
+  click(q('.screen-check'));
+  check('WorkedExample: the first check folds the screen\'s asides but leaves the example as the learner set it (not first-visit folding)', m.store.state.places.demo?.started === true && toggle().getAttribute('aria-expanded') === 'true'
+    && !m.store.state.places.demo.asides);
+  step(() => m.set({ taskKey: 't1' }));
+  check('WorkedExample: the same task rendered again: still open', toggle().getAttribute('aria-expanded') === 'true' && Boolean(card()));
+  step(() => m.set({ taskKey: 't2' }));
+  check('WorkedExample: a new task (or level, or vendor): closed, its content gone, the live region still there', toggle().getAttribute('aria-expanded') === 'false' && !card() && body() === region && region.childNodes.length === 0);
+  step(() => m.set({ taskKey: 't1' }));
+  check('WorkedExample: back to the first task: still closed', toggle().getAttribute('aria-expanded') === 'false' && !card());
+  click(toggle()); click(toggle());
+  check('WorkedExample: the toggle closes it again', toggle().getAttribute('aria-expanded') === 'false' && !card());
+  click(toggle());
+  m.remount();
+  check('WorkedExample: leaving and coming back: closed (its own state, not kept in the store)', toggle().getAttribute('aria-expanded') === 'false' && !card());
+});
+scenario('WorkedExample lines', () => h.mountExample({ taskKey: 'deck', kind: 'lines' }), () => {
+  click(q('.ng-wex-toggle'));
+  check('WorkedExample: string rows are lines with a ✓ (aria-hidden), the value in its own span, and the reason last', all('.ng-wex-lines li').length === 1 && q('.ng-wex-lines .ng-wex-mark').getAttribute('aria-hidden') === 'true'
+    && text(q('.ng-wex-lines .ng-wex-value')) === 'show running-config → R1#' && text(q('.ng-wex-card').lastChild) === 'Перегляд налаштувань — у привілейованому режимі.' && !q('.ng-wex-table'));
+});
+scenario('WorkedExample drawing', () => h.mountExample({ taskKey: 'mask', kind: 'drawing' }), () => {
+  check('WorkedExample: children stay out of the page while closed', !q('.ruler'));
+  click(q('.ng-wex-toggle'));
+  check('WorkedExample: children (a static drawing) take the rows\' place inside the card, after the tag and the context', q('.ng-wex-card').contains(q('.ruler')) && text(q('.ruler-words')) === 'Блок 198.51.100.64–127.'
+    && q('.ng-wex-card').firstChild === q('.ng-wex-tag') && !q('.ng-wex-lines') && !q('.ng-wex-table'));
 });
 
 check('no React warnings or errors', warnings.length === 0, warnings.slice(0, 3));

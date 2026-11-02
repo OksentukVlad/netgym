@@ -241,3 +241,8 @@ export function modesExample({ interface: name = 'g0/0', mgmt } = {}) {
     ['(config-if)#', 'exit'], ['(config)#', 'line vty 0 15'], ['(config-line)#', 'end'], ['#', ''],
   ].map(([prompt, command]) => ({ prompt, device, command }));
 }
+
+export const comprehension = {
+  checkpointPurpose: 'крок, не команда: перевір, що новий вхід працює',
+  recommendedFirst: 'радимо спершу: маршрутизацію й VLAN',
+};

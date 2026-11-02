@@ -1,0 +1,132 @@
+/* The worked example (round 5, spec 5b-2 A): a quiet link under the action
+   line and, opened, a muted read-only card. Tokens only, so both themes
+   follow tokens.css (muted text is at least 4.5:1 on the panels:
+   tests/contrast.test.mjs). Text never below 14 px. */
+.ng-wex {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+/* A link-style button with a full 44 px target that takes its own space:
+   no vertical overlap, so its target and the neighbouring controls' never
+   meet (the gate checks it). Only the 6 px side padding hangs out, so the
+   words line up with the action line. */
+.ng-wex-toggle {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: var(--ng-target);
+  margin: 0 -6px;
+  padding: 0 6px;
+  background: transparent;
+  border: 0;
+  border-radius: var(--ng-radius);
+  color: var(--ng-muted);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-caption);
+  font-weight: 400;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* The words are underlined as a link; the arrow and the spaces around it are not. */
+.ng-wex-words {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ng-wex-toggle:hover,
+.ng-wex-toggle[aria-expanded="true"] {
+  color: var(--ng-text);
+}
+
+.ng-wex-toggle:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: -2px;
+}
+
+/* The live region: always present, empty (no height) while folded. */
+.ng-wex-body {
+  align-self: stretch;
+  min-width: 0;
+}
+
+/* Opened: muted, read-only, a dashed edge (not a field, not the learner's own). */
+.ng-wex-card {
+  margin-top: 2px;
+  padding: 8px 12px;
+  border: 1px dashed var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  color: var(--ng-muted);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-caption);
+  font-weight: 400;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.ng-wex-card p {
+  margin: 0;
+}
+
+.ng-wex-card > * + * {
+  margin-top: 4px;
+}
+
+.ng-wex-tag {
+  font-family: var(--ng-mono);
+  letter-spacing: 0.5px;
+}
+
+.ng-wex-table {
+  border-collapse: collapse;
+  color: inherit;
+  font-size: inherit;
+}
+
+/* Cells keep whole words («Ланцюжок», «ether2»): only the card's free text
+   may break anywhere. */
+.ng-wex-table th,
+.ng-wex-table td {
+  overflow-wrap: normal;
+}
+
+.ng-wex-table th {
+  padding: 0 14px 0 0;
+  font-weight: 400;
+  text-align: left;
+  vertical-align: bottom;
+}
+
+.ng-wex-table td {
+  padding: 2px 14px 0 0;
+  vertical-align: top;
+}
+
+.ng-wex-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ng-wex-lines li {
+  display: flex;
+  gap: 8px;
+}
+
+.ng-wex-mark {
+  flex: none;
+  width: 1em;
+}
+
+.ng-wex-table .ng-wex-mark {
+  padding-right: 8px;
+}
+
+.ng-wex-value {
+  font-family: var(--ng-mono);
+  font-weight: 700;
+}

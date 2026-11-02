@@ -83,7 +83,7 @@ import { fieldsOfCode } from './useRouteAnswers.js';
 import { hasText } from './rowCheck.js';
 import { useLayoutMode, useStageHeight } from './layoutMode.js';
 import { fieldsAnswer, initialRows, marksOf, nextLevel, routeAfterEdit, rowValues, sameValues, usesDistance } from './faultsRows.js';
-import { faultText, faultsUi, ui } from '../uk.js';
+import { comprehension, faultText, faultsUi, ui } from '../uk.js';
 import '../../../ui/tokens.css';
 import './routing.css';
 import './faults.css';
@@ -283,7 +283,8 @@ function FaultsWork({ bank, record, slot, syntax, layout, root, building, onAgai
   const listSnap = snapChoices.includes(listChoice) ? listChoice : checkedOnce ? 'checked' : 'original';
   const snaps = { original: rf.original, checked: rf.snapshot, ...(rf.reveal ? { before: rf.reveal.before.snapshot, after: rf.reveal.after.snapshot } : {}) };
   const where = { original: faultText.initial, checked: faultText.checked, before: faultsUi.sides.before, after: faultsUi.sides.after };
-  const labelOf = row => probeLabel(task.network, row.from, row.to);
+  // Round 5 5b-2 (spec C): the pings name the internet as «Інтернет (ISP)», where they go and where they stop.
+  const labelOf = row => probeLabel(task.network, row.from, row.to, { internet: comprehension.internet });
 
   const colsRef = useRef(null);
   // The help panel's board (HelpPanel `boardRef`): the element it sits right
@@ -306,7 +307,8 @@ function FaultsWork({ bank, record, slot, syntax, layout, root, building, onAgai
   // A ping's path on demand: { snap, id, n } (n replays it).
   const [pick, setPick] = useInstanceState(ex.key, null);
   const pickedRow = pick ? snaps[pick.snap]?.rows.find(r => r.id === pick.id) ?? null : null;
-  const topo = useMemo(() => diagramTopology(task.network, syntax.id), [task, syntax.id]);
+  // The cloud says «Інтернет (ISP)», the word of the pings and the walk (round 5 5b-2).
+  const topo = useMemo(() => diagramTopology(task.network, syntax.id, { internet: comprehension.internet }), [task, syntax.id]);
   const geo = useMemo(() => diagramGeometry(topo, topo, undefined, NETGYM_DIAGRAM_FONT), [topo]);
   const trace = useMemo(() => (pickedRow ? faults.traceFor(task, pickedRow, syntax.id) : null), [task, pickedRow, syntax.id]);
   const walk = useMemo(() => (pickedRow ? faults.describeTrace(task, pickedRow, syntax.id) : []), [task, pickedRow, syntax.id]);
@@ -464,7 +466,11 @@ function FaultsWork({ bank, record, slot, syntax, layout, root, building, onAgai
 
   const radioName = `ng-rf-cause-${useId().replace(/:/g, '')}`;
   const pathWhere = pickedRow ? faultsUi.pathOf(labelOf(pickedRow), where[pick.snap]) : null;
-  const deviceName = id => task.network.devices.find(d => d.id === id)?.name ?? id;
+  // Where a failing ping stops, in words: «зупинився на R2»; at the provider, «пішов в Інтернет (ISP)», the cloud's word.
+  const stopWords = (id, reply) => {
+    const device = task.network.devices.find(d => d.id === id);
+    return device?.kind === 'isp' ? faultsUi.pingToInternet(comprehension.internet, reply) : faultsUi.pingStop(device?.name ?? id, reply);
+  };
 
   // ── The help panel (round 4 spec R2): the repair check, then the cause in
   // the same place (stepKey); «Далі →» once solved ──
@@ -526,7 +532,7 @@ function FaultsWork({ bank, record, slot, syntax, layout, root, building, onAgai
   // evidence); after it in the cause step (the cause question is).
   boardPick.current = evidenceOf;
   const pings = (
-          <PingList key={`${ex.key}|${listSnap}`} snapshot={shownSnap} labelOf={labelOf} deviceName={deviceName} headRef={pingsHead}
+          <PingList key={`${ex.key}|${listSnap}`} snapshot={shownSnap} labelOf={labelOf} stopWords={stopWords} headRef={pingsHead}
             heading={checkedOnce ? faultsUi.pings : `${faultsUi.pings} · ${where[listSnap]}`}
             choice={snapChoices.length > 1 ? (
               <Segmented label={faultsUi.snapshots} value={listSnap} onChange={setListChoice} className="ng-rf-snaps"
@@ -628,18 +634,18 @@ function FaultsWork({ bank, record, slot, syntax, layout, root, building, onAgai
 
 /**
  * A ping snapshot: each failing ping one line («LAN-HQ → F2 ✗ не проходить,
- * зупинився на ISP»), working ones folded into «ще N проходять». Each is a
+ * зупинився на R2»; lost at the provider «пішов в Інтернет (ISP)», round 5 5b-2), working ones folded into «ще N проходять». Each is a
  * button that draws its path; the drawn one says its walk in words under
  * it. `evidence`: the ping the panel's message is about (data-evidence).
- * @param {{ snapshot: { rows: object[] }, labelOf: Function, deviceName: Function, heading?: string|null, choice?: any, note?: string|null,
+ * @param {{ snapshot: { rows: object[] }, labelOf: Function, stopWords: Function, heading?: string|null, choice?: any, note?: string|null,
  *   picked: string|null, walk: string[], onPick: Function, headRef?: object, evidence?: string|null }} props
  */
-function PingList({ snapshot, labelOf, deviceName, heading = null, choice = null, note = null, picked, walk, onPick, headRef, evidence = null, sectionRef = null }) {
+function PingList({ snapshot, labelOf, stopWords, heading = null, choice = null, note = null, picked, walk, onPick, headRef, evidence = null, sectionRef = null }) {
   const [open, setOpen] = useState(false);
   const foldId = `ng-rf-passing-${useId().replace(/:/g, '')}`;
   const failing = snapshot.rows.filter(r => !r.ok);
   const passing = snapshot.rows.filter(r => r.ok);
-  const row = r => <PingRow key={r.id} row={r} label={labelOf(r)} deviceName={deviceName} picked={picked === r.id} walk={walk} onPick={onPick} evidence={evidence === r.id} />;
+  const row = r => <PingRow key={r.id} row={r} label={labelOf(r)} stopWords={stopWords} picked={picked === r.id} walk={walk} onPick={onPick} evidence={evidence === r.id} />;
   return (
     <section ref={sectionRef} className="ng-rf-pings" aria-label={heading ? undefined : faultsUi.pings}>
       {(heading || choice) && (
@@ -665,9 +671,9 @@ function PingList({ snapshot, labelOf, deviceName, heading = null, choice = null
 
 /** One ping, one line: «LAN1 → LAN3 ✗ не проходить, зупинився на R2» (or
  * «✓ проходить»), a button that draws its path; drawn, its walk in words. */
-function PingRow({ row, label, deviceName, picked, walk, onPick, evidence = false }) {
+function PingRow({ row, label, stopWords, picked, walk, onPick, evidence = false }) {
   const leg = row.ok ? null : row.request?.ok ? row.reply : row.request;
-  const stop = leg?.stop?.deviceId ? faultsUi.pingStop(deviceName(leg.stop.deviceId), Boolean(row.request?.ok)) : null;
+  const stop = leg?.stop?.deviceId ? stopWords(leg.stop.deviceId, Boolean(row.request?.ok)) : null;
   // One line (repair: Fable): «✗ зупинився на R2», «✗ назад зупинився на R1»; «не проходить» for screen readers.
   return (
     <li className={`ng-rt-checkline ng-rf-ping is-${row.ok ? 'pass' : 'fail'}${picked ? ' is-shown' : ''}`} {...(evidence ? { 'data-evidence': 'current' } : {})}>

@@ -17,7 +17,7 @@
 import { classify } from '../logic/classify.js';
 import { renderPolicy } from '../logic/render.js';
 import { fields } from '../logic/model.js';
-import { meanings, predictStep, services, states, t, ui, walkText } from '../uk.js';
+import { comprehension, meanings, predictStep, services, states, t, ui, walkText } from '../uk.js';
 import { uk } from '../../../ui/uk.js';
 
 /** Per-row animation step and the whole walk's cap (§5). */
@@ -176,10 +176,35 @@ export function chainRows(task, hook) {
   return { rows, folded: predictStep.folded({ hook: other, count }) };
 }
 
-/** The walk's notes under the table: the corrected slow-path line (round 4,
- * spec F1 v2) wherever the walk marks FastTrack, instead of the logic's
- * older assumption words. */
-export const walkNotes = walk => (walk?.steps?.some(s => s.outcome === 'marked') ? [predictStep.slowPath] : []);
+/** The walk's notes under the table: the slow-path line wherever the walk
+ * marks FastTrack, instead of the logic's older assumption words (round 4,
+ * spec F1 v2; round 5, 5b-2 B: it names the packet shown as the slow path's
+ * and says the marking doesn't end its check). */
+export const walkNotes = walk => (walk?.steps?.some(s => s.outcome === 'marked') ? [comprehension.fasttrackIntro] : []);
+
+/**
+ * The stepper's words for each frame of the walk (round 5, 5b-2 B), from
+ * the trace's captions (logic/trace.js traceCaptions, RouterOS numbers from
+ * 0 as the table shows them): frame 0 the packet setting off (to its
+ * original destination, before any dst-NAT), 1 its
+ * arrival (and its dst-NAT), 2 the chain, then one per row on screen (a
+ * rule, or the chain's end). `rows`: the rows the walk lights (walkPlan's).
+ */
+export function stepCaptions(captions, card, rows, plan) {
+  const of = kind => captions.filter(c => c.kind === kind).map(c => c.text);
+  const out = [
+    // Before arrival the packet still carries its original destination; a dst-NAT shows at arrival (repair v1, Astra 1).
+    ui.stepStart({ src: card.packet.srcIp, dst: card.facts.dstNat === true && card.facts.dstNatFrom ? card.facts.dstNatFrom.address : card.packet.dstIp }),
+    [...of('ingress'), ...of('dst-nat')].join('. '),
+    of('chain').join('. '),
+  ];
+  for (let i = 0; i < plan.rowsLit; i++) {
+    const row = rows[i];
+    const caption = row.end ? captions.find(c => c.kind === 'chain-end') : captions.find(c => c.kind === 'rule' && c.ruleId === row.id);
+    out.push(caption?.text ?? '');
+  }
+  return out;
+}
 
 /** The current card's findings only (S3), not the round's aggregate code. */
 export function findingOf(result, cardId) {

@@ -22,7 +22,7 @@ import { webPreview } from './platform.js';
 import '../ui/tokens.css';
 import './shell.css';
 
-/** @param {{ target: { id: string, title: string, prefs?: object, sections: Array<{ id: string, title: string, blurb: string, Screen: Function, bank?: object }> } }} props */
+/** @param {{ target: { id: string, title: string, prefs?: object, sections: Array<{ id: string, title: string, blurb: string, advice?: string, Screen: Function, bank?: object }> } }} props */
 export default function Shell({ target }) {
   return (
     <StoreProvider prefs={target.prefs}>
@@ -113,7 +113,9 @@ function ShellFrame({ target }) {
 
 // Round 4 (spec A7): the cards in the target's order (the IP screens first),
 // «Почни тут» on the first; each card is one button, its arrow a corner mark;
-// seven cards fit at 1280 × 800 and 1000 × 700 without scrolling. The web
+// seven cards fit at 1280 × 800 and 1000 × 700 without scrolling. Round 5
+// 5b-2 (spec G): a section's `advice` («радимо спершу: …») is a quiet last
+// line of its card, part of the button's name; nothing is locked. The web
 // build adds a note above the cards and a footer link to the notices page;
 // the Windows app shows neither (platform.js).
 function StartScreen({ sections, theme, headingRef, onOpen }) {
@@ -138,6 +140,7 @@ function StartScreen({ sections, theme, headingRef, onOpen }) {
                   {i === 0 && <>{' '}<span className="ng-card-start">{uk.startHere}</span></>}
                 </span>{' '}
                 <span className="ng-card-blurb">{s.blurb}</span>
+                {s.advice && <>{' '}<span className="ng-card-advice">{s.advice}</span></>}
                 <span className="ng-card-arrow" aria-hidden="true">→</span>
               </button>
             </li>

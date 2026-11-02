@@ -1,18 +1,24 @@
 // One card's content in the deck (between ReorderList's handle and its
 // «↑» «↓», or in the read-only list of the learner's own order after a
-// reveal): the command, its purpose on the second line (round 5, R2: what
-// the command achieves, in Ukrainian, always visible; the bank's data), and
-// on DR-3 a third, muted line with the same step in Winbox's menus. Then the
-// «• Ще ні» mark after a failed check (beside the prompt group where there
-// is one, in the place of its «режим?», so it never widens the row), and the
-// prompt as one quiet group (round 4, spec S2): «режим?» until the learner
-// picks, the chosen prompt standing out, the others plain text in the group.
+// reveal). Round 5 (spec 5b-2 F, v2): the purpose comes first, in
+// Ukrainian (R2: what the command achieves, always visible; the bank's
+// data), and is the row's name in words (purposeOf: the handle and the
+// list's announcements); the command is the second line, bold monospace at
+// its usual size; on DR-3 a third, muted line gives the same step in
+// Winbox's menus. The prompt group sits on the right of the command's line,
+// in one band with the command (setup.css: the purpose keeps the whole
+// row's width, so it stays one line). Round 4, spec S2: one quiet group,
+// «режим?» until the learner picks, the chosen prompt standing out, the
+// others plain text in the group; after a failed check «• Ще ні» takes the
+// place of its «режим?», so a mark never widens the row. On a deck without
+// prompts (DR-3) the mark takes that place on its own.
 // Nothing here depends on the card's required mode or place: the options are
 // the deck's prompts, the same for every card, and the names say only the
-// row's position. A deck without prompts (DR-3) has no prompt choice at all.
+// row's position.
 //
-// DR-3's login check (`kind: 'checkpoint'`) is a step, not a command: ✋ and
-// its words in the body font, no monospace; it carries a purpose too.
+// DR-3's login check (`kind: 'checkpoint'`) is a step, not a command: its
+// first line says so (comprehension.checkpointPurpose), and its words (✋)
+// are in the body font, no monospace.
 //
 // `current` marks the row as the evidence the help panel's current message
 // is about (data-evidence="current": the first flagged row, or the row
@@ -21,7 +27,11 @@ import { useId } from 'react';
 import Segmented from '../../../ui/components/Segmented.jsx';
 import Purpose from '../../../ui/components/Purpose.jsx';
 import { uk as shared } from '../../../ui/uk.js';
-import { ui } from '../uk.js';
+import { comprehension, ui } from '../uk.js';
+
+/** A row's purpose as shown (its first line and its name in words): the bank's,
+ * and for DR-3's login check the words that say it is a step, not a command. */
+export const purposeOf = row => (row.kind === 'checkpoint' ? comprehension.checkpointPurpose : row.purpose);
 
 /**
  * @param {{
@@ -49,15 +59,14 @@ export default function CardRow({ row, n, prompts, marked = false, modeInvalid =
     );
   } else if (prompts.length > 0) {
     choice = <span className="ng-su-chosen">{row.prompt ?? ui.noChoice}</span>;
+  } else if (mark) {
+    choice = <span className="ng-su-flag">{mark}</span>;
   }
   return (
     <div className={`ng-su-row${checkpoint ? ' is-step' : ''}`} data-term="" {...(current ? { 'data-evidence': 'current' } : {})}>
-      <span className="ng-su-first">
-        {main}
-        {!(prompts.length > 0 && onPrompt) && mark}
-      </span>
+      <Purpose stacked className="ng-su-purpose">{purposeOf(row)}</Purpose>
+      <span className="ng-su-term">{main}</span>
       {choice}
-      <Purpose stacked className="ng-su-purpose">{row.purpose}</Purpose>
       {row.secondary && <span className="ng-su-path">{`${ui.winbox} ${row.secondary}`}</span>}
     </div>
   );

@@ -21,7 +21,7 @@ console.error = (...args) => warnings.push(args.map(String).join(' ').slice(0, 4
 console.warn = console.error;
 
 const { act, mountFirewall, fw, record, combined } = await import('../../.test-bundles/harness/mounted-firewall.mjs');
-const { ui: fwUi, t: fwT, predictStep: fwStep } = await import('../../src/sections/firewall/uk.js');
+const { ui: fwUi, t: fwT, predictStep: fwStep, comprehension: fwWords } = await import('../../src/sections/firewall/uk.js');
 const { region } = await import('./firewall-screen.mjs');
 const results = [];
 const check = (name, ok, detail = '') => results.push({ name, ok: Boolean(ok), detail: typeof detail === 'string' ? detail : JSON.stringify(detail) });
@@ -463,12 +463,21 @@ scenario('overlays and steps', m => {
   click(q('.ng-fw .ng-more-close'));
   click(q('.ng-fw-walkbar').querySelectorAll('button').find(b => text(b) === 'По кроках'));
   const counter = () => text(q('.ng-fw-step-text'));
+  // Round 5 (5b-2 B): each step is named in words under the stepper (the trace's captions), the group described by them.
+  const caption = () => text(q('#ng-fw-step-caption'));
   check('«По кроках»: starts at step 1', /^крок 1 з \d+$/.test(counter()) && walk() === 'stepping', counter());
+  check('«По кроках»: step 1 names the packet setting off; the group is described by those words', /^Пакет \S+ → \S+ вирушає$/.test(caption()) && q('#ng-fw-step-caption').getAttribute('aria-live') === 'polite'
+    && q('.ng-fw-stepper').getAttribute('aria-describedby') === 'ng-fw-step-caption', caption());
   key(q('.ng-fw-stepper').querySelector('button'), 'ArrowRight');
+  check('«По кроках»: step 2 says where the packet arrives', /^Пакет приходить на \S+/.test(caption()), caption());
   key(q('.ng-fw-stepper').querySelector('button'), 'ArrowRight');
   check('«По кроках»: arrows step', /^крок 3 з/.test(counter()), counter());
+  check('«По кроках»: step 3 names the chain', /^Ланцюжок (input|forward)$/.test(caption()), caption());
+  key(q('.ng-fw-stepper').querySelector('button'), 'ArrowRight');
+  check('«По кроках»: step 4 names the first rule of the chain by its RouterOS number', /^(Правило \d+ · (input|forward): |Кінець ланцюжка)/.test(caption()), caption());
+  key(q('.ng-fw-stepper').querySelector('button'), 'ArrowLeft');
   click(q('.ng-fw-stepper').querySelectorAll('button')[0]);
-  check('«По кроках»: ◀ steps back', /^крок 2 з/.test(counter()), counter());
+  check('«По кроках»: ◀ steps back', /^крок 2 з/.test(counter()) && /^Пакет приходить на/.test(caption()), counter());
   check('«По кроках»: no timer runs while stepping', pending.size === 0);
 });
 
@@ -509,7 +518,8 @@ scenario195('fix 2: the slow-path line under the table', m => {
   check('fix 2: not before the FastTrack row is lit', q('.ng-fw-note') === null && walk() === 'playing');
   tick(400);
   const note = q('.ng-fw-note');
-  check('fix 2: once it is lit, under the table, in the corrected words (F1 v2)', note !== null && note.parentNode === q('.ng-fw-rules') && text(note) === fwStep.slowPath, text(note));
+  // Round 5 (5b-2 B): the words name the packet shown as the slow path's, and that the marking doesn't end its check.
+  check('fix 2: once it is lit, under the table, in the corrected words (F1 v2; 5b-2 B)', note !== null && note.parentNode === q('.ng-fw-rules') && text(note) === fwWords.fasttrackIntro, text(note));
   tick(3000);
   check('fix 2: and not in the feedback', !/повільному шляху/.test(status() + after()) && /Вирішує forward, рядок 6/.test(after()), after());
   click(cont());
@@ -605,9 +615,13 @@ function wheelZoom(label, mountIt, frameSelector, barSelector) {
 // over every rendered surface for several seeds, with injected leaks.
 {
   const { orderRecord, orderCreate, prepareOrder, orderInitialState } = await import('../../.test-bundles/harness/mounted-firewall.mjs');
+  const { witnessFor } = await import('../../src/sections/firewall/logic/order.js');
   const { firewallOrderLeaks, normaliseReactIds, orderListFindings } = await import('./firewall-order-leaks.mjs');
+  const { expectWorkedExample } = await import('./worked-example.mjs');
+  /** expectWorkedExample as a check: the failure's words, or null. */
+  const exampleProblem = (container, options) => { try { expectWorkedExample(container, options); return null; } catch (e) { return e.message; } };
   const { uk: shared } = await import('../../src/ui/uk.js');
-  const { orderUi, orderText, orderCopy, ui: fwUi, t: fwT } = await import('../../src/sections/firewall/uk.js');
+  const { orderUi, orderText, orderCopy, ui: fwUi, t: fwT, comprehension: fwc } = await import('../../src/sections/firewall/uk.js');
   const OSEEDS = { input: 11, all: 23 };
   const seen = new Set();
   const quoted = s => String(s).replace(/\.$/, '');
@@ -690,6 +704,21 @@ function wheelZoom(label, mountIt, frameSelector, barSelector) {
     const task = task2(m);
     check('FW-2 levels: «Лише до роутера» shows the five input rules in the task\'s shuffled order', items().length === 5 && JSON.stringify(rowNames()) === JSON.stringify(task.rules.map(r => quoted(descOf(task, r.id)))) && task.rules.every(r => r.chain === 'input'));
     check('FW-2 levels: each row says its chain, action, conditions and meaning', items().every((li, i) => text(li.querySelector('.ng-fwo-chain')) === task.rules[i].chain && li.querySelector('.ng-fw-action') && li.querySelector('.ng-fw-cond') && text(li.querySelector('.ng-fwo-desc')) === descOf(task, task.rules[i].id)));
+    // Round 5 (5b-2 B): the description leads (first line, after the chain); the native rule is the second line.
+    check('FW-2 levels (5b-2): line 1 the chain and the description, line 2 the action and conditions', items().every(li => {
+      const [line, native] = li.querySelector('.ng-fwo-rule').children;
+      return line.className === 'ng-fwo-line' && line.querySelector('.ng-fwo-chain') && line.querySelector('.ng-fwo-desc') && !line.querySelector('.ng-fw-action')
+        && native.className === 'ng-fwo-native' && native.querySelector('.ng-fw-action') && native.querySelector('.ng-fw-cond') && !native.querySelector('.ng-fwo-desc');
+    }));
+    const line = q('.ng-fwo-list .ng-action-line');
+    check('FW-2 levels (5b-2): the action line over the list; the folded worked example is its next sibling, closed', text(line) === orderUi.action
+      && line.nextSibling?.getAttribute?.('data-worked-example') === '' && exampleProblem(m.container, { open: false }) === null, exampleProblem(m.container, { open: false }));
+    check('FW-2 levels (5b-2): one input chain, so no line about the chains\' order; ICMP glossed where the task first says it', q('.ng-fwo-ordering') === null
+      && all('.ng-fwo-gloss').length === 1 && text(q('.ng-fwo-gloss')) === `${fwc.icmpGloss}.` && /ICMP/.test(text(q('.ng-fwo-gloss').parentNode).split(fwc.icmpGloss)[0]));
+    click(q('.ng-wex-toggle'));
+    note();
+    check('FW-2 levels (5b-2): opened, the example shows its two finished rules on other values, and its words', exampleProblem(m.container, { open: true, rows: 2 }) === null
+      && /198\.51\.100\.64\/26/.test(text(q('.ng-wex-card'))) && !task.rules.some(r => text(q('.ng-wex-card')).includes(r.id)) && gate(m).length === 0, [exampleProblem(m.container, { open: true, rows: 2 }), gate(m)]);
     check('FW-2 levels: the task and its goal in a few lines, the policy named as a simplified home set', text(q('.ng-fwo-task')) === task.text.split('\n')[0] && all('.ng-fwo-goal p').length === 3 && text(q('.ng-fwo-policy')) === quoted(orderUi.policy));
     check('FW-2 levels: the diagram shows the network alone (no packet, no ingress chip)', q('.ng-fwo .ng-fw-svg') && q('.ng-fwo .ng-fw-envelope') === null && q('.ng-fwo .ng-fw-chip') === null && q('.ng-fwo .ng-fw-place.is-given') === null);
     check('FW-2 levels: no zoom bar on a diagram that fits (A3); «Текстом» is there', q('.ng-fwo .ng-fw-zoom') === null && q('.ng-fwo button[aria-controls="ng-fwo-text"]') !== null);
@@ -702,6 +731,9 @@ function wheelZoom(label, mountIt, frameSelector, barSelector) {
     note();
     check('FW-2 levels: «Увесь фільтр» shows all nine, input and forward in one list', items().length === 9 && new Set(all9.rules.map(r => r.chain)).size === 2 && JSON.stringify(rowNames()) === JSON.stringify(all9.rules.map(r => quoted(descOf(all9, r.id)))));
     check('FW-2 levels: its goal adds the WAN line and the port-forward fact (F2), the diagram its dst-NAT label', all('.ng-fwo-goal p').length === 4 && /прокидання порту/.test(text(q('.ng-fwo-goal'))) && /Проброс порту: 100\.64\.0\.2:443 → Сервер:443/.test(text(q('.ng-fwo-goal'))) && q('.ng-fwo .ng-fw-nat') !== null);
+    check('FW-2 levels (5b-2): the port-forward line is marked as the given (data-nat); both chains, so the line about their order; the example closed again (a new level)',
+      all('.ng-fwo-goal [data-nat]').length === 1 && /^Проброс порту/.test(text(q('.ng-fwo-goal [data-nat]'))) && text(q('.ng-fwo-ordering')) === fwc.ordering
+      && exampleProblem(m.container, { open: false }) === null);
     check('FW-2 levels: the chains grouped inside the one list: an edge per chain, a divider where it changes (F2)', items().every(li => /is-chain-(input|forward)/.test(li.className)) && items().filter(li => li.className.includes('is-chain-change')).length === items().filter((li, i) => i > 0 && (li.className.match(/is-chain-(\w+)/)?.[1] !== items()[i - 1].className.match(/is-chain-(\w+)/)?.[1])).length && all('.ng-fwo ol').length >= 1);
     click(main2());
     click(level('Лише до роутера'));
@@ -784,14 +816,29 @@ function wheelZoom(label, mountIt, frameSelector, barSelector) {
     const markOf = i => text(items()[i].querySelector('.ng-fwo-mark'));
     check('FW-2 dead FastTrack: the earlier rule «перехопило», the hidden one «не отримує» (Fable 1)', markOf(order.indexOf(acc)) === orderUi.markBlocker && markOf(order.indexOf(ft)) === orderUi.markHidden, [markOf(order.indexOf(acc)), markOf(order.indexOf(ft))]);
     check('FW-2 dead FastTrack: exactly those two rows are marked', all('.ng-fwo .ng-reorder-item.is-marked').length === 2 && [ft, acc].every(x => items()[order.indexOf(x)].className.includes('is-marked')));
-    check('FW-2 dead FastTrack: no packet, so no walk to open and no zoom tools', q('.ng-fwo [data-help-current] .ng-fw-card') === null && !button2(orderUi.walkShow) && q('.ng-fwo .ng-fw-path-line') === null && q('.ng-fwo .ng-fw-zoom') === null);
+    // Round 5 (5b-2 B): a shadowing has its packet too (logic witnessFor on the checked order): one the hidden rule would catch, taken earlier.
+    const witness = witnessFor(task, order, fb);
+    check('FW-2 dead FastTrack: its packet, beside the words (no «має · у тебе»: the outcome can be right), with a closed walk toggle; no zoom tools',
+      q('.ng-fwo [data-help-current] .ng-fw-card') !== null && q('.ng-fwo [role="status"] .ng-fw-card') === null && q('.ng-fwo-fate') === null
+      && button2(orderUi.walkShow)?.getAttribute('aria-expanded') === 'false' && q('.ng-fwo .ng-fw-path-line') === null && q('.ng-fwo .ng-fw-zoom') === null
+      && text(q('.ng-fwo [data-help-current] .ng-fw-card')).includes(witness.card.packet.dstIp) && witness.walk.decidedBy === acc);
     check('FW-2 dead FastTrack: after the check the hint button stays in the panel\'s row; the dead rule is the current evidence', hintButton()?.closest('[data-help="row"]') !== null
       && items()[order.indexOf(ft)].querySelector('[data-evidence="current"]') !== null && all('.ng-fwo [data-evidence="current"]').length === 1);
     check('FW-2 dead FastTrack: the leak gate passes with the finding shown', gate(m).length === 0, gate(m));
     click(hintButton());
     click(hintButton());
-    check('FW-2 dead FastTrack: hint 2 opens no walk (there is no packet)', !state2(m).walkOpen && all('.ng-fwo .is-walk').length === 0 && all('.ng-fwo [data-help="hint"]').length === 2 && !button2(orderUi.walkShow));
-    check('FW-2 dead FastTrack: hint 2\'s words point at the two marked rules, not at a walk', hintWords(2) === `Підказка 2 з 3. ${orderUi.hintDead}` && !/шлях/.test(hintWords(2)) && m.store.state.instances[task2(m).instanceKey].view.orderHint2 === 'order-dead', hintWords(2));
+    // 5b-2 content contract: logic can now open a shadow witness. The section
+    // writer wires its packet and walk into this unchanged screen next.
+    check('FW-2 dead FastTrack: hint 2 opens the shadow walk on the learner\'s rows: the earlier rule takes the packet, the hidden one never sees it',
+      state2(m).walkOpen && items().every(li => li.className.includes('is-walk')) && items()[order.indexOf(acc)].className.includes('is-walk-match')
+      && items()[order.indexOf(ft)].className.includes('is-walk-not-reached') && all('.ng-fwo [data-help="hint"]').length === 2 && button2(orderUi.walkHide)?.getAttribute('aria-expanded') === 'true');
+    // Repair v1 (Fable 2): a marked row's outcome is a line of its own, never run into its mark.
+    check('FW-2 dead FastTrack: on the two marked rows the mark and the walk\'s outcome are separate lines', [acc, ft].every(x => {
+      const rule = items()[order.indexOf(x)].querySelector('.ng-fwo-rule'), lines = [...rule.children].filter(c => c.className === 'ng-fwo-line');
+      return lines.length === 2 && lines[0].querySelector('.ng-fwo-mark') && !lines[0].querySelector('.ng-fwo-out') && lines[1].querySelector('.ng-fwo-out') && !lines[1].querySelector('.ng-fwo-mark');
+    }) && items().filter((li, i) => ![order.indexOf(acc), order.indexOf(ft)].includes(i)).every(li => !li.querySelector('.ng-fwo-mark') && li.querySelector('.ng-fwo-line .ng-fwo-out')));
+    check('FW-2 dead FastTrack: hint 1 follows its packet to the rule that took it', hintWords(1) === `Підказка 1 з 3. ${fwc.hintPacket({ srcIp: witness.card.packet.srcIp, dstIp: witness.card.packet.dstIp, ingress: witness.card.facts.ingress, chain: 'forward', ruleNumber: order.indexOf(acc) + 1, verdict: 'accept' })}`, hintWords(1));
+    check('FW-2 dead FastTrack: hint 2\'s words point at the two marked rules', hintWords(2) === `Підказка 2 з 3. ${orderUi.hintDead}` && !/шлях/.test(hintWords(2)) && m.store.state.instances[task2(m).instanceKey].view.orderHint2 === 'order-dead', hintWords(2));
     check('FW-2 dead FastTrack: the gate passes with those words', gate(m).length === 0, gate(m));
     note();
   }, { variantId: 'all' });
@@ -823,10 +870,10 @@ function wheelZoom(label, mountIt, frameSelector, barSelector) {
     check('FW-2 hints: the hint button sits in the panel\'s row, beside «Перевірити»', hintButton()?.closest('[data-help="row"]') !== null && hintButton().parentNode === main2().parentNode && text(hintButton()) === `💡 ${shared.hintN({ n: 1, total: 3 })}`);
     click(hintButton());
     note();
-    check('FW-2 hints: the first is the question, current and announced; nothing checked', text(current()).includes(orderText('order-hint-question')) && status2().includes(orderText('order-hint-question'))
+    // Round 5 (5b-2 B): before any check hint 1 asks for one (it follows the packet a check finds); no rule is current.
+    check('FW-2 hints: the first, before a check, asks for one; current and announced; nothing checked', text(current()).includes(fwc.hintBeforeCheck) && status2().includes(fwc.hintBeforeCheck)
       && state2(m).result === null && inst2(m).session.hintIndex === 1 && inst2(m).session.assisted);
-    check('FW-2 hints: hint 1 makes the rule it names the current evidence', all('.ng-fwo [data-evidence="current"]').length === 1
-      && text(q('.ng-fwo [data-evidence="current"] .ng-fwo-desc')) === fwT('rule.input-rest'));
+    check('FW-2 hints: before a check hint 1 names no rule (no current row)', all('.ng-fwo [data-evidence="current"]').length === 0);
     check('FW-2 hints: the gate passes with hint 1', gate(m).length === 0, gate(m));
     click(hintButton());
     note();
@@ -839,8 +886,25 @@ function wheelZoom(label, mountIt, frameSelector, barSelector) {
     check('FW-2 hints: the hint doesn\'t hide the evidence: the packet card and «має · у тебе» stay beside the shrunk verdict, outside the status region',
       q('.ng-fwo .ng-help-mini-box .ng-fw-card') !== null && Boolean(q('.ng-fwo .ng-help-mini-box .ng-fwo-fate')) && q('.ng-fwo [role="status"] .ng-fw-card') === null);
     check('FW-2 hints: its words are about the packet\'s walk', hintWords(2) === `Підказка 2 з 3. ${orderText('order-hint-walk')}`, hintWords(2));
+    const fb2 = state2(m).result.feedback, w2 = witnessFor(task2(m), state2(m).answer.order, fb2);
+    check('FW-2 hints: hint 2\'s check makes hint 1 follow its packet: where it comes in, its chain, the rule it stopped at', hintWords(1) === `Підказка 1 з 3. ${fwc.hintPacket({
+      srcIp: fb2.card.packet.srcIp, dstIp: fb2.card.packet.dstIp, ingress: fb2.card.facts.ingress, chain: w2.walk.hook,
+      ruleNumber: w2.walk.decidedBy === 'chain-end' ? null : state2(m).answer.order.indexOf(w2.walk.decidedBy) + 1, verdict: w2.walk.verdict })}`, hintWords(1));
     check('FW-2 hints: the second checks the list and opens that packet\'s walk (its «Ще ні» on the shrunk verdict line)', state2(m).result?.feedback?.code === 'order-verdict' && state2(m).walkOpen && all('.ng-fwo .is-walk').length === 5 && inst2(m).session.attempts === 1 && /Ще ні/.test(text(q('.ng-fwo .ng-help-mini'))));
     check('FW-2 hints: the gate passes with the walk open', gate(m).length === 0, gate(m));
+    // Repair v1 (Astra): after a reorder hint 1 keeps the packet and rule number of the order that was checked; a recheck updates it.
+    const checkedWords = hintWords(1);
+    const moved = state2(m).answer.order.indexOf(fb2.ruleIds[0]);
+    click(moved > 0 ? up2(moved) : q('.ng-fwo .ng-reorder-item .ng-reorder-move:last-child'));
+    check('FW-2 hints: a reorder keeps hint 1 on the checked order (its packet, its rule number)', state2(m).result === null && hintWords(1) === checkedWords, [checkedWords, hintWords(1)]);
+    click(main2());
+    const fb3 = state2(m).result.feedback, w3 = fb3.code === 'order-ok' ? null : witnessFor(task2(m), state2(m).answer.order, fb3);
+    const expected1 = w3 ? `Підказка 1 з 3. ${fwc.hintPacket({ srcIp: w3.card.packet.srcIp, dstIp: w3.card.packet.dstIp, ingress: w3.card.facts.ingress, chain: w3.walk.hook,
+      ruleNumber: w3.walk.decidedBy === 'chain-end' ? null : state2(m).answer.order.indexOf(w3.walk.decidedBy) + 1, verdict: w3.walk.verdict })}` : `Підказка 1 з 3. ${orderUi.hintDone}`;
+    check('FW-2 hints: a recheck brings hint 1 to the new check\'s packet and rule number', hintWords(1) === expected1, [checkedWords, hintWords(1), expected1]);
+    // Put the list back as the scenario left it before (the hints below expect the walk the second hint opened).
+    putOrder(m, task2(m).rules.map(r => r.id));
+    click(main2()); click(button2(orderUi.walkShow));
     click(hintButton());
     note();
     check('FW-2 hints: the third is the SMTP example; then the hint button goes and focus moves to its words', text(current()).includes(orderText('order-hint-example')) && hintButton() === null
@@ -856,6 +920,7 @@ function wheelZoom(label, mountIt, frameSelector, barSelector) {
     click(main2());
     note();
     check('FW-2 pass: «✓ Так» and the words', status2() === `✓ Так ${orderText('order-ok')}`, status2());
+    check('FW-2 pass (repair v1): the action line says the order is accepted, in its place', text(q('#ng-fwo-action')) === orderUi.actionDone && q('.ng-fwo-list .ng-action-line') === q('#ng-fwo-action'));
     check('FW-2 pass: no marks, no walk toggle; the session is solved, not assisted', all('.ng-fwo .is-marked').length === 0 && !button2(orderUi.walkShow) && inst2(m).session.status === 'solved' && inst2(m).session.earned.solved && !inst2(m).session.assisted);
     check('FW-2 pass: «Чому так» with the input tips only on this level', text(q('.ng-fwo-result .ng-fw-caption')) === orderUi.tipsHeading && all('.ng-fwo-tips li').map(li => text(li)).join('|') === [orderUi.tips.replies, orderUi.tips.input].join('|'));
     check('FW-2 pass: the script is open in the success detail, under its label', all('.ng-fwo-result .ng-fw-caption').map(h => text(h)).includes(orderText('order-accepted-label')) && Boolean(q('.ng-fwo-result .ng-copy-pre')));
@@ -869,6 +934,7 @@ function wheelZoom(label, mountIt, frameSelector, barSelector) {
     click(up2(4));
     check('FW-2 pass: the edited row is the stale verdict\'s evidence; the panel anchors right after it', all('.ng-fwo [data-evidence="current"]').length === 1
       && items()[3].querySelector('[data-evidence="current"]') !== null && q('.ng-fwo .ng-help-host')?.previousSibling === items()[3]);
+    check('FW-2 pass (repair v1): after an edit the action line asks again', text(q('#ng-fwo-action')) === orderUi.action);
     check('FW-2 pass: a reorder after success clears the result; the verdict stays, dimmed («до змін»), its tips and the checked order\'s script folded behind «Детальніше»; «Далі →» stays primary',
       state2(m).result === null && current()?.hasAttribute('data-help-stale') && q('.ng-fwo .ng-help-more .ng-fwo-result .ng-copy-pre')?.textContent === script && !q('.ng-fwo .ng-help-more').hasAttribute('open')
       && /до змін/.test(status2()) && nextButton()?.className.includes('ng-button-primary'));
@@ -935,6 +1001,18 @@ function wheelZoom(label, mountIt, frameSelector, barSelector) {
     check('FW-2 reveal: following it passes, still assisted and not earned', state2(m).result.ok && inst2(m).session.assisted && !inst2(m).session.earned.solved && /✓ Так/.test(status2()));
   }, { variantId: 'all' });
 
+  // Repair v1 (Fable 3): at 1000 px the split layout; the router's addresses as a line that breaks only between pairs.
+  {
+    const width = globalThis.window.innerWidth;
+    globalThis.window.innerWidth = 1000;
+    orderScenario('FW-2 split', m => {
+      const strip = q('.ng-fwo-strip'), pairs = all('.ng-fwo-strip .ng-fwo-pair').map(text);
+      check('FW-2 split: the task beside the list, the diagram after both; the address line under the task', fwo().getAttribute('data-layout') === 'split' && strip?.parentNode === q('.ng-fwo-intro')
+        && text(strip) === 'адреси цього роутера: ether1 100.64.0.2 · bridge 192.168.88.1' && JSON.stringify(pairs) === JSON.stringify(['ether1 100.64.0.2', 'bridge 192.168.88.1']), text(strip));
+    });
+    globalThis.window.innerWidth = width;
+  }
+
   wheelZoom('FW-2 wheel', () => mountOrder('input'), '.ng-fwo .ng-fw-frame', '.ng-fwo .ng-fw-zoom');
 
   // The dedicated FW-2 gate over every seeded surface before the reveal:
@@ -984,7 +1062,8 @@ function wheelZoom(label, mountIt, frameSelector, barSelector) {
   const shown = [...seen].join(' ');
   const words = [orderUi.title, quoted(orderUi.policy), orderUi.check, shared.next, orderUi.revealButton, orderUi.tipsHeading, orderUi.mark, orderUi.walkShow, orderUi.walkHide,
     ...Object.values(orderUi.tips), orderText('order-ok'), orderText('order-verdict'), orderText('order-reveal-label'), orderText('order-accepted-label'),
-    orderText('order-hint-question'), orderText('order-hint-walk'), orderText('order-hint-example'), ...orderRecord.variants.map(v => v.title), 'має: ', ' · у тебе: '];
+    fwc.hintBeforeCheck, orderText('order-hint-walk'), orderText('order-hint-example'), ...orderRecord.variants.map(v => v.title), 'має: ', ' · у тебе: ',
+    orderUi.action, fwc.ordering, fwc.icmpGloss, orderUi.markBlocker, orderUi.markHidden];
   const missing = words.filter(w => !shown.includes(w.replace(/\s+/g, ' ')));
   check('FW-2 strings: every screen word and code was shown in a scenario', missing.length === 0 && Object.keys(orderCopy).length === 10, missing);
 }

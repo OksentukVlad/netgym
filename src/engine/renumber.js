@@ -139,7 +139,7 @@ export function mapText(text, map) {
 }
 
 const addressFields = new Set(['ip', 'gateway', 'via', 'dst', 'from', 'to', 'destination', 'primaryVia', 'backupVia', 'alternatives']);
-const textFields = new Set(['text', 'topology', 'hint', 'justification', 'title', 'label', 'note', 'name']);
+const textFields = new Set(['text', 'details', 'topology', 'hint', 'justification', 'title', 'label', 'note', 'name']);
 /** Strict structural walk: new address-bearing fields fail closed. */
 export function mapAddresses(value, map, key = '', parent = null, prose = false) {
   if (typeof value === 'string') {

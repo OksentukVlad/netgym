@@ -23,12 +23,13 @@ import { check } from '../../src/sections/setup/logic/rules.js';
 import { explanation, hints, tips } from '../../src/sections/setup/logic/hints.js';
 import { capabilities } from '../../src/sections/setup/logic/model.js';
 import { initialState, transition } from '../../src/sections/setup/logic/state.js';
-import { deckUi, text, ui } from '../../src/sections/setup/uk.js';
+import { comprehension, deckUi, text, ui } from '../../src/sections/setup/uk.js';
+import { setupExample } from '../../src/sections/setup/logic/examples.js';
 import { uk as shared } from '../../src/ui/uk.js';
 
 export const bank = setupBank;
 export const [ciscoRouter, cisco2960, mikrotikRouter] = setupBank.decks;
-export { act, drill, cardText, recallRows, render, scriptForState, check, explanation, hints, tips, capabilities, initialState, transition, successTips, lineSummary, deckUi, text, ui, shared };
+export { act, drill, cardText, recallRows, render, scriptForState, check, explanation, hints, tips, capabilities, initialState, transition, successTips, lineSummary, deckUi, text, ui, shared, comprehension, setupExample };
 
 function Expose({ into }) {
   Object.assign(into, useStore());

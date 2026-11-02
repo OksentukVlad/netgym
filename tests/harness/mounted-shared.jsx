@@ -13,6 +13,8 @@
 //     region, beside the panel's own check;
 //   - BoardFixture: a long board (the panel's home before or after it, and
 //     anchored after a late flagged row).
+// Round 5 stage 5b-2: WorkedExample on a screen (ExampleScreen), beside the
+// screen's first-visit folding.
 import { createRoot } from 'react-dom/client';
 import { act, useRef, useState } from 'react';
 import StoreProvider from '../../src/app/StoreProvider.jsx';
@@ -21,8 +23,10 @@ import HelpPanel from '../../src/ui/components/HelpPanel.jsx';
 import MoreMenu from '../../src/ui/components/MoreMenu.jsx';
 import Aside, { useAsideFold } from '../../src/ui/components/Aside.jsx';
 import DoneMark from '../../src/ui/components/DoneMark.jsx';
+import ActionLine from '../../src/ui/components/ActionLine.jsx';
+import WorkedExample from '../../src/ui/components/WorkedExample.jsx';
 
-export { act, HelpPanel, MoreMenu, Aside, DoneMark };
+export { act, HelpPanel, MoreMenu, Aside, DoneMark, WorkedExample };
 
 function mountElement(element, parent = document.body) {
   const container = document.createElement('div');
@@ -205,6 +209,35 @@ export function mountAside(screen = 'demo') {
   const tree = () => <StoreProvider><Expose />{show && <AsideScreen screen={screen} />}</StoreProvider>;
   const m = mountElement(tree());
   return { ...m, store, remount() { show = false; m.render(tree()); show = true; m.render(tree()); } };
+}
+
+/** A screen with a WorkedExample under its action line (spec 5b-2 A); «Перевірити» folds the screen's asides. */
+export function ExampleScreen({ taskKey, kind = 'table', screen = 'demo' }) {
+  const fold = useAsideFold(screen);
+  const context = 'R1 → LAN-C 192.0.2.0/24, сусід 198.51.100.2';
+  const example = kind === 'lines'
+    ? <WorkedExample taskKey={taskKey} context="Роутер Cisco, режим за запрошенням." rows={['show running-config → R1#']} note="Перегляд налаштувань — у привілейованому режимі." />
+    : kind === 'drawing'
+      ? <WorkedExample taskKey={taskKey} context="198.51.100.77/26"><svg className="ruler" aria-hidden="true"><text>64 · 128</text></svg><p className="ruler-words">Блок 198.51.100.64–127.</p></WorkedExample>
+      : <WorkedExample taskKey={taskKey} context={context} head={['Мережа', 'Маска', 'Наступний перехід']} rows={[['192.0.2.0', '255.255.255.0', '198.51.100.2']]} />;
+  return (
+    <div className="example-screen">
+      <ActionLine id="example-act">Заповни перший рядок.</ActionLine>
+      {example}
+      <input className="answer" aria-label="Мережа" />
+      <button type="button" className="screen-check" onClick={fold}>Перевірити</button>
+    </div>
+  );
+}
+
+/** ExampleScreen in the app store; `set(props)` is the screen's next render, `remount()` leaving and coming back. */
+export function mountExample(props) {
+  const store = {};
+  function Expose() { Object.assign(store, useStore()); return null; }
+  let show = true, current = props;
+  const tree = () => <StoreProvider><Expose />{show && <ExampleScreen {...current} />}</StoreProvider>;
+  const m = mountElement(tree());
+  return { ...m, store, set(next) { current = next; m.render(tree()); }, remount() { show = false; m.render(tree()); show = true; m.render(tree()); } };
 }
 
 /** «⋯» with a button outside it (for outside clicks and Tab). */

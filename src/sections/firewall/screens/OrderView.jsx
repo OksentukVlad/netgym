@@ -60,20 +60,35 @@
 //   - two columns (≥ 1160): the heading, the task and the diagram (at its
 //     readable 12 px text) on the left, sticky, one screen high; on the
 //     right the list with its panel, at their natural height;
-//   - one column (< 1160): the same order, the diagram last; nothing sticky.
+//   - split (900–1159, round 5, 5b-2 B): the heading and the task (with
+//     the router's addresses as a line) on the left, the list on the right,
+//     the whole diagram under both; nothing sticky;
+//   - one column (< 900): the same order, the diagram last.
+//
+// Round 5 (5b-2 A, B): the action line over the list with the folded worked
+// example under it (its own two-rule policy on reserved addresses); each
+// row leads with its description, the native rule under it; the task says
+// that order matters within each chain and glosses ICMP where it first
+// appears; hint 1 follows the last checked packet (logic hintsForState) and
+// a shadowing shows its packet and walk (logic witnessFor), as a changed
+// outcome does.
 // The zoom bar follows spec A3 (only when the diagram doesn't fit).
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { forRecord } from '../logic/order.js';
-import { initialState, transition } from '../logic/order-state.js';
+import { hintsForState, initialState, transition } from '../logic/order-state.js';
+import { orderExample } from '../logic/examples.js';
 import { useExercise } from '../../../ui/useExercise.js';
 import { usePlace, usePref } from '../../../ui/useStore.js';
 import { BarControls } from '../../../ui/BarSlot.jsx';
 import Segmented from '../../../ui/components/Segmented.jsx';
-import HelpPanel from '../../../ui/components/HelpPanel.jsx';
+import HelpPanel, { bringIntoView } from '../../../ui/components/HelpPanel.jsx';
+import { useReducedMotion } from '../../../ui/motion.js';
 import DoneMark, { earnedBy } from '../../../ui/components/DoneMark.jsx';
 import { useStore } from '../../../ui/useStore.js';
 import ReorderList from '../../../ui/components/ReorderList.jsx';
 import Purpose from '../../../ui/components/Purpose.jsx';
+import ActionLine from '../../../ui/components/ActionLine.jsx';
+import WorkedExample from '../../../ui/components/WorkedExample.jsx';
 import CopyBlock from '../../../ui/components/CopyBlock.jsx';
 import TextEquivalent, { TextEquivalentButton } from '../../../ui/components/TextEquivalent.jsx';
 import FirewallDiagram from './FirewallDiagram.jsx';
@@ -81,14 +96,16 @@ import PacketCard from './PacketCard.jsx';
 import { cardLines, natRuleOf } from './walkView.js';
 import { nextSeed } from './round.js';
 import { TIPS, hint2Text, orderRows, orderScene, orderTextSections, quoted, taskLines, walkRows } from './orderView.js';
-import { orderText, orderUi, t, ui } from '../uk.js';
+import { comprehension, orderText, orderUi, t, ui } from '../uk.js';
 import '../../../ui/tokens.css';
 import './firewall.css';
 import './order.css';
 
-/** The layout for the screen's width (the threshold in order.css): two
- * columns once the diagram's column can keep its 12 px text beside the list. */
-export const orderLayoutFor = width => (width >= 1160 ? 'two' : 'one');
+/** The layout for the screen's width (the thresholds in order.css): two
+ * columns once the diagram's column can keep its 12 px text beside the list;
+ * below that (round 5, 5b-2 B: 1000 × 700) the task beside the list and the
+ * diagram under both, so the list starts at the top; one column when narrower. */
+export const orderLayoutFor = width => (width >= 1160 ? 'two' : width >= 900 ? 'split' : 'one');
 
 /** The layout, and the scrolling area's height in two columns (the sticky
  * left column is one screen high: --ng-fwo-screen). */
@@ -110,8 +127,21 @@ function useLayout(ref) {
   return layout;
 }
 
-/** The rule hint 1 names before any check («Відкидає решту пакетів до роутера»). */
-const restRuleOf = task => task.rules.find(r => r.descriptionCode === 'rule.input-rest')?.id ?? null;
+/** The worked example (round 5, 5b-2 A): one fixed policy on reserved addresses, never this task's;
+ * each rule a line, its values after their names («Ланцюжок: input · Дія й умови: accept · …»). */
+const EXAMPLE = orderExample();
+const EXAMPLE_LINES = EXAMPLE.rows.map(row => row.map((cell, i) => `${EXAMPLE.columns[i]}: ${cell}`).join(' · '));
+
+/** The goal line that first says «ICMP» carries its gloss (5b-2 B); the port-forward line is a given (data-nat). */
+function GoalLines({ goals, nat }) {
+  const glossed = goals.findIndex(line => /\bICMP\b/.test(line));
+  const natText = nat ? `${nat.address}:${nat.port}` : null;
+  return goals.map((line, i) => (
+    <p key={line} {...(natText && line.includes(natText) ? { 'data-nat': '' } : {})}>
+      {line}{i === glossed && <> <span className="ng-fwo-gloss">{`${comprehension.icmpGloss}.`}</span></>}
+    </p>
+  ));
+}
 
 const HINTS = 3;
 
@@ -120,28 +150,31 @@ function Chain({ chain }) {
   return <span className={`ng-fwo-chain is-${chain}`}>{chain}</span>;
 }
 
-/** One row's content (between ReorderList's handle and its ↑ ↓): the chain,
- * the action and the conditions (FW-1's chips), then the description, its
- * purpose line (round 5, R2: the shared Purpose; FW-2 keeps the full
- * description, which also names the rule in its feedback; the one
- * exemption from the one-line cap), always shown, with «• Ще ні» after it
- * when the finding names this rule; with the walk open, this packet's
- * outcome on a line of its own under it (round 5 repair: never in its place). */
+/** One row's content (between ReorderList's handle and its ↑ ↓), in two
+ * lines (round 5, 5b-2 B): first the chain, the rule's description (its
+ * purpose: R2; FW-2 keeps the full description, which also names the rule
+ * in its feedback, the one exemption from the one-line cap), «• Ще ні» when
+ * the finding names this rule and, with the walk open, this packet's
+ * outcome after it (on its own line when the row is marked too; never in
+ * its place); then the native rule, its action
+ * and conditions (FW-1's chips), monospace and smaller. */
 function RuleBody({ row, marked, outcome, current }) {
   return (
     <div className="ng-fwo-rule" data-term="" {...(current ? { 'data-evidence': 'current' } : {})}>
-      <span className="ng-fwo-head">
+      <span className="ng-fwo-line">
         <Chain chain={row.chain} />
+        <Purpose className="ng-fwo-desc">{row.description}</Purpose>
+        {marked && <> <span className="ng-fwo-mark">{typeof marked === 'string' ? marked : orderUi.mark}</span></>}
+        {outcome && !marked && <> <span className="ng-fwo-out">{outcome.text}</span></>}
+      </span>
+      {/* A marked row's outcome on a line of its own: two statements, never run together (repair v1, Fable 2). */}
+      {outcome && marked && <span className="ng-fwo-line"><span className="ng-fwo-out">{outcome.text}</span></span>}
+      <span className="ng-fwo-native">
         <span className="ng-fw-action">{row.action}</span>
         <span className="ng-fw-conds">
           {row.chips.map((chip, i) => <span key={i} className="ng-fw-cond" title={chip.title}>{chip.text}</span>)}
         </span>
       </span>
-      <span className="ng-fwo-line">
-        <Purpose className="ng-fwo-desc">{row.description}</Purpose>
-        {marked && <> <span className="ng-fwo-mark">{typeof marked === 'string' ? marked : orderUi.mark}</span></>}
-      </span>
-      {outcome && <span className="ng-fwo-line"><span className="ng-fwo-out">{outcome.text}</span></span>}
     </div>
   );
 }
@@ -185,16 +218,25 @@ export default function OrderView({ bank }) {
   const stale = !result && Boolean(staleView);
   const finding = result?.feedback ?? null;
   const solved = Boolean(result?.ok);
-  const verdict = finding?.code === 'order-verdict' ? finding : null;
-  const walkIn = useMemo(() => (verdict && state.walkOpen ? logic.walkInput(task, state.answer.order, verdict.card) : null),
-    [logic, task, verdict, state.walkOpen, state.answer.order]);
+  // The verdict for the panel: the current result, or the one an edit made stale.
+  const shown = result ?? staleView?.result ?? null;
+  const shownFinding = shown?.feedback ?? null;
+  // The finding's packet (round 5, 5b-2 B): a changed outcome's card, or the
+  // packet a hidden rule never gets (a shadowing). Logic's witnessFor walks
+  // it through the order that was checked (an edit's stale verdict keeps its
+  // own), so a walk never lies on rows that changed since.
+  const shownOrder = result ? state.answer.order : staleView?.order ?? null;
+  const shownWitness = useMemo(() => (shownFinding && shownOrder && ['order-verdict', 'order-dead'].includes(shownFinding.code)
+    ? logic.witnessFor(task, shownOrder, shownFinding) : null), [logic, task, shownFinding, shownOrder]);
+  const witness = result ? shownWitness : null;
+  const walkIn = witness && state.walkOpen ? witness : null;
   const walk = useMemo(() => (walkIn ? walkRows(walkIn) : null), [walkIn]);
   const marked = new Set(finding?.ruleIds ?? []);
   /** A rule's mark: a shadowing names both roles (the earlier one caught the packet, the later one never gets it), else «• Ще ні». */
   const markOf = id => (!marked.has(id) ? false
     : finding?.code === 'order-dead' ? (id === finding.blockerId ? orderUi.markBlocker : orderUi.markHidden) : true);
   const nat = useMemo(() => (variant.id === 'all' ? natRuleOf(task.topology, variant.cards) : null), [task, variant]);
-  const card = verdict?.card ?? null;
+  const card = witness?.card ?? null;
   const scene = useMemo(() => orderScene({ topology: task.topology, nat, card, walkIn }), [task, nat, card, walkIn]);
   const sections = useMemo(() => orderTextSections({ topology: task.topology, nat, card, walkIn }), [task, nat, card, walkIn]);
   // The working order's script; after an edit, the order that was checked (under «до змін», folded).
@@ -206,14 +248,23 @@ export default function OrderView({ bank }) {
   const deadText = finding => (finding.shadow
     ? orderText('order-shadowed', { ...finding.shadow, rule: quoted(t(finding.shadow.ruleDescriptionCode)), blocker: quoted(t(finding.shadow.blockerDescriptionCode)) })
     : orderText('order-dead', { rule: descriptionOf(finding.ruleId), blocker: descriptionOf(finding.blockerId) }));
-  const hintTexts = ex.hints().map(h => (h.rung === 2 ? hint2Text(ex.view.orderHint2) : orderText(h.code)));
+  // The hints (round 5, 5b-2 B): hint 1 follows the last checked packet
+  // («Пакет … зупинився на правилі N»; before any check it asks for one;
+  // after a reorder it stays with the order that was checked). A solved
+  // list needs no new hint (the panel hides the button); the hints already
+  // opened stay readable, rung 1 in words true for a list that passed.
+  const ladder = useMemo(() => hintsForState(task, state), [task, state]);
+  const hintTexts = (ladder.length ? ladder : ex.hints()).map(h => (h.rung === 1 ? (ladder.length ? h.text : orderUi.hintDone)
+    : h.rung === 2 ? hint2Text(ex.view.orderHint2) : orderText(h.code)));
+  const hintWitness = ladder[0]?.witness ?? null;
   // The rule the current message is about: the finding's (a rule that never
-  // fires, or the one that decided the packet), else hint 1's.
+  // fires, or the one that decided the packet), else the rule hint 1's
+  // packet stopped at (none before a check).
   const evidenceId = solved ? null
     : stale ? staleView.moved ?? null
     : finding?.code === 'order-dead' ? finding.ruleId
       : finding ? finding.ruleIds?.[0] ?? null
-        : session.hintIndex > 0 && !session.revealed ? restRuleOf(task) : null;
+        : session.hintIndex > 0 && !session.revealed && hintWitness && hintWitness.walk.decidedBy !== 'chain-end' ? hintWitness.walk.decidedBy : null;
 
   const save = (next, extra = {}) => { if (next !== state || Object.keys(extra).length) ex.setView({ orderState: next, ...extra }); };
   /** The rule a reorder moved (ReorderList says; else a guess from the orders: the one that left or arrived first). */
@@ -235,7 +286,16 @@ export default function OrderView({ bank }) {
     ex.check(next.answer, { result: next.result });
     save(next, { orderStale: null });
   }
-  const onWalk = () => save(transition(logic, task, state, { type: 'walk' }));
+  /** «Показати шлях пакета»: the walk's outcomes make the rows above the panel taller; its toggle and words stay in view. */
+  const walkToggled = useRef(false);
+  const reduced = useReducedMotion();
+  const onWalk = () => { walkToggled.current = true; save(transition(logic, task, state, { type: 'walk' })); };
+  useEffect(() => {
+    if (!walkToggled.current) return;
+    walkToggled.current = false;
+    const current = root.current?.querySelector('[data-help-current]');
+    if (current) bringIntoView([current], reduced ? 'auto' : 'smooth');
+  }, [state.walkOpen]);
   /** A hint, counted by the session (the one counter, which drives the
    * transition); the second checks the list first if it wasn't, opens that
    * packet's walk, and keeps which finding its words are about. */
@@ -273,9 +333,6 @@ export default function OrderView({ bank }) {
     listHeading.current?.focus();
   }, [task.instanceKey]);
 
-  // The verdict for the panel: the current result, or the one an edit made stale.
-  const shown = result ?? staleView?.result ?? null;
-  const shownFinding = shown?.feedback ?? null;
   const shownVerdict = shownFinding?.code === 'order-verdict' ? shownFinding : null;
   const panelVerdict = !shown ? null : {
     tone: shown.ok ? 'ok' : 'no',
@@ -285,10 +342,10 @@ export default function OrderView({ bank }) {
       : shownFinding?.code === 'order-dead' ? deadText(shownFinding)
         : orderText(shownFinding?.code ?? 'order-invalid'),
     // The failing packet, its fate and its walk: evidence the decision needs, open beside the summary.
-    summaryNode: shownVerdict ? (
-      <div className="ng-fwo-finding" {...(!stale && !shownVerdict.ruleIds?.length ? { 'data-evidence': 'current' } : {})}>
-        <PacketCard lines={cardLines(task, shownVerdict.card)} label={orderUi.packet} />
-        <p className="ng-fwo-fate">{orderUi.fate({ expected: shownVerdict.expected, actual: shownVerdict.actual })}</p>
+    summaryNode: shownWitness ? (
+      <div className="ng-fwo-finding" {...(!stale && shownVerdict && !shownVerdict.ruleIds?.length ? { 'data-evidence': 'current' } : {})}>
+        <PacketCard lines={cardLines(task, shownWitness.card)} label={orderUi.packet} />
+        {shownVerdict && <p className="ng-fwo-fate">{orderUi.fate({ expected: shownVerdict.expected, actual: shownVerdict.actual })}</p>}
         {!stale && (
           <button type="button" className="ng-fw-btn ng-fwo-walk" aria-expanded={state.walkOpen} aria-controls="ng-fwo-list" onClick={onWalk}>
             {state.walkOpen ? orderUi.walkHide : orderUi.walkShow} <span aria-hidden="true">{state.walkOpen ? '▲' : '▼'}</span>
@@ -345,13 +402,25 @@ export default function OrderView({ bank }) {
         </header>
         <div className="ng-fw-intro ng-fwo-intro">
           <p className="ng-fwo-task">{sentence}</p>
-          <div className="ng-fwo-goal">{goals.map(line => <p key={line}>{line}</p>)}</div>
+          <div className="ng-fwo-goal"><GoalLines goals={goals} nat={nat} /></div>
+          {/* Where the list holds both chains: the order matters within each one only. */}
+          {new Set(task.rules.map(r => r.chain)).size > 1 && <p className="ng-fwo-ordering">{comprehension.ordering}</p>}
+          {/* Below two columns (round 5, 5b-2 B): the diagram is after the list, so the router's own addresses are a line here. */}
+          {layout !== 'two' && (
+            <p className="ng-fwo-strip">{`${ui.routerAddresses}: `}{task.topology.router.interfaces.map((i, k) => (
+              // A line breaks only between the pairs (repair v1, Fable 3).
+              <Fragment key={i.id}>{k > 0 && ' · '}<span className="ng-fwo-pair">{`${i.id} ${i.address}`}</span></Fragment>
+            ))}</p>
+          )}
         </div>
         {layout === 'two' && stage}
       </div>
 
       <section className="ng-fwo-work" aria-label={orderUi.list}>
         <div id="ng-fwo-list" ref={listRef} className="ng-fwo-list">
+          {/* A passing list says so in the same place (repair v1, Fable 3); an edit brings the action back. */}
+          <ActionLine id="ng-fwo-action">{solved ? orderUi.actionDone : orderUi.action}</ActionLine>
+          <WorkedExample taskKey={task.instanceKey} context={EXAMPLE.context} rows={EXAMPLE_LINES} />
           <h2 id="ng-fwo-policy" ref={listHeading} tabIndex={-1} className="ng-fwo-policy">{session.revealed ? orderUi.yours : quoted(orderUi.policy)}</h2>
           <ReorderList items={rows} label={orderUi.list} name={row => quoted(row.description)} onReorder={onReorder}
             rowClassName={rowClass} showHelp={false}>

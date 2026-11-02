@@ -20,6 +20,10 @@ export const SCREEN = 'vlan';
  * task's data (PCs, devices, configured ports, gateways, failing checks):
  * `data-task-*` on the work column; the shots recipe compares each with the
  * labels rendered, so a missing label fails. Words and layout never use them. */
+/** A worked example's rows as lines, each value after its field's name
+ * («Порт: fa0/1 · Режим: access · VLAN: 310»): read whole at any width (5b-2 A). */
+export const exampleLines = ({ columns, rows }) => rows.map(row => row.map((cell, i) => `${columns[i]}: ${cell}`).join(' · '));
+
 export const taskCounts = counts => Object.fromEntries(Object.entries(counts).map(([k, v]) => [`data-task-${k}`, String(v)]));
 
 /** Each PC's goal (its third line) and, where the task gives one, its

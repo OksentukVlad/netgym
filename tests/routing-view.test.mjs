@@ -8,7 +8,7 @@ import tasks from '../src/banks/routing/tasks.js';
 import routing, { textFor } from './helpers/routing.mjs';
 import { topology } from '../src/sections/routing/logic/topology.js';
 import { syntaxList, syntaxes } from '../src/sections/routing/syntax/index.js';
-import { ui } from '../src/sections/routing/uk.js';
+import { comprehension, ui } from '../src/sections/routing/uk.js';
 import { initialStore, storeReducer } from '../src/app/store.js';
 import { scoreOf } from '../src/ui/exercise-state.js';
 import { initialSession } from '../src/ui/session.js';
@@ -27,7 +27,8 @@ test('step 6 cuts: no stub badge, no Cisco mask line and no per-row hint, over e
         const html = normalise(surfaces.renderRows(task, syntax, router, scaffold, null, {}, mode));
         views++;
         for (const cut of ['тупіковий: досить default', 'Маска — повна', '💡', 'Підказка']) assert.ok(!html.includes(cut), `#${variant.code} ${syntax.id} ${router} ${mode}: ${cut}`);
-        if (mode === 'free') assert.ok(html.includes(ui.shared.addRoute) && !html.includes(ui.shared.routeTo), 'free rows: «+ Маршрут», no destination label');
+        // Round 5 5b-2 (spec C): free mode adds a route by its quiet link, «+ ще один маршрут (якщо потрібен)».
+        if (mode === 'free') assert.ok(html.includes(comprehension.addRoute) && !html.includes(ui.shared.routeTo), 'free rows: the add link, no destination label');
         // Round 4 (spec R1): one check, the panel's; a guided row checks itself on blur, with no button of its own.
         else assert.ok(!html.includes('Перевірити'), 'guided rows have no row check button');
       }
@@ -37,9 +38,9 @@ test('step 6 cuts: no stub badge, no Cisco mask line and no per-row hint, over e
   assert.ok(!('stubRows' in ui.cisco) && !('maskLine' in ui.cisco) && !('hint' in ui.shared), 'the cut strings are gone');
 });
 
-test('task 15: both syntaxes state relative distance order and bounds, and name no gateway', () => {
+test('task 15 details: both syntaxes state relative distance order and bounds, and name no gateway', () => {
   const record = tasks.find(t => t.displayNumber === 15);
-  for (const syntax of syntaxList) for (const text of [record.text, record.variants[0].text]) {
+  for (const syntax of syntaxList) for (const text of [record.details, record.variants[0].details]) {
     const words = textFor(text, syntax.id);
     assert.ok(words.includes('Основному дай меншу distance'), `${syntax.id}: primary rule`);
     assert.ok(words.includes('резервному — більшу, від 2 до 254'), `${syntax.id}: backup rule`);

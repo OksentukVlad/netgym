@@ -44,7 +44,10 @@
 // «Далі»; round 5 (R4): it reads this instance's own values (legendFacts:
 // its first LAN, a link with both ends and their owners, the ISP's own
 // gateway). Only «Текстом» opens over the diagram (checkView.js). Round 5
-// (R1): the action line names the first thing to do, above the routes. The page is
+// (R1): the action line names the first thing to do, above the routes; round 5
+// 5b-2 (spec A, C): the folded worked example sits right under it (another
+// network's finished route, task 15's main and backup), and task 15's two
+// sentences come with «Уся умова» for the rest (at both sizes). The page is
 // the only scroller: in two columns the diagram's column sticks
 // (useStageHeight). The packet's path is drawn on the diagram (PathLayer),
 // with motion: a probe's path, a safety rule's cycle router by router, or a
@@ -96,7 +99,7 @@ import MoreMenu from '../../../ui/components/MoreMenu.jsx';
 import { AsideButton, useAsideFold } from '../../../ui/components/Aside.jsx';
 import TextEquivalent, { TextEquivalentButton } from '../../../ui/components/TextEquivalent.jsx';
 import { describeNetwork } from '../../../ui/topology/describe.js';
-import { faultsUi, t, ui } from '../uk.js';
+import { comprehension, faultsUi, t, ui } from '../uk.js';
 import { levelClass, routerClass } from './theme.js';
 import { routableAnswer, sameRouteSet, useRouteAnswers } from './useRouteAnswers.js';
 import TaskList from './TaskList.jsx';
@@ -124,7 +127,9 @@ import { AddressRow, CodeField } from './Addresses.jsx';
 import { modeFor, useLayoutMode, useStageHeight } from './layoutMode.js';
 import FaultsView from './FaultsView.jsx';
 import ActionLine from '../../../ui/components/ActionLine.jsx';
+import WorkedExample from '../../../ui/components/WorkedExample.jsx';
 import { legendFacts } from '../logic/legend.js';
+import { routingExample } from '../logic/examples.js';
 import '../../../ui/tokens.css';
 import './routing.css';
 
@@ -633,8 +638,14 @@ function TasksView({ bank, exerciseSwitch = null }) {
   // for every address at 12 px; the rest and the failure case open under it. Measured before the first
   // paint of each instance; the learner's own choice holds for the instance.
   const [details, setDetails] = useState({});
+  // Round 5 5b-2 (spec C): a task with its own `details` (task 15) shows its short `text` whole and the
+  // rest behind «Уся умова», closed, at both sizes: the height rule is for the other tasks.
+  const full = variant.details ? textFor(variant.details, syntax.id) : null;
+  const [fullOpen, setFullOpen] = useState({});
+  const fullShown = Boolean(full && fullOpen[ex.key]);
+  const fullId = `${markerIds}-full`;
   useIsoLayoutEffect(() => {
-    if (!short || layout === 'narrow' || details[ex.key] !== undefined) return;
+    if (full || !short || layout === 'narrow' || details[ex.key] !== undefined) return;
     const left = root.current?.querySelector('.ng-rt-left'), text = left?.querySelector('.ng-rt-legend');
     if (!text || !firstSentence(textFor(variant.text, syntax.id)).rest) return;
     const top = left.getBoundingClientRect().top;
@@ -643,6 +654,10 @@ function TasksView({ bank, exerciseSwitch = null }) {
   const detailsShut = details[ex.key] === false;
   const taskText = textFor(variant.text, syntax.id);
   const taskParts = firstSentence(taskText);
+  // The worked example (spec 5b-2 A, C): another network's finished route in this syntax (task 15: its main
+  // and backup default routes); display data only, never the learner's rows.
+  const backupExample = record.displayNumber === 15;
+  const example = useMemo(() => routingExample({ syntax: syntax.id, taskNumber: backupExample ? 15 : 1 }), [syntax.id, backupExample]);
 
   // The packet path: the diagram's own geometry (as TopologyMap draws it), one motion for both parts.
   const geo = useMemo(() => diagramGeometry(topo, topo, undefined, NETGYM_DIAGRAM_FONT), [topo]);
@@ -739,6 +754,8 @@ function TasksView({ bank, exerciseSwitch = null }) {
       next={nextRecord && (presented?.ok || revealed) ? { onNext: goNext } : null}
     />
   );
+  // The action line (and the worked example under it): while the learner's own rows are shown and there is a route to fill.
+  const acting = mine && (mode === 'free' || (answers.rows[router] ?? []).length > 0);
   // An edit after a check dims its verdict; the panel anchors next to the
   // edited row (HelpPanel), and nothing scrolls while the learner types.
   const mineToggle = revealed ? (
@@ -807,10 +824,21 @@ function TasksView({ bank, exerciseSwitch = null }) {
                 in one column the order is as before (task, legend, diagram, work). */}
             <div className="ng-rt-left">
               <p className="ng-rt-desc">{detailsShut ? taskParts.first : taskText}</p>
-              {failover && !detailsShut && <p className="ng-rt-desc ng-rt-failover">{ui.shared.failover(failover.title)}</p>}
+              {full ? (
+                <div id={fullId} className="ng-rt-full" hidden={!fullShown}>
+                  {fullShown && <><p>{full}</p>{failover && <p className="ng-rt-failover">{ui.shared.failover(failover.title)}</p>}</>}
+                </div>
+              ) : failover && !detailsShut && <p className="ng-rt-desc ng-rt-failover">{ui.shared.failover(failover.title)}</p>}
               <div className="ng-rt-asides">
-                <Legend task={task} syntax={syntax.id} routers={routerNames} short={short || crowded === ex.key} />
-                {details[ex.key] !== undefined && (
+                {/* A task with `details` starts its legend folded too, like the rest of its condition: the diagram keeps its room. */}
+                <Legend task={task} syntax={syntax.id} routers={routerNames} short={short || crowded === ex.key || Boolean(full)} />
+                {full && (
+                  <button type="button" className="ng-rt-link ng-rt-details" aria-expanded={fullShown} aria-controls={fullId}
+                    onClick={() => setFullOpen(o => ({ ...o, [ex.key]: !fullShown }))}>
+                    {fullShown ? ui.shared.detailsShut : comprehension.fullCondition}
+                  </button>
+                )}
+                {!full && details[ex.key] !== undefined && (
                   <button type="button" className="ng-rt-link ng-rt-details" aria-expanded={!detailsShut} onClick={() => setDetails(d => ({ ...d, [ex.key]: !detailsShut }))}>
                     {detailsShut ? ui.shared.detailsOpen : ui.shared.detailsShut}
                   </button>
@@ -838,7 +866,12 @@ function TasksView({ bank, exerciseSwitch = null }) {
             <section className="ng-rt-work" aria-label={ui.shared.rowsCaption(router)}>
               <InterfacesCard task={task} syntax={syntax} router={router} colour={routerClass(routerNames, router)} />
               {/* Round 5 (R1): the action line, under the router's addresses and above the routes (or the panel, when a long board puts it first). */}
-              {mine && (mode === 'free' || (answers.rows[router] ?? []).length > 0) && <ActionLine>{panelFirst ? ui.shared.actionBelow : ui.shared.action}</ActionLine>}
+              {acting && <ActionLine>{panelFirst ? ui.shared.actionBelow : ui.shared.action}</ActionLine>}
+              {/* Round 5 5b-2 (A): the folded worked example, directly under the action line (same condition). */}
+              {acting && (
+                <WorkedExample taskKey={`${ex.key}|${syntax.id}`} context={example.context} rows={example.rows} note={example.note ?? undefined}
+                  head={[...ui.shared.exampleHead[syntax.id], ...(backupExample ? [ui.shared.exampleDistance] : [])]} />
+              )}
               {mine
                 ? <RouteRows ex={ex} answers={answers} syntax={syntax} router={router} onNetwork={runNetworkCheck} onBlurCheck={blurCheck}
                     target={shownTarget} evidenceKey={evidence?.key ?? null} headEvidence={Boolean(evidence?.head)}

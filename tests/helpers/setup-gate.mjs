@@ -13,7 +13,7 @@
 import { render, recallRows, scriptForState, cardText } from '../../src/sections/setup/logic/render.js';
 import { explanation } from '../../src/sections/setup/logic/hints.js';
 import { capabilities } from '../../src/sections/setup/logic/model.js';
-import copy, { text, ui } from '../../src/sections/setup/uk.js';
+import copy, { comprehension, text, ui } from '../../src/sections/setup/uk.js';
 import { uk as shared } from '../../src/ui/uk.js';
 import { setupLeaks } from './setup-leaks.mjs';
 
@@ -36,10 +36,12 @@ export const identities = task => task.cards.flatMap(c => [c.id, c.commandId]).f
  * (HintLadder's list and DR-3's `list`): the app's vocabulary, not a card's. */
 const UI_CLASSES = new Set(['ng-hints-list']);
 /** The panel's and the gate's own hooks (spec A1): they say what is current, never what is right.
- * Round 5's shared markers (empty): a row with a term and its purpose, the action line. */
-const HOOKS = /^data-(?:theme|layout|help|help-[\w-]+|evidence|term|purpose|action-line)$/;
+ * Round 5's shared markers (empty): a row with a term and its purpose, the action line, the worked example. */
+const HOOKS = /^data-(?:theme|layout|help|help-[\w-]+|evidence|term|purpose|action-line|worked-example)$/;
 /** The deck's success words: DR-3 promises no prompts (`ok.dr-3`). */
 export const okWords = task => text(`ok.${task.identity.taskId}` in copy ? `ok.${task.identity.taskId}` : 'ok');
+/** A row's purpose as shown, its first line (5b-2 F): the card's own; the login check says it is a step. */
+export const shownPurpose = row => (row?.kind === 'checkpoint' ? comprehension.checkpointPurpose : row?.purpose);
 /** A row's second line as shown: «Winbox:» and the path. */
 export const pathWords = secondary => `${ui.winbox} ${secondary}`;
 
@@ -83,7 +85,11 @@ export function structureFindings(root, task, state, { unchecked = false } = {})
     if (path.length !== (secondary ? 1 : 0) || (secondary && words(path[0]) !== pathWords(secondary))) out.push(`second line: row ${n} shows «${[...path].map(words).join(' | ')}», its card has «${secondary ?? ''}»`);
     // Round 5 (R2): every row's purpose is its own card's, one per row, on the row that carries the term.
     const purposes = li.querySelectorAll('[data-purpose]');
-    if (purposes.length !== 1 || words(purposes[0]) !== shown[i]?.purpose) out.push(`purpose: row ${n} shows «${[...purposes].map(words).join(' | ')}», its card has «${shown[i]?.purpose ?? ''}»`);
+    if (purposes.length !== 1 || words(purposes[0]) !== shownPurpose(shown[i])) out.push(`purpose: row ${n} shows «${[...purposes].map(words).join(' | ')}», its card has «${shownPurpose(shown[i]) ?? ''}»`);
+    // 5b-2 F: the purpose is the row's first line and its name in words (the handle).
+    const row = li.querySelector('.ng-su-row');
+    if (row && row.children[0] !== purposes[0]) out.push(`purpose: row ${n} does not start with its purpose`);
+    if (shown[i] && !handle?.getAttribute('aria-label')?.endsWith(`: ${shownPurpose(shown[i])}`)) out.push(`name: row ${n} handle «${handle?.getAttribute('aria-label')}» is not named by its purpose`);
     if (li.querySelectorAll('[data-term]').length !== 1) out.push(`purpose: row ${n} has ${li.querySelectorAll('[data-term]').length} rows with a term`);
     const [up, down] = li.querySelectorAll('.ng-reorder-move');
     if (up?.getAttribute('aria-label') !== shared.reorder.up({ n }) || down?.getAttribute('aria-label') !== shared.reorder.down({ n })) out.push(`numbering: row ${n} move buttons`);

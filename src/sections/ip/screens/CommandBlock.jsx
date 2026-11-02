@@ -13,6 +13,9 @@
 // `onToggle`: its heading is then a disclosure button), and while its inputs
 // are empty or malformed (the result is the last valid one, stale) the copy
 // buttons are disabled with the reason in words (`disabled`).
+//
+// Round 5 5b-2 (spec D): `caption`, one line above the blocks, says which
+// address the commands set.
 import { useId, useRef, useState } from 'react';
 import { calcUi } from '../uk.js';
 import '../../../ui/tokens.css';
@@ -24,13 +27,14 @@ import { copyText, selectText } from '../../../ui/clipboard.js';
  * @param {{
  *   heading: string,
  *   blocks: Array<{ id: string, label: string, text: string }>,
+ *   caption?: string|null,                      // one line above the blocks: what the commands set
  *   note?: string,                              // a muted line under the blocks
  *   onCopy?: (text: string) => Promise<void>,   // tests: where the payload goes
  *   open?: boolean, onToggle?: Function,        // folded behind its heading (a disclosure) when onToggle is given
  *   disabled?: string|null,                     // why copying is off now (shown as text), or null
  * }} props
  */
-export default function CommandBlock({ heading, blocks, note, onCopy = copyText, open = true, onToggle = null, disabled = null }) {
+export default function CommandBlock({ heading, blocks, caption = null, note, onCopy = copyText, open = true, onToggle = null, disabled = null }) {
   const bodyId = useId();
   const reasonId = useId();
   // { key, ok }: the last copy that finished, for the block and text it was.
@@ -60,6 +64,7 @@ export default function CommandBlock({ heading, blocks, note, onCopy = copyText,
           </h2>
         : <h2 className="ng-caption ng-commands-heading">{heading}</h2>}
       {open && <div id={bodyId} className="ng-commands-body">
+      {caption && blocks.length > 0 && <p className="ng-commands-caption">{caption}</p>}
       {disabled && blocks.length > 0 && <p id={reasonId} className="ng-commands-off">{disabled}</p>}
       {blocks.length > 0 && (
         <div className="ng-commands-blocks">

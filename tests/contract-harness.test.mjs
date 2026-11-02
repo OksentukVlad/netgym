@@ -395,7 +395,8 @@ test('routing screen: each syntax follows its round 1 app; the reference is abse
   store.dispatch({ type: 'pref', name: 'syntax', value: 'routeros' });
   html = unescape(store.render(h.RoutingScreen, { bank: h.routingBank }));
   assert.ok(!html.includes('MIKROTIK LAB') && html.includes('МАРШРУТИ — R1'));
-  assert.ok(html.includes('placeholder="адреса мережі/префікс"') && html.includes('>Мережа призначення (dst-address)</label>') && html.includes('>Шлюз — адреса сусіда (gateway)</label>'));
+  // Round 5 5b-2 (spec C): the destination's placeholder shows the shape of its answer.
+  assert.ok(html.includes('placeholder="мережа/префікс, напр. x.x.x.0/24"') && html.includes('>Мережа призначення (dst-address)</label>') && html.includes('>Шлюз — адреса сусіда (gateway)</label>'));
   assert.ok(!html.includes('192.168.2.0 /24') && !html.includes('>Маска</label>') && !html.includes('маска /24?'), 'MikroTik shows no network and no mask field');
   assert.ok(!html.includes('EDGE'));
   assert.ok(!html.includes('/ip route add'));
