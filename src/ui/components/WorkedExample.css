@@ -130,3 +130,42 @@
   font-family: var(--ng-mono);
   font-weight: 700;
 }
+
+/* Round 6 (P4): under 640 px a table example stacks, a row per block and
+   each value after its column's name, so nothing runs off the right edge. */
+@media (max-width: 639.98px) {
+  .ng-wex-table,
+  .ng-wex-table tbody,
+  .ng-wex-table tr,
+  .ng-wex-table td {
+    display: block;
+  }
+
+  .ng-wex-table tr {
+    position: relative;
+    padding: 4px 0 4px 1.4em;
+  }
+
+  .ng-wex-table tr + tr {
+    border-top: 1px dashed var(--ng-stroke);
+  }
+
+  .ng-wex-table td.ng-wex-mark {
+    position: absolute;
+    left: 0;
+    top: 4px;
+    padding: 0;
+  }
+
+  .ng-wex-table td.ng-wex-value {
+    padding: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .ng-wex-table td.ng-wex-value[data-label]::before {
+    content: attr(data-label) ": ";
+    font-family: var(--ng-sans);
+    font-weight: 400;
+    color: var(--ng-muted);
+  }
+}

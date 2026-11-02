@@ -64,11 +64,13 @@ import { probeLabel } from '../syntax/presentation.js';
 import { syntaxList, syntaxes } from '../syntax/index.js';
 import { useExercise } from '../../../ui/useExercise.js';
 import { usePref, useStore } from '../../../ui/useStore.js';
-import { BarControls } from '../../../ui/BarSlot.jsx';
+import { BarControls, SheetCaption, SheetChoice } from '../../../ui/BarSlot.jsx';
 import Segmented from '../../../ui/components/Segmented.jsx';
 import HelpPanel from '../../../ui/components/HelpPanel.jsx';
 import DoneMark from '../../../ui/components/DoneMark.jsx';
-import TextEquivalent, { TextEquivalentButton } from '../../../ui/components/TextEquivalent.jsx';
+import TextEquivalent, { TextEquivalentButton, lineCount } from '../../../ui/components/TextEquivalent.jsx';
+import DiagramExpand, { ExpandButton, useDiagramExpand, useTextOpen } from '../../../ui/topology/DiagramExpand.jsx';
+import { isPhoneNow } from '../../../ui/phone.js';
 import { describeNetwork } from '../../../ui/topology/describe.js';
 import { uk as generic } from '../../../ui/uk.js';
 import { useReducedMotion } from '../../../ui/motion.js';
@@ -199,6 +201,7 @@ export default function FaultsView({ bank, exerciseSwitch = null }) {
     <div ref={root} className="ng-rt ng-rf" data-theme={themeName} data-mode={layout}>
       <BarControls>
         <div className="ng-rt-controls">
+          <SheetCaption label={ui.shared.syntax} />
           <Segmented label={ui.shared.syntax} options={syntaxList.map(x => ({ value: x.id, label: x.label }))} value={syntax.id} onChange={setSyntax} />
         </div>
       </BarControls>
@@ -207,8 +210,8 @@ export default function FaultsView({ bank, exerciseSwitch = null }) {
         <div className="ng-rt-taskbar">
           <h1 className="ng-rt-h1">{ui.shared.heading}</h1>
           {levels.length > 1 && (
-            <Segmented label={faultsUi.level} value={shownLevel} onChange={chooseLevel} className="ng-rf-levels"
-              options={levels.map(level => ({ value: level, label: <>{faultsUi.levelN(level)}<DoneMark done={earnedLevels.has(level)} /></> }))} />
+            <SheetChoice stepper label={faultsUi.level} value={shownLevel} onChange={chooseLevel} className="ng-rf-levels"
+              options={levels.map(level => ({ value: level, label: <>{faultsUi.levelN(level)}<DoneMark done={earnedLevels.has(level)} /></>, step: faultsUi.levelN(level) }))} />
           )}
           <p className="ng-rf-busy" aria-live="polite">{building ? faultsUi.preparing : ''}</p>
           {/* Round 5: the exercise switch ends the task bar, as on «Налаштуй маршрути». */}
@@ -325,10 +328,14 @@ function FaultsWork({ bank, record, slot, syntax, layout, root, building, onAgai
   // the diagram comes into view if it isn't.
   const showPath = (snap, id) => {
     setPick(p => ({ snap, id, n: (p?.n ?? 0) + 1 }));
+    // Round 6: on a phone «Текстом» takes the drawing's place; a path asked for shows on the drawing.
+    if (isPhoneNow()) setTextOpen(false);
     if (layout === 'narrow') root.current?.querySelector('.ng-dg-view')?.scrollIntoView?.({ block: 'nearest' });
   };
 
-  const [textOpen, setTextOpen] = useState(false);
+  // Round 6 (P2): «Текстом» starts open on a phone; the full-screen diagram has a zoom of its own.
+  const [textOpen, setTextOpen] = useTextOpen(false);   // closed on a phone (round 6 repair: the first action's facts are on the screen)
+  const expand = useDiagramExpand({ zoom: view.zoom, onZoom: zoom => ex.setView({ zoom }) });
   const textButton = useRef(null);
   const described = useMemo(() => describeNetwork(task.network, syntax.id), [task, syntax.id]);
   const textSections = [...described,
@@ -555,18 +562,22 @@ function FaultsWork({ bank, record, slot, syntax, layout, root, building, onAgai
             <div className="ng-rt-stage-head">
               <p className="ng-rt-caption">{pathWhere ?? ui.shared.diagramCaption}</p>
               {plan?.moves.length > 0 && !textOpen && <PathLegend />}
+              {/* Round 6 (P2): «Розгорнути схему» on a phone, at the stage's head (no row of its own). */}
+              <ExpandButton expand={expand} className="ng-rt-expand" />
             </div>
+            <DiagramExpand expand={expand}>
             <TopologyMap
               ref={mapRef}
               topo={topo} activeRouter={router} setActiveRouter={selectRouter} fitHeight={layout !== 'narrow'}
-              viewKey={ex.key} zoom={view.zoom} onZoom={zoom => ex.setView({ zoom })}
-              covered={textOpen}
+              viewKey={ex.key} zoom={expand.zoom} onZoom={expand.onZoom}
+              covered={expand.covered(textOpen)}
               underlay={<PathUnder plan={plan} step={step} ids={markers} />}
               overlay={<PathOver plan={plan} step={step} />}
-              overlays={<TextEquivalent id={TEXT_ID} title={ui.shared.textTitle} sections={textSections} open={textOpen} onClose={() => { setTextOpen(false); textButton.current?.focus(); }} />}
+              overlays={<TextEquivalent id={TEXT_ID} title={ui.shared.textTitle} sections={textSections} open={expand.covered(textOpen)} onClose={() => { setTextOpen(false); textButton.current?.focus(); }} />}
             >
-              <TextEquivalentButton buttonRef={textButton} id={TEXT_ID} label={ui.shared.textButton} open={textOpen} onToggle={() => setTextOpen(o => !o)} />
+              <TextEquivalentButton buttonRef={textButton} id={TEXT_ID} label={ui.shared.textButton} open={textOpen} onToggle={() => setTextOpen(o => !o)} count={lineCount(textSections)} />
             </TopologyMap>
+            </DiagramExpand>
           </section>
         </div>
 

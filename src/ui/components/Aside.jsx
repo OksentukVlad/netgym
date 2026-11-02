@@ -11,22 +11,27 @@
 // State, in the store's places (in memory): `places[screen].asides[id]` is the
 // learner's explicit choice (true open, false folded); `places[screen].started`
 // is set by useAsideFold's `fold()` on the first check or «Далі». Open =
-// the explicit choice, else not started.
+// the explicit choice, else not started (round 6: and not a phone, where
+// every aside starts folded).
 //
 // <Aside screen="ip.mask" id="block" title="Як знайти блок">…</Aside> renders
 // «?» and, when open, the note under it. For a «?» in a header and the note
 // elsewhere, use useAside() and render AsideButton and the note yourself.
 import { useId } from 'react';
 import { useStore } from '../useStore.js';
+import { usePhone } from '../phone.js';
 import '../tokens.css';
 import './Aside.css';
 
 /** The aside's state and its toggle. */
 export function useAside(screen, id) {
   const { state, dispatch } = useStore();
+  // Round 6 (the phone layer, P2): under 640 px every aside starts folded, so
+  // the task, the picture and the first control come first; «?» opens it.
+  const phone = usePhone();
   const place = state.places[screen] ?? {};
   const choice = place.asides?.[id];
-  const open = typeof choice === 'boolean' ? choice : !place.started;
+  const open = typeof choice === 'boolean' ? choice : !place.started && !phone;
   const toggle = () => dispatch({ type: 'place', scope: screen, patch: { asides: { ...(state.places[screen]?.asides ?? {}), [id]: !open } } });
   return { open, toggle };
 }

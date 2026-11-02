@@ -6,8 +6,10 @@ filtering, VLANs and device setup. Every exercise checks by behaviour (any
 working answer passes), explains with hints, and shows the reference answer
 only when asked. It runs offline as a Windows `.exe` (Wails) and in a browser.
 
-**Web version:** <https://oksentukvlad.github.io/netgym/>. It is meant for a
-computer; phone layouts are not done yet.
+**Web version:** <https://oksentukvlad.github.io/netgym/>. Under 640 px of
+width it has a phone layout (one scrolling page, one-row bars with a «⋯»
+sheet, a full-screen diagram); until it has been tried on a real phone the
+start screen still says the web version is meant for a computer.
 
 ## Sections
 
@@ -134,7 +136,8 @@ Third-party parts keep their own licences, listed with their full texts in
 
 - Worked examples and clearer wording in routing, VLAN and firewall tasks.
 - A better first-run experience for the setup decks.
-- Phone layouts for the web version.
+- Phone layouts for the web version: built (round 6); a hand run on a real
+  phone comes before the start screen's note changes.
 - A checker for RouterOS `/export` files, once real exports are available
   for its fixtures.
 - Windows `.exe` releases are a separate, later decision.

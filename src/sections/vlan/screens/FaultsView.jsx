@@ -72,10 +72,13 @@ import { useExercise } from '../../../ui/useExercise.js';
 import { useStore } from '../../../ui/useStore.js';
 import Segmented from '../../../ui/components/Segmented.jsx';
 import HelpPanel from '../../../ui/components/HelpPanel.jsx';
+import { Stepper } from '../../../ui/BarSlot.jsx';
+import { isPhoneNow, usePhone } from '../../../ui/phone.js';
 import MoreMenu from '../../../ui/components/MoreMenu.jsx';
 import DoneMark, { earnedBy } from '../../../ui/components/DoneMark.jsx';
 import Aside, { useAsideFold } from '../../../ui/components/Aside.jsx';
-import TextEquivalent, { TextEquivalentButton } from '../../../ui/components/TextEquivalent.jsx';
+import TextEquivalent, { TextEquivalentButton, lineCount } from '../../../ui/components/TextEquivalent.jsx';
+import DiagramExpand, { ExpandButton, useDiagramExpand, useTextOpen } from '../../../ui/topology/DiagramExpand.jsx';
 import { uk } from '../../../ui/uk.js';
 import ActionLine from '../../../ui/components/ActionLine.jsx';
 import VlanDiagram from './VlanDiagram.jsx';
@@ -314,7 +317,8 @@ export default function FaultsView({ records, syntax, place, setPlace, head, ski
   useEffect(() => {
     if (!focusStage.current) return;
     focusStage.current = false;
-    (stage === 'repair' ? formHeading.current : stageHeading.current)?.focus();
+    // Round 6 repair: on a phone a new task's focus never scrolls the page past its task (HelpPanel starts it at the top).
+    (stage === 'repair' ? formHeading.current : stageHeading.current)?.focus(isPhoneNow() ? { preventScroll: true } : undefined);
   }, [stage, ex.key]);
   const textButton = useRef(null);
   const focusMark = useRef(false);
@@ -325,7 +329,10 @@ export default function FaultsView({ records, syntax, place, setPlace, head, ski
     const target = bad?.getAttribute('role') === 'radiogroup' ? bad.querySelector('[tabindex="0"]') : bad;
     (target ?? formHeading.current)?.focus();
   });
-  const [textOpen, setTextOpen] = useState(false);
+  // Round 6 (P2): «Текстом» starts open on a phone; the full-screen diagram has a zoom of its own.
+  const phone = usePhone();
+  const [textOpen, setTextOpen] = useTextOpen(false);   // closed on a phone (round 6 repair: the first action's facts are on the screen)
+  const expand = useDiagramExpand({ zoom: ex.view.zoom, onZoom: zoom => ex.setView({ zoom }) });
   const hintIndex = ex.session.hintIndex;
   // Rungs 1–2 from the last check (or the start's grid); rung 3 only once opened (Z7).
   const hintTexts = useMemo(() => {
@@ -386,6 +393,8 @@ export default function FaultsView({ records, syntax, place, setPlace, head, ski
   /** «Інші номери VLAN»: the same network and level, a new seed; «Попередні номери» goes back. */
   const otherNumbers = () => { focusStage.current = true; setSlot(pickSlot(record, syntax, slot.level, { previous: slot.seed, shape: task.identity.shape }), { ...slot, shape: task.identity.shape }); };
   const previousNumbers = () => { if (previousSlot) { focusStage.current = true; setSlot(previousSlot, { ...slot, shape: task.identity.shape }); } };
+  /** The phone's level stepper: that level, a new seed and the network it draws. */
+  const chooseLevel = n => { if (n === slot.level) return; focusStage.current = true; foldAsides(); setSlot(pickSlot(record, syntax, n, { previous: slot.seed })); };
   /** «Далі →»: the next level (to 3), a new seed and the network it draws. */
   const onAgain = () => { focusStage.current = true; foldAsides(); setSlot(pickSlot(record, syntax, nextLevel(slot.level), { previous: slot.seed })); };
   const chooseDevice = id => ex.setView({ deviceId: id });
@@ -524,6 +533,9 @@ export default function FaultsView({ records, syntax, place, setPlace, head, ski
       <div className="ng-vl-side">
         <header className="ng-vl-head">
           {head}
+          {/* Round 6 repair (Fable 2): on a phone the levels are a stepper, as the other VLAN exercises' tasks are. */}
+          {phone && <Stepper label={faultsUi.levelLabel} value={level} onChange={chooseLevel} className="ng-phone-only"
+            options={[1, 2, 3].map(n => ({ value: n, step: faultsUi.levelWhat[n] }))} />}
           <p className="ng-vf-level"><b>{faultsUi.level({ n: level })}</b><DoneMark done={earnedLevels.has(level)} />{` · ${faultsUi.levelWhat[level]} · ${shapeTitle}`}</p>
           <MoreMenu disclosureHost={moreHost} items={[
             { id: 'other', label: ui.otherNumbersMenu, onSelect: otherNumbers },
@@ -542,14 +554,17 @@ export default function FaultsView({ records, syntax, place, setPlace, head, ski
         </div>
         <section className="ng-vl-stage" aria-label={ui.diagramLabel}>
           {evidence && (elsewhere || stale) && <p className="ng-vl-previous">{evidence.where}</p>}
-          <VlanDiagram geo={geo} topology={task.topology} zoom={ex.view.zoom} onZoom={zoom => ex.setView({ zoom })} viewKey={ex.key}
-            covered={textOpen} scene={scene} third={third} fourth={fourth} activeSwitch={stage === 'repair' ? device.id : null} onSwitch={id => { chooseDevice(id); goStage('repair'); }}
+          <DiagramExpand expand={expand}>
+          <VlanDiagram geo={geo} topology={task.topology} zoom={expand.zoom} onZoom={expand.onZoom} viewKey={ex.key}
+            covered={expand.covered(textOpen)} scene={scene} third={third} fourth={fourth} activeSwitch={stage === 'repair' ? device.id : null} onSwitch={id => { chooseDevice(id); goStage('repair'); }}
             tokens={tokens} chips={chips} stepMs={stepMs} caption={routing ? routeUi.newFrame(routing) : null}
             tools={<>
-              <TextEquivalentButton buttonRef={textButton} id="ng-vl-text" label={ui.textButton} open={textOpen} onToggle={() => setTextOpen(o => !o)} />
+              <TextEquivalentButton buttonRef={textButton} id="ng-vl-text" label={ui.textButton} open={textOpen} onToggle={() => setTextOpen(o => !o)} count={lineCount(sections)} />
+              <ExpandButton expand={expand} />
               {seq && !player.reduced && <button type="button" className="ng-vl-btn ng-vl-replay" onClick={player.replay}>{ui.replay}</button>}
             </>}
-            overlays={<TextEquivalent id="ng-vl-text" title={ui.textTitle} sections={sections} open={textOpen} onClose={() => { setTextOpen(false); textButton.current?.focus(); }} />} />
+            overlays={<TextEquivalent id="ng-vl-text" title={ui.textTitle} sections={sections} open={expand.covered(textOpen)} onClose={() => { setTextOpen(false); textButton.current?.focus(); }} />} />
+          </DiagramExpand>
         </section>
       </div>
 

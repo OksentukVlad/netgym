@@ -252,3 +252,16 @@
 .ng-help-message:not(:has(> details, > .ng-help-mini-box, > [data-help-current])) {
   margin-top: -10px;
 }
+
+/* Round 6 repair: under 640 px the check row's buttons keep to one line
+   («Перевірити», «💡 Підказка 1 з 3», «Далі →» fit in 360 px), so the panel
+   and the evidence above it share the view more often. */
+@media (max-width: 639.98px) {
+  .ng-help-row {
+    gap: 6px;
+  }
+
+  .ng-help-row > .ng-button {
+    padding: 0 9px;
+  }
+}

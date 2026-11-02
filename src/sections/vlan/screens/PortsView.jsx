@@ -56,11 +56,14 @@ import ports from '../logic/ports.js';
 import { useExercise } from '../../../ui/useExercise.js';
 import { useStore } from '../../../ui/useStore.js';
 import Segmented from '../../../ui/components/Segmented.jsx';
+import { SheetChoice } from '../../../ui/BarSlot.jsx';
 import HelpPanel from '../../../ui/components/HelpPanel.jsx';
+import { isPhoneNow } from '../../../ui/phone.js';
 import MoreMenu from '../../../ui/components/MoreMenu.jsx';
 import DoneMark, { earnedBy } from '../../../ui/components/DoneMark.jsx';
 import Aside, { useAsideFold } from '../../../ui/components/Aside.jsx';
-import TextEquivalent, { TextEquivalentButton } from '../../../ui/components/TextEquivalent.jsx';
+import TextEquivalent, { TextEquivalentButton, lineCount } from '../../../ui/components/TextEquivalent.jsx';
+import DiagramExpand, { ExpandButton, useDiagramExpand, useTextOpen } from '../../../ui/topology/DiagramExpand.jsx';
 import ActionLine from '../../../ui/components/ActionLine.jsx';
 import WorkedExample from '../../../ui/components/WorkedExample.jsx';
 import { portsExample } from '../logic/examples.js';
@@ -68,7 +71,7 @@ import VlanDiagram from './VlanDiagram.jsx';
 import PortsForm from './PortsForm.jsx';
 import { useFactHighlight } from './factHighlight.js';
 import Commands from './Commands.jsx';
-import { CommandsFold, exampleLines, failingStep, hostLines, hostPort, portIdOf, taskCounts, useHelpInView, SCREEN, WalkPointer, WalkWords } from './panel.jsx';
+import { CommandsFold, exampleLines, failingStep, hostLines, hostPort, portIdOf, taskCounts, SCREEN, WalkPointer, WalkWords } from './panel.jsx';
 import { compactPcWidth, layout } from './diagram.js';
 import { chipsAt, floodMotion, runAt, sceneAt, sequence, stepMsFor, tokensAt } from './walkSteps.js';
 import { useSkipper, useWalkPlayer } from './walkPlayer.js';
@@ -207,7 +210,7 @@ export default function PortsView({ records, syntax, place, setPlace, head, skip
   const domains = after ? legend?.map(d => ({ n: d.n, hosts: d.hosts, colour: d.colour })) ?? null : null;
 
   const workRef = useRef(null);
-  useHelpInView(workRef, `${ex.key}|${device.id}`);
+  // Round 6 repair: a device tab change re-anchors the help panel (HelpPanel viewKey) and scrolls it with its evidence.
   const boardRef = useRef(null);
   const formHeading = useRef(null);
   const textButton = useRef(null);
@@ -227,9 +230,12 @@ export default function PortsView({ records, syntax, place, setPlace, head, skip
   useEffect(() => {
     if (!focusForm.current) return;
     focusForm.current = false;
-    formHeading.current?.focus();
+    // Round 6 repair: on a phone the new task starts at its top; focus doesn't scroll past it.
+    formHeading.current?.focus(isPhoneNow() ? { preventScroll: true } : undefined);
   }, [ex.key]);
-  const [textOpen, setTextOpen] = useState(false);
+  // Round 6 (P2): «Текстом» starts open on a phone; the full-screen diagram has a zoom of its own.
+  const [textOpen, setTextOpen] = useTextOpen();
+  const expand = useDiagramExpand({ zoom: ex.view.zoom, onZoom: zoom => ex.setView({ zoom }) });
   const hintIndex = ex.session.hintIndex;
   const hintTexts = hintIndex > 0
     ? ports.hints(task, answer, { syntax }).map(h => t(h.code, h.params))
@@ -351,8 +357,8 @@ export default function PortsView({ records, syntax, place, setPlace, head, skip
       <div className="ng-vl-side">
         <header className="ng-vl-head">
           {head}
-          <Segmented label={ui.task} value={record.id} onChange={chooseTask} className="ng-vl-variants"
-            options={records.map((r, i) => ({ value: r.id, label: <>{`${i + 1} · ${ui.taskShort[r.id] ?? r.variants[0].title}`}<DoneMark done={earned.has(r.id)} /></>, title: r.variants[0].title }))} />
+          <SheetChoice stepper label={ui.task} value={record.id} onChange={chooseTask} className="ng-vl-variants"
+            options={records.map((r, i) => ({ value: r.id, label: <>{`${i + 1} · ${ui.taskShort[r.id] ?? r.variants[0].title}`}<DoneMark done={earned.has(r.id)} /></>, title: r.variants[0].title, step: ui.taskShort[r.id] ?? r.variants[0].title }))} />
           <MoreMenu disclosureHost={moreHost} items={[
             { id: 'other', label: ui.otherNumbersMenu, onSelect: otherNumbers },
             previousSeed !== null && { id: 'previous', label: ui.previousNumbers, onSelect: previousNumbers },
@@ -367,15 +373,18 @@ export default function PortsView({ records, syntax, place, setPlace, head, skip
         </div>
         <section ref={stageRef} className="ng-vl-stage" aria-label={ui.diagramLabel}>
           {stale && (scene || legend) && <p className="ng-vl-previous">{ui.previous}</p>}
-          <VlanDiagram geo={geo} topology={task.topology} zoom={ex.view.zoom} onZoom={zoom => ex.setView({ zoom })} viewKey={ex.key}
-            covered={textOpen} scene={scene} domains={domains} third={third} activeSwitch={device.id} onSwitch={chooseSwitch} tokens={tokens} chips={chips}
+          <DiagramExpand expand={expand}>
+          <VlanDiagram geo={geo} topology={task.topology} zoom={expand.zoom} onZoom={expand.onZoom} viewKey={ex.key}
+            covered={expand.covered(textOpen)} scene={scene} domains={domains} third={third} activeSwitch={device.id} onSwitch={chooseSwitch} tokens={tokens} chips={chips}
             highlight={facts.highlight}
             stepMs={stepMsFor(seq?.total ?? 0, Boolean(lap))}
             tools={<>
-              <TextEquivalentButton buttonRef={textButton} id="ng-vl-text" label={ui.textButton} open={textOpen} onToggle={() => setTextOpen(o => !o)} />
+              <TextEquivalentButton buttonRef={textButton} id="ng-vl-text" label={ui.textButton} open={textOpen} onToggle={() => setTextOpen(o => !o)} count={lineCount(sections)} />
+              <ExpandButton expand={expand} />
               {seq && !player.reduced && <button type="button" className="ng-vl-btn ng-vl-replay" onClick={player.replay}>{ui.replay}</button>}
             </>}
-            overlays={<TextEquivalent id="ng-vl-text" title={ui.textTitle} sections={sections} open={textOpen} onClose={() => { setTextOpen(false); textButton.current?.focus(); }} />} />
+            overlays={<TextEquivalent id="ng-vl-text" title={ui.textTitle} sections={sections} open={expand.covered(textOpen)} onClose={() => { setTextOpen(false); textButton.current?.focus(); }} />} />
+          </DiagramExpand>
         </section>
       </div>
 
@@ -403,6 +412,8 @@ export default function PortsView({ records, syntax, place, setPlace, head, skip
         <HelpPanel
           taskKey={task.instanceKey}
           boardRef={boardRef}
+          placement="after"
+          viewKey={device.id}
           check={{ label: ui.check, onCheck }}
           verdict={verdict}
           stale={stale}

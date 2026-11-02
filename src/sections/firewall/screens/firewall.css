@@ -893,3 +893,29 @@
 @media (max-width: 1100px) {
   .ng-fw-head .ng-segmented-option { padding: 0 8px; font-size: var(--ng-font-caption); }
 }
+
+/* ── Round 6, the phone layer (plan-mobile v2 P1) ────────────────────────
+ * Under 640 px the heading row is one row: the stepper over the rule sets
+ * (or the levels) and «⋯»; the choices themselves are in the bar's «⋯»
+ * sheet. The heading stays for screen readers and focus. */
+@media (max-width: 639.98px) {
+  .ng-fw-head {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .ng-fw-head > .ng-fw-h1 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .ng-fw-head > .ng-more {
+    flex: none;
+    margin-left: auto;
+  }
+}

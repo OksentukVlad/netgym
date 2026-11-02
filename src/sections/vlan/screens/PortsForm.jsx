@@ -57,7 +57,7 @@ const ModeLabel = ({ mode }) => (
 export const modeOptions = () => [
   { value: 'access', label: <ModeLabel mode="access" /> },
   { value: 'trunk', label: <ModeLabel mode="trunk" /> },
-  { value: null, label: <span className="ng-vl-mode"><span className="ng-vl-mode-word">{ui.modes.none}</span></span> },
+  { value: null, label: <span className="ng-vl-mode"><span className="ng-vl-mode-word is-unset">{ui.modes.none}</span></span> },
 ];
 
 /** A text field of the form: the raw text while typing, else the form's value. */
@@ -155,12 +155,12 @@ export default function PortsForm({ device, syntax, form, raw, marks, edit, onCh
               return [
                 <tr key={p.id} className={mark ? 'is-marked' : undefined}>
                   {portCell(p, label)}
-                  <td>
+                  <td className="ng-vl-cell-mode">
                     <Segmented label={ui.mode({ port: label })} value={port.mode} invalid={modeInvalid} describedBy={mark ? markId(row) : undefined} className="ng-vl-modes"
                       onChange={mode => edit.set(sw, `${row}.mode`, mode)} readOnly={given(p.id)}
                       options={modeOptions()} />
                   </td>
-                  <td>
+                  <td className="ng-vl-cell-value" data-label={ui.valueCol}>
                     {given(p.id) ? <span className="ng-vl-given-value">{formatValue(port.mode === 'trunk' ? port.allowed : port.vlan)}</span> : <>
                       {port.mode === 'access' && field(`${row}.vlan`, ui.accessVlan({ port: label }), { row, className: 'is-vid', numeric: true })}
                     </>}
@@ -217,9 +217,9 @@ export default function PortsForm({ device, syntax, form, raw, marks, edit, onCh
             return [
               <tr key={p.id} className={mark ? 'is-marked' : undefined}>
                 {portCell(p, label)}
-                <td>{given(p.id) ? <span className="ng-vl-given-value">{formatValue(config.ports[p.id].pvid)}</span>
+                <td className="ng-vl-cell-value" data-label={ui.col.pvid}>{given(p.id) ? <span className="ng-vl-given-value">{formatValue(config.ports[p.id].pvid)}</span>
                   : field(`${row}.pvid`, ui.pvid({ port: label }), { row, className: 'is-vid', numeric: true, invalid: pvidInvalid })}</td>
-                <td>
+                <td className="ng-vl-cell-mode">
                   <Segmented label={ui.frameTypesOf({ port: label })} value={config.ports[p.id].frameTypes} className="ng-vl-frames" readOnly={given(p.id)}
                     invalid={Boolean(markOn(marks, `${row}.frameTypes`))} describedBy={mark ? markId(row) : undefined}
                     onChange={value => edit.set(sw, `${row}.frameTypes`, value)}

@@ -1558,3 +1558,200 @@ tr.is-marked > th,
   .ng-vl-form-table thead th { font-size: 12px; }
   .ng-vl-form-table caption.ng-vl-caption { padding: 0; }
 }
+
+/* ── Round 6, the phone layer (plan-mobile v2 P1) ────────────────────────
+ * Under 640 px the heading row is one row: «‹ 1/4 · Два відділи ›» and «⋯»
+ * (the exercise switch and the task list are in the bar's «⋯» sheet). The
+ * section's heading stays for screen readers and focus. */
+@media (max-width: 639.98px) {
+  .ng-vl-head {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .ng-vl-head > .ng-vl-h1 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  /* The level stepper says the level and what it covers; the network's name stays for screen readers. */
+  .ng-vl-head > .ng-vf-level {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .ng-vl-head > .ng-more {
+    flex: none;
+    margin-left: auto;
+  }
+}
+
+/* ── Round 6 (P4): the port form as stacked cards under 640 px ──────────
+ * Same markup, inputs, labels and marks; only the table's boxes change.
+ * A port is one card: the port and its PC with the VLAN (PVID) field on
+ * the first line, the mode (frame types) as a full-width segmented row
+ * under it; a trunk's VLAN list and a mark have their own lines in the
+ * same card. The column headers stay for screen readers; a value's column
+ * name is written beside its field. */
+@media (max-width: 639.98px) {
+  .ng-vl-form-table,
+  .ng-vl-form-table > tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .ng-vl-form-table {
+    background: transparent;
+    border: 0;
+  }
+
+  .ng-vl-form-table > caption.ng-vl-caption {
+    display: block;
+    padding: 0 0 4px;
+  }
+
+  /* Every field and choice has its own name (its port in it), and a value
+     its column's name beside it: the header row goes. */
+  .ng-vl-form-table > thead {
+    display: none;
+  }
+
+  .ng-vl-form-table > tbody > tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px 10px;
+    padding: 8px 10px;
+    background: var(--ng-surf);
+    border: 1px solid var(--ng-stroke);
+    border-radius: var(--ng-radius);
+  }
+
+  .ng-vl-form-table > tbody > tr + tr {
+    margin-top: 6px;
+  }
+
+  /* A trunk's list and a mark continue their port's card. */
+  .ng-vl-form-table > tbody > tr:is(.ng-vl-allowed-row, .ng-vl-mark-row) {
+    margin-top: -7px;
+    padding-top: 0;
+    border-top: 0;
+    border-radius: 0 0 var(--ng-radius) var(--ng-radius);
+  }
+
+  .ng-vl-form-table > tbody > tr:has(+ tr:is(.ng-vl-allowed-row, .ng-vl-mark-row)) {
+    border-bottom: 0;
+    border-radius: var(--ng-radius) var(--ng-radius) 0 0;
+  }
+
+  .ng-vl-form-table > tbody > tr > :is(th, td) {
+    display: block;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+  }
+
+  .ng-vl-form-table > tbody > tr > th.ng-vl-port {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .ng-vl-form-table > tbody > tr > td.ng-vl-cell-value {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .ng-vl-form-table > tbody > tr > td.ng-vl-cell-value[data-label]::before {
+    content: attr(data-label);
+    color: var(--ng-muted);
+    font-family: var(--ng-sans);
+    font-size: var(--ng-font-caption);
+    line-height: 1.2;
+    text-align: right;
+    max-width: 6.5em;
+  }
+
+  /* No field yet (no mode chosen, or a trunk): no column name either. */
+  .ng-vl-form-table > tbody > tr > td.ng-vl-cell-value:empty::before {
+    content: none;
+  }
+
+  .ng-vl-form-table > tbody > tr > td.ng-vl-cell-mode {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .ng-vl-form-table > tbody > tr > td[colspan] {
+    grid-column: 1 / -1;
+  }
+
+  .ng-vl-form-table .ng-vl-cell-mode .ng-segmented,
+  .ng-vl-form-table .ng-vl-cell-mode .ng-segmented-options {
+    display: flex;
+    width: 100%;
+  }
+
+  .ng-vl-form-table .ng-vl-cell-mode .ng-segmented-option {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .ng-vl-form-table .ng-vl-modes .ng-segmented-options,
+  .ng-vl-form-table .ng-vl-frames .ng-segmented-options {
+    flex-wrap: nowrap;
+  }
+
+  .ng-vl-form-table .ng-vl-input.is-vid {
+    width: 4.6em;
+  }
+
+  .ng-vl-allowed {
+    padding-top: 6px;
+    border-top: 1px dashed var(--ng-stroke);
+  }
+
+  .ng-vl-input.is-list {
+    width: 100%;
+  }
+
+  .ng-vl-allowed > .ng-vl-pair {
+    flex: 1 1 100%;
+  }
+}
+
+/* Round 6 repair (Fable): «не задано» is a placeholder, not a choice: chosen,
+   it stays muted and plain (dashed edge), so the two real modes read as the
+   choice. Every width. */
+.ng-vl-modes .ng-vl-mode-word.is-unset {
+  font-weight: 400;
+}
+
+.ng-vl-modes .ng-segmented-option[aria-checked="true"]:has(.ng-vl-mode-word.is-unset) {
+  background: transparent;
+  border-style: dashed;
+  border-color: var(--ng-stroke);
+  color: var(--ng-muted);
+}
+
+/* Round 6 repair: under 640 px the drawing in the page is a short preview
+   (170 px; it pans at its readable size), so the task and the first control
+   stay in the first view; «Розгорнути схему» shows it whole. */
+@media (max-width: 639.98px) {
+  .ng-vl[data-mode="narrow"] .ng-vl-frame {
+    height: min(var(--ng-vl-natural, 340px), 170px);
+    min-height: 0;
+  }
+}

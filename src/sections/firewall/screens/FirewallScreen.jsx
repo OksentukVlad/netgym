@@ -88,13 +88,14 @@ import { traceCaptions } from '../logic/trace.js';
 import { useExercise } from '../../../ui/useExercise.js';
 import { usePlace, usePref, useStore } from '../../../ui/useStore.js';
 import { useReducedMotion, useStepTimer } from '../../../ui/motion.js';
-import { BarControls } from '../../../ui/BarSlot.jsx';
+import { BarControls, SheetCaption, SheetChoice } from '../../../ui/BarSlot.jsx';
 import Segmented from '../../../ui/components/Segmented.jsx';
 import HelpPanel, { bringIntoView } from '../../../ui/components/HelpPanel.jsx';
 import MoreMenu from '../../../ui/components/MoreMenu.jsx';
 import DoneMark from '../../../ui/components/DoneMark.jsx';
 import Aside, { useAsideFold } from '../../../ui/components/Aside.jsx';
-import TextEquivalent, { TextEquivalentButton } from '../../../ui/components/TextEquivalent.jsx';
+import TextEquivalent, { TextEquivalentButton, lineCount } from '../../../ui/components/TextEquivalent.jsx';
+import DiagramExpand, { ExpandButton, useDiagramExpand, useTextOpen } from '../../../ui/topology/DiagramExpand.jsx';
 import ActionLine from '../../../ui/components/ActionLine.jsx';
 import FactLink, { scrollToLabel } from '../../../ui/components/FactLink.jsx';
 import { uk } from '../../../ui/uk.js';
@@ -213,7 +214,9 @@ function PredictView({ bank }) {
   const rowEls = useRef([]);
   const focusCard = useRef(false);
   const focusRules = useRef(false);
-  const [textOpen, setTextOpen] = useState(false);
+  // Round 6 (P2): «Текстом» starts open on a phone; the full-screen diagram has a zoom of its own.
+  const [textOpen, setTextOpen] = useTextOpen();
+  const expand = useDiagramExpand({ zoom: ex.view.zoom, onZoom: zoom => setView({ zoom }) });
   const [mine, setMine] = useState(null);   // the card whose «Моя відповідь» is shown
 
   const allRows = useMemo(() => tableRows(task.policy), [task]);
@@ -456,10 +459,12 @@ function PredictView({ bank }) {
 
   const stage = (
       <section className="ng-fw-stage" aria-label={ui.diagramLabel}>
-        <FirewallDiagram scene={scene} topology={task.topology} highlight={highlight} zoom={ex.view.zoom} onZoom={zoom => setView({ zoom })} viewKey={ex.key}
-          covered={textOpen}
-          tools={<TextEquivalentButton buttonRef={textButton} id="ng-fw-text" label={ui.textButton} open={textOpen} onToggle={() => setTextOpen(o => !o)} />}
-          overlays={<TextEquivalent id="ng-fw-text" title={ui.textTitle} sections={sections} open={textOpen} onClose={closeText} />} />
+        <DiagramExpand expand={expand}>
+        <FirewallDiagram scene={scene} topology={task.topology} highlight={highlight} zoom={expand.zoom} onZoom={expand.onZoom} viewKey={ex.key}
+          covered={expand.covered(textOpen)}
+          tools={<><TextEquivalentButton buttonRef={textButton} id="ng-fw-text" label={ui.textButton} open={textOpen} onToggle={() => setTextOpen(o => !o)} count={lineCount(sections)} /><ExpandButton expand={expand} /></>}
+          overlays={<TextEquivalent id="ng-fw-text" title={ui.textTitle} sections={sections} open={expand.covered(textOpen)} onClose={closeText} />} />
+        </DiagramExpand>
         {illustrate && <p className="ng-fw-illustration">{ui.illustration}</p>}
         {walk && (
           <div className="ng-fw-walkbar">
@@ -490,10 +495,11 @@ function PredictView({ bank }) {
       <div className="ng-fw-side">
       <header className="ng-fw-head">
         <h1 className="ng-fw-h1">{ui.heading}</h1>
-        {chainSet && <Segmented label={ui.level} value={level} onChange={chooseLevel} className="ng-fw-variants ng-fw-levels"
-          options={predictLevels.map(l => ({ value: l.value, label: levelLabel(l) }))} />}
-        {level === 2 && <Segmented label={ui.variant} value={ruleSet.id} onChange={chooseVariant} className="ng-fw-variants"
-          options={ruleSets.map(v => ({ value: v.id, label: variantLabel(v) }))} />}
+        {/* Round 6: on a phone both go into the bar's «⋯» sheet; the row keeps a stepper over the rule sets (level 2) or the levels. */}
+        {chainSet && <SheetChoice stepper={level !== 2} label={ui.level} value={level} onChange={chooseLevel} className="ng-fw-variants ng-fw-levels"
+          options={predictLevels.map(l => ({ value: l.value, label: levelLabel(l), step: l.label }))} />}
+        {level === 2 && <SheetChoice stepper label={ui.variant} value={ruleSet.id} onChange={chooseVariant} className="ng-fw-variants"
+          options={ruleSets.map(v => ({ value: v.id, label: variantLabel(v), step: v.title }))} />}
         <MoreMenu disclosureHost={moreHost} items={[
           { id: 'states', label: ui.statesMenu, render: () => <StatesPanel /> },
           level === 2 && { id: 'commands', label: ui.commandsMenu, render: () => <CommandsPanel rows={allRows} /> },
@@ -586,6 +592,7 @@ export default function FirewallScreen({ bank }) {
   return <>
     {exercises.length > 1 && (
       <BarControls>
+        <SheetCaption label={ui.exercise} />
         <Segmented label={ui.exercise} value={exercise} onChange={id => setTab({ exercise: id })} className="ng-fw-exercises"
           options={exercises.map(id => ({ value: id, label: ui.exercises[id] }))} />
       </BarControls>

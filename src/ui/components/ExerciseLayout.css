@@ -137,3 +137,37 @@
   gap: 6px;
   min-width: 0;
 }
+
+/* Round 6, the phone layer (plan-mobile v2 P1): under 640 px the header is
+   one row, the level stepper (its choices are in the bar's «⋯» sheet); the
+   heading stays for screen readers and focus. A header without controls
+   (the calculator) keeps its heading. */
+@media (max-width: 639.98px) {
+  .ng-exercise-head {
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding: 8px 14px;
+  }
+
+  /* overflow: clip, not hidden: focusing the heading inside must not scroll this 1 px box. */
+  .ng-exercise-head:has(> .ng-exercise-controls) > .ng-exercise-titles {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    overflow: clip;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .ng-exercise-controls {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .ng-exercise-body {
+    gap: 16px;
+    padding: 14px;
+  }
+}

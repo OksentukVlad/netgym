@@ -1031,6 +1031,8 @@
    drawing never spills out of its frame over the buttons. */
 .ng-rt[data-mode="desk"] .ng-rt-stage > .ng-dg,
 .ng-rt[data-mode="wide"] .ng-rt-stage > .ng-dg,
+.ng-rt[data-mode="desk"] .ng-rt-stage > .ng-dx > .ng-dg,
+.ng-rt[data-mode="wide"] .ng-rt-stage > .ng-dx > .ng-dg,
 .ng-rt[data-mode="desk"] .ng-dg-box,
 .ng-rt[data-mode="wide"] .ng-dg-box {
   min-height: auto;
@@ -1545,4 +1547,69 @@ button.ng-rt-checkline-body:hover,
 
 .ng-rt[data-short] .ng-rt-work .ng-rt-row-head {
   margin-bottom: 2px;
+}
+
+/* ── Round 6, the phone layer (plan-mobile v2 P1) ────────────────────────
+ * Under 640 px the task bar is one row: «☰», the task's title, ◀ ▶, «⋯»
+ * (the exercise switch is in the bar's «⋯» sheet); «Знайди несправність»:
+ * «‹ 1/3 · Рівень 1 ›». The heading and the level chip stay for screen
+ * readers and the drawer. */
+.ng-rt-drawer-word {
+  display: inline;
+}
+
+@media (max-width: 639.98px) {
+  .ng-rt-taskbar {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .ng-rt-taskbar > .ng-rt-h1,
+  .ng-rt-taskbar > .ng-rt-level,
+  .ng-rt-drawer-word {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .ng-rt-drawer-button {
+    flex: none;
+    min-width: var(--ng-target);
+    padding: 0 10px;
+  }
+
+  /* The task's whole name, on up to two lines (round 6 repair, Fable 2: never «Два роутери, д…»). */
+  .ng-rt-taskbar > .ng-rt-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 16px;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+
+  .ng-rt-taskbar > .ng-rt-step {
+    flex: none;
+  }
+
+  .ng-rt-taskbar > .ng-rt-bar-end {
+    flex: none;
+    margin-left: 0;
+  }
+
+  .ng-rf .ng-rt-taskbar > .ng-rf-busy:empty {
+    display: none;
+  }
+}
+
+/* Round 6 repair: under 640 px the drawing in the page is a short, pannable
+   preview (the task's first route stays in the first view); «Розгорнути схему»
+   shows it whole. */
+@media (max-width: 639.98px) {
+  .ng-rt .ng-dg-frame.is-pan:not(.is-fit) {
+    max-height: 190px;
+  }
 }

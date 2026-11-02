@@ -26,17 +26,21 @@
 //   - the values are the example's own (Sol's examples.js: reserved
 //     addresses), never the learner's task or answer, and never written into
 //     answers or drafts.
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { uk } from '../uk.js';
+import { usePhone } from '../phone.js';
 import '../tokens.css';
 import './WorkedExample.css';
 
 /** The rows: arrays of cells as a table (with `head` as column labels), strings as lines. */
 function Rows({ head, rows }) {
+  // Round 6: under 640 px the table stacks and each value carries its column's name (data-label), so the
+  // header row isn't rendered there (out of the tree rather than hidden: nothing in the example is hidden).
+  const phone = usePhone();
   if (head || rows.some(Array.isArray)) {
     return (
       <table className="ng-wex-table">
-        {head && (
+        {head && !phone && (
           <thead>
             <tr><td className="ng-wex-mark" />{head.map((label, i) => <th key={i} scope="col">{label}</th>)}</tr>
           </thead>
@@ -45,7 +49,8 @@ function Rows({ head, rows }) {
           {rows.map((row, i) => (
             <tr key={i}>
               <td className="ng-wex-mark" aria-hidden="true">✓</td>
-              {[].concat(row).map((cell, j) => <td key={j} className="ng-wex-value">{cell}</td>)}
+              {/* data-label: the column's name, written before the value when the table stacks (round 6, under 640 px). */}
+              {[].concat(row).map((cell, j) => <td key={j} className="ng-wex-value" data-label={head?.[j]}>{cell}</td>)}
             </tr>
           ))}
         </tbody>
@@ -78,14 +83,33 @@ export default function WorkedExample({ taskKey, context, rows, head, note, chil
   if (!Object.is(state.key, taskKey)) setState({ key: taskKey, open: false });
   const open = state.open && Object.is(state.key, taskKey);
   const bodyId = useId();
+  // Round 6: opened by its toggle, the card comes into view whole where it can (`nearest`: no move when it
+  // already is; on a phone it would open below the window's edge). Never on mount or a task change.
+  const card = useRef(null);
+  const asked = useRef(false);
+  useEffect(() => {
+    if (!open || !asked.current) return;
+    asked.current = false;
+    const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    // Once the fonts are in and two frames have laid the opened card out at its final height (round 6
+    // repair: it was sometimes scrolled while still short); nothing if it closes or unmounts first.
+    const show = () => card.current?.scrollIntoView?.({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' });
+    show();   // at once (the card is laid out by now), and again once fonts and layout have settled
+    if (typeof window === 'undefined' || !window.requestAnimationFrame) return undefined;
+    let cancelled = false, frame = 0;
+    const twoFrames = () => { if (!cancelled) frame = window.requestAnimationFrame(() => { if (!cancelled) frame = window.requestAnimationFrame(() => { if (!cancelled) show(); }); }); };
+    const fonts = typeof document !== 'undefined' ? document.fonts?.ready : null;
+    if (fonts) fonts.then(twoFrames, twoFrames); else twoFrames();
+    return () => { cancelled = true; window.cancelAnimationFrame?.(frame); };
+  }, [open]);
   return (
     <div className={`ng-wex${open ? ' is-open' : ''}${className ? ` ${className}` : ''}`} data-worked-example="">
-      <button type="button" className="ng-wex-toggle" aria-expanded={open} aria-controls={bodyId} onClick={() => setState({ key: taskKey, open: !open })}>
+      <button type="button" className="ng-wex-toggle" aria-expanded={open} aria-controls={bodyId} onClick={() => { asked.current = !open; setState({ key: taskKey, open: !open }); }}>
         <span className="ng-wex-label"><span className="ng-wex-words">{uk.example.toggle}</span> <span aria-hidden="true">{open ? '▾' : '▸'}</span> <span className="ng-wex-words">{uk.example.toggleRest}</span></span>
       </button>
       <div id={bodyId} className="ng-wex-body" aria-live="polite">
         {open && (
-          <div className="ng-wex-card">
+          <div ref={card} className="ng-wex-card">
             <p className="ng-wex-tag">{uk.example.tag}</p>
             {context && <p className="ng-wex-context">{context}</p>}
             {rows ? <Rows head={head} rows={rows} /> : children}

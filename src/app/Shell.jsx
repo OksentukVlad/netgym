@@ -14,7 +14,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { HOME, currentRoute, initialNav, isHome, navReducer } from './nav.js';
 import StoreProvider from './StoreProvider.jsx';
 import Bar, { ThemeButton } from './Bar.jsx';
-import { BarSlotContext } from '../ui/BarSlot.jsx';
+import { BarSlotContext, SheetAreaContext } from '../ui/BarSlot.jsx';
 import { NavContext } from '../ui/useNav.js';
 import { usePref } from '../ui/useStore.js';
 import { uk } from './uk.js';
@@ -36,6 +36,8 @@ function ShellFrame({ target }) {
   const [nav, setNav] = useState(initialNav);
   // The bar's control slot (null on the start screen, which has no bar).
   const [slot, setSlot] = useState(null);
+  // Round 6: the phone sheet's area for a screen's own choices (ui/BarSlot.jsx SheetControls).
+  const [sheetArea, setSheetArea] = useState(null);
   const navRef = useRef(nav);
   const focusPending = useRef(false);
   const homeHeading = useRef(null);
@@ -74,6 +76,10 @@ function ShellFrame({ target }) {
   useEffect(() => {
     if (!focusPending.current) return;
     focusPending.current = false;
+    // Round 6: on a phone the page itself scrolls; a new screen starts at its top, as the
+    // desktop's new screen area does (no-op where the document doesn't scroll).
+    const page = document.scrollingElement;
+    if (page && page.scrollTop) page.scrollTop = 0;
     let heading = barHeading.current;
     if (!section) heading = homeHeading.current;
     else heading = screenBox.current?.querySelector('h1') ?? heading;
@@ -94,9 +100,10 @@ function ShellFrame({ target }) {
   return (
     <NavContext.Provider value={navValue}>
       <BarSlotContext.Provider value={slot}>
+        <SheetAreaContext.Provider value={sheetArea}>
         <div className="ng-shell">
           {section ? (
-            <Bar onBack={() => apply({ type: 'home' }, true)} caption={uk.appName} title={section.title} headingRef={barHeading} slotRef={setSlot} />
+            <Bar onBack={() => apply({ type: 'home' }, true)} caption={uk.appName} title={section.title} headingRef={barHeading} slotRef={setSlot} sheetRef={setSheetArea} />
           ) : (
             <StartScreen sections={target.sections} theme={theme} headingRef={homeHeading} onOpen={openSection} />
           )}
@@ -106,6 +113,7 @@ function ShellFrame({ target }) {
             </div>
           )}
         </div>
+        </SheetAreaContext.Provider>
       </BarSlotContext.Provider>
     </NavContext.Provider>
   );

@@ -64,7 +64,7 @@ import { explanation, hints as hintsOf, tips } from '../logic/hints.js';
 import { setupExample } from '../logic/examples.js';
 import { useExercise } from '../../../ui/useExercise.js';
 import { usePlace, usePref, useStore } from '../../../ui/useStore.js';
-import Segmented from '../../../ui/components/Segmented.jsx';
+import { SheetChoice } from '../../../ui/BarSlot.jsx';
 import ReorderList from '../../../ui/components/ReorderList.jsx';
 import HelpPanel, { bringIntoView } from '../../../ui/components/HelpPanel.jsx';
 import MoreMenu from '../../../ui/components/MoreMenu.jsx';
@@ -334,14 +334,14 @@ export default function SetupScreen({ bank }) {
   // Closed again on every new deck or values (the instance), never in the store.
   const workedExample = <WorkedExample taskKey={task.instanceKey} context={example.context} head={example.columns} rows={example.rows} />;
 
-  const deckOptions = decks.map(deck => ({ value: deck.id, label: <>{deck.label}<DoneMark done={earned.has(deck.id)} /></> }));
+  const deckOptions = decks.map(deck => ({ value: deck.id, label: <>{deck.label}<DoneMark done={earned.has(deck.id)} /></>, step: deck.label }));
   const taskLine = recalling ? ui.recallTask : phase === 'sorted' ? ui.sortedTask : phase === 'sorted-shown' ? ui.shownTask : ui.task;
 
   return (
     <div ref={root} className={`ng-su is-${phase}`} data-theme={themeName} data-layout={layout}>
       <header className="ng-su-head">
         <h1 className="ng-su-h1" tabIndex={-1}>{words.heading}</h1>
-        <Segmented label={ui.decks} value={deckId} onChange={onDeck} className="ng-su-decks" options={deckOptions} />
+        <SheetChoice stepper label={ui.decks} value={deckId} onChange={onDeck} className="ng-su-decks" options={deckOptions} />
         {moreItems.length > 0 && <MoreMenu items={moreItems} className="ng-su-more-menu" />}
       </header>
       <div className="ng-su-intro">
@@ -390,6 +390,9 @@ export default function SetupScreen({ bank }) {
         <HelpPanel
           taskKey={`${task.instanceKey}:${recalling ? 'recall' : 'cards'}`}
           boardRef={boardRef}
+          // Round 6 (P3): while the cards are sorted the check row follows the deck (task, cards, then
+          // «Перевірити»); recall and the script keep the panel before a long board, as before.
+          placement={sorting ? 'after' : 'auto'}
           check={sorting ? { label: ui.check, onCheck } : null}
           verdict={verdict}
           stale={sorting ? state.stale : lineStale}

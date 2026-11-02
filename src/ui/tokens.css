@@ -204,3 +204,18 @@
 .ng-standalone > * {
   min-height: 100%;
 }
+
+/* Round 6, the phone layer: under 640 px a single-section build's page is
+   the scroller too (src/app/shell.css does the same for the NetGym shell). */
+@media (max-width: 639.98px) {
+  .ng-standalone,
+  .ng-standalone-frame {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .ng-standalone > * {
+    min-height: 0;
+  }
+}

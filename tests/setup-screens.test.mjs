@@ -280,7 +280,8 @@ test('setup recall (server): the three lines are hidden everywhere until typed, 
     const html = unescape(h.renderScreen(h.storeFor({ seed, deck: record.id, setup: state, session: { earned: { solved: true, assisted: false }, status: 'solved' } })));
     const label = `${record.id} seed ${seed}`;
     assert.equal((html.match(/class="ng-su-field"/g) ?? []).length, 3, label);
-    assert.equal((html.match(/<input [^>]*value=""/g) ?? []).length, 3, `${label}: empty lines`);
+    // Round 6 repair: a recall line is a one-line text area (it wraps a long command on a phone): empty, it has no text.
+    assert.equal((html.match(/<textarea [^>]*class="ng-su-field"[^>]*><\/textarea>/g) ?? []).length, 3, `${label}: empty lines`);
     for (const id of task.typedIds) assert.ok(!html.includes(cardText(task, id)), `${label}: «${cardText(task, id)}» shown before it is typed`);
     // Every occurrence is «…» in the script (the 2960's SVI entry may come twice in other orders).
     const script = scriptForState(task, state);

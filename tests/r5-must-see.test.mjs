@@ -114,6 +114,14 @@ const fixtures = {
   'transparent -webkit-text-fill-color': { html: '<p class="e" style="margin:20px; -webkit-text-fill-color:transparent">192.168.88.1</p>', fail: /not painted/ },
   'wrapped HTML text at 12 px': { html: '<p class="e" style="width:200px; font-size:12px">Адреса «Куди» належить самому роутеру — це input. Іншому пристрою — це forward.</p>', pass: true },
   'normal SVG text at scale 1': { html: '<svg width="300" height="60"><text class="e" x="10" y="30" font-size="12" font-weight="700" font-family="monospace" fill="#fff">bridge · 192.168.88.1</text></svg>', pass: true },
+  // Round 6 (the phone contract): `reach` is measured after scrolling vertically to each run; `first: n` in view, the rest reachable.
+  'below the fold, reachable': { html: '<div style="height:1600px"></div><p class="e">Обери, кому адресовано пакет.</p>', essentials: [{ sel: '.e', reach: true }], pass: true },
+  'below the fold inside a scroller, reachable': { html: '<div style="height:300px; overflow:auto"><div style="height:900px"></div><p class="e">192.168.88.1</p></div>', essentials: [{ sel: '.e', reach: true }], pass: true },
+  'reachable, but cut off at the right': { html: '<div style="height:1600px"></div><div style="width:120px; overflow:hidden"><span class="e" style="white-space:nowrap">192.168.88.1 — адреса роутера</span></div>', essentials: [{ sel: '.e', reach: true }], fail: /clipped by div/ },
+  'reachable, but too small': { html: '<div style="height:1600px"></div><p class="e" style="font-size:10px">дрібно</p>', essentials: [{ sel: '.e', reach: true }], fail: /too small/ },
+  'reachable, but painted over': { html: '<div style="height:1600px"></div><div style="position:relative"><p class="e" style="margin:0">192.168.88.1 — адреса</p><div style="position:absolute; left:0; top:0; width:300px; height:30px; background:#000"></div></div>', essentials: [{ sel: '.e', reach: true }], fail: /painted over by div/ },
+  'the first in view, the rest reachable': { html: '<p class="e">перша</p><div style="height:1600px"></div><p class="e">друга</p><p class="e">третя</p>', essentials: [{ sel: '.e', count: 3, first: 1 }], pass: true },
+  'the second of two first-view matches below the fold': { html: '<p class="e">перша</p><div style="height:1600px"></div><p class="e">друга</p>', essentials: [{ sel: '.e', count: 2, first: 2 }], fail: /outside the viewport/ },
 };
 
 test('R5 checker\'s known limit can\'t bite: src/ has no CSS clip-path and no clipPath with more than one shape', () => {
@@ -141,6 +149,12 @@ test('R5 checker: the fixtures in Chromium (1000 × 700)', { skip: missing }, as
       if (f.pass) assert.deepEqual(reasons, [], name);
       else assert.ok(reasons.some(r => f.fail.test(r)), `${name}: ${JSON.stringify(reasons)}`);
     }
+    // Round 6: measuring reachable runs puts every scroller back where it was.
+    await p.setContent(page('<p>top</p><div id="inner" style="height:200px; overflow:auto"><div style="height:900px"></div><p class="e">x</p></div><div style="height:1600px"></div><p class="e">y</p>'));
+    await p.evaluate(() => { window.scrollTo(0, 37); document.getElementById('inner').scrollTop = 11; });
+    const reached = await p.evaluate(measureEssentials, { essentials: [{ sel: '.e', reach: true }], minFont: MIN_FONT_PX });
+    assert.deepEqual(reached.failures, [], 'both reachable');
+    assert.deepEqual(await p.evaluate(() => [scrollY, document.getElementById('inner').scrollTop]), [37, 11], 'scroll positions put back');
     // The checker leaves the page as it was: forced pointer-events and its probe are removed.
     await p.setContent(page('<p class="e" style="margin:20px">x</p><div id="o" style="pointer-events:none !important">y</div>'));
     await p.evaluate(measureEssentials, { essentials: ['.e'], minFont: MIN_FONT_PX });

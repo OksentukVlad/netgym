@@ -7,7 +7,7 @@
 //   - the screen id of the VLAN asides (first-visit notes, spec A8), and
 //     (round 5) their fold on a short window.
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { bringIntoView } from '../../../ui/components/HelpPanel.jsx';
+import { bringPanelIntoView } from '../../../ui/components/HelpPanel.jsx';
 import { useStore } from '../../../ui/useStore.js';
 import Commands from './Commands.jsx';
 import { vlanFact } from '../logic/facts.js';
@@ -161,6 +161,6 @@ export function useHelpInView(rootRef, device) {
     const current = root?.querySelector('[data-help-current]');
     if (!root || !current) return;
     const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    bringIntoView([root.querySelector('[data-help="row"]'), current, root.querySelector('[data-evidence="current"]')], reduced ? 'auto' : 'smooth');
+    bringPanelIntoView(root.querySelector('[data-help="row"]'), current, root.querySelector('[data-evidence="current"]'), reduced ? 'auto' : 'smooth');
   });
 }

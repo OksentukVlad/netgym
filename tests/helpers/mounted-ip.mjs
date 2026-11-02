@@ -614,8 +614,9 @@ scenario('theme switch', mountShell, () => {
   openCard('IP-калькулятор');
   const sw = switches()[0];
   const end = sw?.parentNode;
-  check('theme: an IP screen has one switch, last in the top bar, after the slot', switches().length === 1 && Boolean(sw.closest('.ng-bar')) && end.className === 'ng-bar-end'
-    && end.childNodes.at(-1) === sw && end.childNodes[0].className === 'ng-bar-slot', switches().length);
+  // Round 6: the bar's end holds a body (the phone sheet's content): the screen's choices, the slot, then the switch.
+  check('theme: an IP screen has one switch, last in the top bar, after the slot', switches().length === 1 && Boolean(sw.closest('.ng-bar')) && end.className === 'ng-bar-sheet-body'
+    && end.parentNode.className === 'ng-bar-end' && end.childNodes.at(-1) === sw && end.childNodes.at(-2).className === 'ng-bar-slot', switches().length);
   check('theme: the IP screen opens in the light theme chosen on the start screen', screenTheme() === 'light' && label() === 'Темна тема', screenTheme());
   click(sw);
   check('theme: pressed in the bar, the IP screen turns dark', screenTheme() === 'dark' && label() === 'Світла тема', screenTheme());

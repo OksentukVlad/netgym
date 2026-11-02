@@ -67,6 +67,8 @@ const all = (selector, root = document) => root.querySelectorAll(selector);
 const click = el => step(() => { el.focus(); fire(el, 'click'); });
 const key = (el, k) => step(() => fire(el, 'keydown', { key: k }));
 const type = (el, value) => step(() => { el.value = value; fire(el, 'input'); });
+// Round 6 repair: a recall field is a text area; mounted again, React gives it its value as its text.
+const valueOf = f => (f.value !== undefined ? f.value : f.textContent);
 const status = () => statusWords(document);
 const live = () => words(q('.ng-reorder-live'));
 /** A step whose effects finish in promises (the clipboard): flushed inside act. */
@@ -571,7 +573,7 @@ await scenario('recall by keyboard', m => {
   solve(m);
   const presses = instOf(m).presses;
   click(continueButton());
-  check('recall: three empty lines, focus on the first', stateOf(m).phase === 'recall' && fields().length === 3 && fields().every(f => f.value === '') && document.activeElement === fields()[0]);
+  check('recall: three empty lines, focus on the first', stateOf(m).phase === 'recall' && fields().length === 3 && fields().every(f => valueOf(f) === '') && document.activeElement === fields()[0]);
   check('recall: the task sentence says what to do (its own line, no action line or mode «?»)', words(q('.ng-su-task')) === ui.recallTask && !q('.ng-action-line') && modeQ().length === 0);
   check('recall: each line labelled by its description, with its prompt', fields().every((f, i) => words(q(`label[for="${f.getAttribute('id')}"]`)) === `${i + 1}. ${recallRows(task, stateOf(m))[i].description}`)
     && all('.ng-su-recall-prompt').map(words).join() === task.recallLines.map(l => l.mode).join());
@@ -660,7 +662,7 @@ await scenario('recall: the reveal fills the lines and keeps the deck’s ✓', 
   click(continueButton());
   click(revealButton());
   const st = stateOf(m);
-  check('recall reveal: the lines hold the commands, read-only, marked «показано»', st.phase === 'done-shown' && fields().every((f, i) => f.value === cardText(task, task.typedIds[i]) && f.hasAttribute('readonly'))
+  check('recall reveal: the lines hold the commands, read-only, marked «показано»', st.phase === 'done-shown' && fields().every((f, i) => valueOf(f) === cardText(task, task.typedIds[i]) && f.hasAttribute('readonly'))
     && all('.ng-su-recall-line .ng-shown-chip').length === 3);
   check('recall reveal: one line in the panel, focus on it', status() === ui.recallApplied && document.activeElement === q('.ng-help-applied-text'));
   check('recall reveal: the deck’s ✓ stays; assistance reaches the session; no sorting reveal', instOf(m).session.earned.solved && instOf(m).session.assisted && !instOf(m).session.revealed
@@ -699,7 +701,7 @@ await scenario('navigation restoration (recall)', m => {
   key(fields()[0], 'Enter');
   type(fields()[1], 'ip ssh ver');
   key(fields()[1], 'Enter');
-  const snap = () => ({ values: fields().map(f => f.value), underlines: lines().map((_, i) => words(verdict(i))), status: status(), masked: all('.ng-su-line.is-masked').length, evidence: evidence().length });
+  const snap = () => ({ values: fields().map(f => valueOf(f)), underlines: lines().map((_, i) => words(verdict(i))), status: status(), masked: all('.ng-su-line.is-masked').length, evidence: evidence().length });
   const before = snap();
   m.remount();
   check('navigation: recall comes back with its lines, verdicts and masks', JSON.stringify(snap()) === JSON.stringify(before), { before, after: snap() });
@@ -809,7 +811,7 @@ function chooseBy(m, prompts) {
 }
 const markedTexts = () => rows().filter(li => li.className.split(/\s+/).includes('is-marked')).map(li => rowTexts({ querySelectorAll: () => [li] })[0]);
 const snapshot = () => ({
-  heading: words(q('.ng-su-h1')), rows: rowTexts(root()), status: status(), marks: markedTexts(), fields: fields().map(f => f.value), phase: root().className,
+  heading: words(q('.ng-su-h1')), rows: rowTexts(root()), status: status(), marks: markedTexts(), fields: fields().map(f => valueOf(f)), phase: root().className,
   checked: all('.ng-su-board [aria-checked="true"]').map(words), hints: all('[data-help="hint"]').length, script: all('.ng-su-part').map(scriptText),
 });
 

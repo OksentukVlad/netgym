@@ -210,3 +210,36 @@
   outline: var(--ng-focus-width) solid var(--ng-focus);
   outline-offset: 3px;
 }
+
+/* ── Round 6, the phone layer (plan-mobile v2 P1) ────────────────────────
+ * Under 640 px the page itself is the one scroller: the shell is no longer
+ * one screen high and the screen area no longer scrolls on its own, so the
+ * bar scrolls away with the page and the browser's own bars can hide. */
+@media (max-width: 639.98px) {
+  html {
+    scroll-padding: 12px 0;
+  }
+
+  .ng-shell {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .ng-screen,
+  .ng-home {
+    flex: none;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .ng-screen > * {
+    min-height: 0;
+  }
+
+  .ng-home-column {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}

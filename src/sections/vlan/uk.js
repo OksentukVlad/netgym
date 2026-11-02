@@ -500,6 +500,7 @@ Object.assign(copy, {
 ui.exercises.faults = faultText.title;
 export const faultsUi = {
   level: ({ n }) => `Рівень ${n} з 3`,
+  levelLabel: 'Рівень',
   levelWhat: { 1: 'комутатори', 2: 'маршрутизація між VLAN', 3: 'будь-що з вивченого' },
   version: ({ label }) => `Версія RouterOS на пристроях: ${label}.`,
   // The symptom grid.

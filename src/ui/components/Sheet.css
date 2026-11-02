@@ -1,0 +1,82 @@
+/* Round 6, the phone layer (src/ui/BarSlot.jsx): a screen's choices that go
+ * into the bar's «⋯» sheet under 640 px, and the one-row stepper left in
+ * their place. On a desktop the wrappers take no box (display: contents), so
+ * the choices lay out in the screen's header exactly as before. */
+
+.ng-sheet-place,
+.ng-sheet-host {
+  display: contents;
+}
+
+/* A choice's caption shows only in the sheet. */
+.ng-sheet-caption {
+  display: none;
+}
+
+.ng-phone-only {
+  display: none;
+}
+
+@media (max-width: 639.98px) {
+  .ng-phone-only {
+    display: flex;
+  }
+
+  .ng-desk-only {
+    display: none !important;
+  }
+}
+
+/* «‹ 1/4 · Два відділи ›»: one row, the name shortened with an ellipsis. */
+.ng-stepper {
+  align-items: center;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ng-stepper-move {
+  box-sizing: border-box;
+  flex: none;
+  min-width: var(--ng-target);
+  min-height: var(--ng-target);
+  padding: 0;
+  background: var(--ng-input-bg);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ng-stepper-move[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.ng-stepper-move:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}
+
+.ng-stepper-now {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+  text-align: center;
+}
+
+.ng-stepper-n {
+  color: var(--ng-muted);
+  font-family: var(--ng-mono);
+}

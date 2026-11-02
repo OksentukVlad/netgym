@@ -50,7 +50,7 @@ import { useNav, useRouteParams } from '../../../ui/useNav.js';
 import ExerciseLayout from '../../../ui/components/ExerciseLayout.jsx';
 import Button from '../../../ui/components/Button.jsx';
 import HelpPanel from '../../../ui/components/HelpPanel.jsx';
-import Segmented from '../../../ui/components/Segmented.jsx';
+import { SheetChoice } from '../../../ui/BarSlot.jsx';
 import DoneMark, { earnedBy } from '../../../ui/components/DoneMark.jsx';
 import AddressRuler, { rulerWith } from './AddressRuler.jsx';
 import BitRows, { addressOf } from './BitRows.jsx';
@@ -203,11 +203,11 @@ export default function BinaryScreen({ route = null }) {
   const sheet = acceptedRows(ex.parts);
   // Level 1's own words for this step and input mode; other levels keep theirs.
   const l1 = level === 1 ? binaryLevel1Text(task, { step, mode: place.text ? 'text' : 'toggles' }) : null;
-  const levelOptions = LEVELS.map((n, i) => ({ value: n, label: <>{binaryUi.levels[i]}<DoneMark done={earned.has(n)} /></> }));
+  const levelOptions = LEVELS.map((n, i) => ({ value: n, label: <>{binaryUi.levels[i]}<DoneMark done={earned.has(n)} /></>, step: binaryUi.levels[i] }));
   return (
     <ExerciseLayout
       heading={binaryUi.heading}
-      controls={<Segmented label={binaryUi.level} showLabel options={levelOptions} value={level} onChange={chooseLevel} className="ng-bin-levels" />}
+      controls={<SheetChoice stepper label={binaryUi.level} showLabel options={levelOptions} value={level} onChange={chooseLevel} className="ng-bin-levels" />}
       question={<div className="ng-bin-walk ng-bin-task">
         <p data-provenance="given">{binaryUi.task({ ip: task.ip, prefix: task.prefix, mask: task.mask })}</p>
         <p className="ng-bin-goal">{binaryUi.goal}</p>

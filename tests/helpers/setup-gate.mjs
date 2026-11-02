@@ -37,7 +37,7 @@ export const identities = task => task.cards.flatMap(c => [c.id, c.commandId]).f
 const UI_CLASSES = new Set(['ng-hints-list']);
 /** The panel's and the gate's own hooks (spec A1): they say what is current, never what is right.
  * Round 5's shared markers (empty): a row with a term and its purpose, the action line, the worked example. */
-const HOOKS = /^data-(?:theme|layout|help|help-[\w-]+|evidence|term|purpose|action-line|worked-example)$/;
+const HOOKS = /^data-(?:theme|layout|help|help-[\w-]+|evidence|term|purpose|action-line|worked-example|label)$/; // round 6: data-label, a worked-example column name for its phone stacking
 /** The deck's success words: DR-3 promises no prompts (`ok.dr-3`). */
 export const okWords = task => text(`ok.${task.identity.taskId}` in copy ? `ok.${task.identity.taskId}` : 'ok');
 /** A row's purpose as shown, its first line (5b-2 F): the card's own; the login check says it is a step. */
@@ -146,7 +146,7 @@ export function recallFindings(root) {
     for (const el of elements(li)) {
       if (el.className.includes('ng-su-verdict') || el.closest('.ng-su-verdict')) continue; // the learner's echoed line
       for (const { name, value } of el.attributes) if (!(name === 'value' && el.className.includes('ng-su-field'))) parts.push(value);
-      for (const node of el.childNodes) if (node.nodeType === 3) parts.push(node.textContent);
+      for (const node of el.childNodes) if (node.nodeType === 3 && !el.className.includes('ng-su-field')) parts.push(node.textContent);
     }
     for (const leak of setupLeaks(parts.join('\n'), 'typed')) out.push(`recall line: ${leak}`);
   }
@@ -170,7 +170,7 @@ export function hiddenFindings(root, task, state) {
       for (const command of hidden) if (value.includes(command)) out.push(`hidden command in ${name}: ${command}`);
     }
     for (const node of el.childNodes) {
-      if (node.nodeType !== 3) continue;
+      if (node.nodeType !== 3 || el.className.includes('ng-su-field')) continue;   // round 6: the field's own text (a text area) is the learner's
       for (const command of hidden) if (node.textContent.includes(command)) out.push(`hidden command in ${el.className || el.localName}: ${command}`);
     }
   }

@@ -23,8 +23,11 @@ import './Overlay.css';
 function reveal(el) {
   let box = el.parentElement;
   while (box && !(box.scrollHeight > box.clientHeight && /auto|scroll/.test(getComputedStyle(box).overflowY))) box = box.parentElement;
+  // Round 6: on a phone the page itself scrolls.
+  const page = document.scrollingElement;
+  if (!box && page && page.scrollHeight > page.clientHeight) box = page;
   if (!box) return;
-  const r = el.getBoundingClientRect(), top = box.getBoundingClientRect().top + box.clientTop, bottom = top + box.clientHeight;
+  const r = el.getBoundingClientRect(), top = box === page ? 0 : box.getBoundingClientRect().top + box.clientTop, bottom = top + (box === page ? window.innerHeight : box.clientHeight);
   if (r.top < top) box.scrollTop -= top - r.top;
   else if (r.bottom > bottom) box.scrollTop += Math.min(r.bottom - bottom, r.top - top);
 }

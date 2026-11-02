@@ -122,3 +122,33 @@
   outline: var(--ng-focus-width) solid var(--ng-focus);
   outline-offset: 2px;
 }
+
+/* Round 6 (P5): under 640 px an item is rows, with no side column: the
+   caller's content across the whole card (its purpose, its command, its own
+   controls at full width), then the handle and «↑» «↓» on one row. Nothing
+   sits beside the content, so nothing paints over it. The targets stay
+   44 px (48 on a coarse pointer, tokens.css); there is no pointer drag. */
+@media (max-width: 639.98px) {
+  .ng-reorder-item {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "body body body"
+      "handle . moves";
+    align-items: center;
+    gap: 6px;
+    padding: 8px 8px 6px 10px;
+  }
+
+  .ng-reorder-body {
+    grid-area: body;
+  }
+
+  .ng-reorder-handle {
+    grid-area: handle;
+    justify-self: start;
+  }
+
+  .ng-reorder-moves {
+    grid-area: moves;
+  }
+}

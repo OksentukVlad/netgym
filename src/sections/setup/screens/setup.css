@@ -605,12 +605,19 @@
   font-weight: 700;
 }
 
-/* The field takes the line's whole width: a long command is never clipped. */
+/* The field takes the line's whole width: a long command is never clipped.
+   Round 6 repair: a one-line text area that wraps and grows (Recall.jsx). */
 .ng-su-field {
   flex: 1 1 auto;
+  box-sizing: border-box;
   min-width: 0;
   min-height: var(--ng-target);
-  padding: 0 8px;
+  padding: 9px 8px;
+  overflow: hidden;
+  resize: none;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
   background: var(--ng-input-bg);
   border: 1px solid var(--ng-line);
   border-radius: var(--ng-radius);
@@ -705,3 +712,94 @@
 .ng-su-modes-words dt { display: inline; color: var(--ng-text); font-family: var(--ng-mono); font-weight: 700; }
 .ng-su-modes-words dt::after { content: " — "; font-family: var(--ng-sans); font-weight: 400; }
 .ng-su-modes-words dd { display: inline; margin: 0; }
+
+/* ── Round 6, the phone layer (plan-mobile v2 P1) ────────────────────────
+ * Under 640 px the heading row is one row: «‹ 1/3 · Роутер Cisco ›» and «⋯»
+ * (the deck choice is in the bar's «⋯» sheet). */
+@media (max-width: 639.98px) {
+  .ng-su-head {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .ng-su-head > .ng-su-h1 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .ng-su-head > .ng-more {
+    flex: none;
+    margin-left: auto;
+  }
+}
+
+/* Round 6 (P5): under 640 px a card's content is rows: the purpose, the
+   command, then the prompt group at full width with 44 px options (48 on a
+   coarse pointer); DR-3's Winbox path last. */
+@media (max-width: 639.98px) {
+  .ng-su-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+
+  .ng-su-row > .ng-su-purpose { grid-row: 1; }
+  .ng-su-term { grid-column: 1; grid-row: 2; }
+  .ng-su-row > .ng-su-path { grid-row: 4; }
+
+  .ng-su-choice,
+  .ng-su-flag,
+  .ng-su-chosen {
+    grid-column: 1;
+    grid-row: 3;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .ng-su-choice .ng-su-prompts {
+    flex: 1 1 100%;
+  }
+
+  /* Recall: the prompt above its field, so the field has the line's whole
+     width (a long command scrolls inside it least). */
+  .ng-su-recall-field {
+    flex-wrap: wrap;
+    gap: 2px 8px;
+  }
+
+  .ng-su-recall-prompt {
+    min-width: 0;
+  }
+
+  .ng-su-recall-field > .ng-su-field {
+    flex: 1 1 calc(100% - 30px);   /* room for its ✓ on the same line */
+  }
+
+  /* The action line wraps here, and its «?» (a 44 px target overhanging its
+     line by 11 px) would reach into the worked example's row under it. */
+  .ng-su-action > .ng-action-line {
+    margin-bottom: 12px;
+  }
+
+  /* The five prompts at their own widths with an even gap, wrapping from the
+     left (round 6 repair, Fable): no stretched or centred lone option. */
+  .ng-su-prompts .ng-segmented-options {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 4px 6px;
+    width: 100%;
+  }
+
+  .ng-su-prompts .ng-segmented-option {
+    flex: 0 0 auto;
+    min-width: var(--ng-target);
+    min-height: var(--ng-target);
+    padding: 0 8px;
+    white-space: nowrap;
+  }
+}

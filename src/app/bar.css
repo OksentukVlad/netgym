@@ -90,3 +90,281 @@
   outline: var(--ng-focus-width) solid var(--ng-focus);
   outline-offset: 2px;
 }
+
+/* ── Round 6, the phone layer (Bar.jsx; plan-mobile v2 P1) ──────────────
+ * Under 640 px: one row, «←», the section's name, «⋯»; the bar scrolls
+ * away with the page (the page is the one scroller). The bar's end (the
+ * slot, the screen's own choices, the theme switch) is the «⋯» sheet: out
+ * of sight until opened, then a bottom sheet over a dimmed page. */
+
+.ng-bar-sheet-button,
+.ng-bar-sheet-head,
+.ng-bar-backdrop {
+  display: none;
+}
+
+/* On a desktop the end's body is one flex group, as the end was. */
+.ng-bar-sheet-body,
+.ng-bar-sheet-screen {
+  display: contents;
+}
+
+.ng-bar-sheet-screen:empty {
+  display: none;
+}
+
+@media (max-width: 639.98px) {
+  .ng-bar {
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding: 4px 8px;
+  }
+
+  .ng-bar-back-word {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .ng-bar .ng-bar-back {
+    flex: none;
+    min-width: var(--ng-target);
+    padding: 0 10px;
+  }
+
+  .ng-bar-title {
+    flex: 1 1 auto;
+  }
+
+  .ng-bar-title .ng-caption {
+    display: none;
+  }
+
+  .ng-bar-section {
+    color: var(--ng-text);
+    font-weight: 700;
+  }
+
+  .ng-bar-sheet-button {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-width: var(--ng-target);
+    min-height: var(--ng-target);
+    margin-left: auto;
+    padding: 0 10px;
+    background: var(--ng-input-bg);
+    border: 1px solid var(--ng-stroke);
+    border-radius: var(--ng-radius);
+    color: var(--ng-text);
+    font-family: var(--ng-sans);
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .ng-bar-sheet-button[aria-expanded="true"] {
+    border-color: var(--ng-blue);
+    background: var(--ng-blue-bg);
+  }
+
+  .ng-bar-sheet-button:focus-visible,
+  .ng-bar-sheet-done:focus-visible {
+    outline: var(--ng-focus-width) solid var(--ng-focus);
+    outline-offset: 2px;
+  }
+
+  /* The sheet: closed, out of sight (its controls stay mounted). */
+  .ng-bar-end[data-sheet="closed"] {
+    display: none;
+  }
+
+  .ng-bar-end[data-sheet="open"] {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 60;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;   /* taller than 85vh, it scrolls; it never wraps into a second column */
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0;
+    max-height: 85vh;
+    max-height: 85dvh;
+    margin: 0;
+    padding: 0 12px calc(12px + env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--ng-panel);
+    border-top: 1px solid var(--ng-stroke);
+    border-radius: 14px 14px 0 0;
+    box-shadow: 0 -8px 28px rgb(0 0 0 / 0.5);
+  }
+
+  .ng-bar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 59;
+    background: rgb(0 0 0 / 0.55);
+  }
+
+  .ng-bar-sheet-head {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    background: var(--ng-panel);
+  }
+
+  .ng-bar-sheet-title {
+    margin: 0;
+    font-size: var(--ng-font-body);
+    font-weight: 700;
+    color: var(--ng-title);
+  }
+
+  .ng-bar-sheet-done {
+    box-sizing: border-box;
+    min-width: var(--ng-target);
+    min-height: var(--ng-target);
+    padding: 0 16px;
+    background: var(--ng-button-bg);
+    border: 1px solid var(--ng-blue);
+    border-radius: var(--ng-radius);
+    color: var(--ng-button-text);
+    font-family: var(--ng-sans);
+    font-size: var(--ng-font-small);
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .ng-bar-end[data-sheet] .ng-bar-sheet-body {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    padding-top: 4px;
+  }
+
+  .ng-bar-end[data-sheet] .ng-bar-sheet-screen,
+  .ng-bar-end[data-sheet] .ng-bar-slot {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 14px;
+  }
+
+  .ng-bar-end[data-sheet] .ng-bar-sheet-screen:empty,
+  .ng-bar-end[data-sheet] .ng-bar-slot:empty {
+    display: none;
+  }
+
+  /* A screen's choices in the sheet: their caption above, the options as a
+     column of full-width rows (one tap each, 44/48 px). */
+  .ng-bar-end[data-sheet] .ng-sheet-host {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .ng-bar-end[data-sheet] .ng-sheet-caption {
+    display: block;
+    margin: 0;
+    color: var(--ng-muted);
+    font-family: var(--ng-mono);
+    font-size: var(--ng-font-caption);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  .ng-bar-end[data-sheet] .ng-segmented {
+    display: flex;
+    width: 100%;
+  }
+
+  .ng-bar-end[data-sheet] .ng-segmented-options {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ng-bar-end[data-sheet] .ng-segmented-option {
+    width: 100%;
+    padding: 6px 12px;
+    text-align: left;
+    white-space: normal;
+  }
+
+  .ng-bar-end[data-sheet] .ng-bar-slot > * {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .ng-bar-end[data-sheet] .ng-theme-switch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 0 12px;
+    text-align: left;
+  }
+
+  .ng-theme-word {
+    font-size: var(--ng-font-small);
+  }
+
+  /* The start screen's switch stays an icon (its name says what it does). */
+  .ng-home .ng-theme-word {
+    display: none;
+  }
+}
+
+/* While the sheet is open the page behind it doesn't scroll. */
+html.ng-sheet-open {
+  overflow: hidden;
+}
+
+@media (max-width: 639.98px) {
+  /* A choice moved into the sheet keeps no margin from its desktop row. */
+  .ng-bar-end[data-sheet] .ng-sheet-host > * {
+    margin: 0;
+  }
+}
+
+@media (max-width: 639.98px) {
+  /* The sheet's own caption names a choice; its in-screen caption isn't repeated. */
+  .ng-bar-end[data-sheet] .ng-segmented-label {
+    display: none;
+  }
+}
+
+/* Round 6 (plan-mobile v2 P1): between 640 and 1063 px the routing screen's
+   bar (its vendor and mode switches, 668 px) leaves the title less than the
+   223 px «NetGym Маршрутизація» needs (measured: it truncated at 1060 px, not
+   at 1064 px). There the caption goes, so the section's name keeps its
+   words where the row has room for them (1000 × 700 included); narrower,
+   the bar wraps as before. */
+@media (min-width: 640px) and (max-width: 1063.98px) {
+  .ng-bar-title .ng-caption {
+    display: none;
+  }
+}

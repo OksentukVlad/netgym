@@ -59,7 +59,7 @@ import AddressField from '../../../ui/components/AddressField.jsx';
 import Button from '../../../ui/components/Button.jsx';
 import HelpPanel, { bringIntoView } from '../../../ui/components/HelpPanel.jsx';
 import Aside, { useAsideFold } from '../../../ui/components/Aside.jsx';
-import Segmented from '../../../ui/components/Segmented.jsx';
+import { SheetChoice } from '../../../ui/BarSlot.jsx';
 import WorkedExample from '../../../ui/components/WorkedExample.jsx';
 import DoneMark, { earnedBy } from '../../../ui/components/DoneMark.jsx';
 import { uk as shared } from '../../../ui/uk.js';
@@ -272,8 +272,8 @@ export default function MaskScreen({ route = null }) {
   return (
     <ExerciseLayout
       heading={ui.heading}
-      controls={<Segmented label={ui.level} showLabel className="ng-mask-levels" value={level} onChange={chooseLevel}
-        options={[1, 2, 3].map(n => ({ value: n, label: <>{ui.levels[n - 1]}<DoneMark done={earned.has(n)} /></> }))} />}
+      controls={<SheetChoice stepper label={ui.level} showLabel className="ng-mask-levels" value={level} onChange={chooseLevel}
+        options={[1, 2, 3].map(n => ({ value: n, label: <>{ui.levels[n - 1]}<DoneMark done={earned.has(n)} /></>, step: ui.levels[n - 1] }))} />}
       stage={<div className="ng-mask-stage" data-revealed={session.revealed ? '' : undefined}>
         <p><b>{fit ? ui.taskFit({ hosts: task.hosts }) : ui.taskBlock({ ip: task.ip, mask: maskOf(task.prefix) })}</b></p>
         {ruler && <AddressRuler {...ruler} />}

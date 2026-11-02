@@ -371,7 +371,15 @@ initial orders aren't derived from reference positions.
   - the diagram and the work panel share the width (work panel 420–540 px,
     scrolling on its own). Each row keeps its own «Перевірити» and inline
     feedback; there is no sticky check area.
-- **One column** (< 960 px: zoom, half-width windows, later phones).
+- **One column** (< 960 px: zoom, half-width windows).
+- **Phone** (under 640 px of window, round 6): the page itself scrolls and
+  the bar scrolls with it; the bar is one row («←», the section, «⋯») and
+  «⋯» opens a sheet with the vendor, mode, exercise, level and theme
+  choices; a screen's header keeps a stepper «‹ 1/4 · Name ›»; asides start
+  folded; «Текстом» starts open where the first action needs it (VLAN
+  ports, firewall) and closed elsewhere, and «Розгорнути схему» shows the
+  diagram full-screen; forms and lists stack. The parts and their API are in
+  `src/ui/phone.js`, `src/ui/BarSlot.jsx` and `src/ui/topology/DiagramExpand.jsx`.
 - **Diagram:** the default view is the whole diagram if its text stays at
   12 px or more, otherwise a readable scale inside a pannable frame. Zoom
   controls («−», «+», «Уся схема», Ctrl+wheel, +/-) are kept per task
@@ -444,7 +452,7 @@ initial orders aren't derived from reference positions.
   asset paths for GitHub Pages; it uses memory navigation like the app. The
   start screen there says it is meant for a computer and links the
   third-party notices. A single-file HTML build (everything inlined, no
-  runtime requests) and phone layouts are later work.
+  runtime requests) is later work; the phone layout is built (§6).
 - **CI:** `.github/workflows/pages.yml` runs the fast tests (with the browser
   checks), builds the web version and deploys it to Pages, in that order.
   Windows `.exe` releases are a separate, later decision.

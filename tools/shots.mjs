@@ -13,6 +13,10 @@ const run = promisify(execFile);
 const seed = 600; // Versioned capture recipe; independent of --only and execution order.
 const viewport = { width: 1280, height: 800 };
 const narrowViewport = { width: 1000, height: 700 };
+// Round 6 (the phone layer, plan-mobile v2 P6): the third gate size, a phone in portrait.
+const phoneViewport = { width: 390, height: 844 };
+/** Under 640 px the app has its phone layout (src/ui/phone.js): the phone gate contract applies. */
+export const isPhoneSize = size => Boolean(size) && size.width < 640;
 let commit, browserVersion;
 const origin = 'http://netgym.test';
 const sections = {
@@ -86,7 +90,7 @@ export function parseSizes(value) {
   return sizes.filter((size, i) => sizes.findIndex(s => s.width === size.width && s.height === size.height) === i);
 }
 export function argumentsOf(args) {
-  let out = path.join(root, '.shots'), only, sizes = [viewport, narrowViewport], narrowShots = false, gate = 'enforce';
+  let out = path.join(root, '.shots'), only, sizes = [viewport, narrowViewport, phoneViewport], narrowShots = false, gate = 'enforce';
   for (let i = 0; i < args.length; i++) {
     let arg = args[i];
     if (arg === '--help') return { help: true };
@@ -124,6 +128,14 @@ export function expectedTargets(id, raw) {
     return { kind: null, row: false, evidence: [], targets: ['[data-worked-example] .ng-wex-card'], waive: {
       evidence: 'opening the worked example is a view toggle, not a check: its declared target is the opened example itself (full checks)',
       message: 'opening the worked example is not an event of the help panel: nothing scrolls to it',
+    } };
+  }
+  // Round 6 (the phone layer, P6): the «⋯» sheet open, the full-screen diagram and the keyboard-open
+  // view are views the learner opens, not checks or hints; their own checks are phoneViewChecks.
+  if (phoneStates.includes(raw)) {
+    return { kind: null, row: false, evidence: [], waive: {
+      evidence: 'a phone view the learner opens (the «⋯» sheet, the full-screen diagram, a field with the keyboard up), not a check: its own checks are recorded under phone',
+      message: 'a phone view the learner opens is not an event of the help panel: nothing scrolls to a message',
     } };
   }
   // Round 5 (5b-2 B): «Порядок правил» hint 1 before any check asks for a check; it names no packet or rule.
@@ -270,13 +282,14 @@ const fwPredictEssentials = level => [
 /** Setup decks (5b-1 §3, matrix; 5b-2 F): the task, the action line, Cisco's mode «?» (at both
  * sizes), cards 1–3 each with its purpose (first line), its command and (Cisco) its prompt
  * group, and «Перевірити». The folded worked example under the action line is never one. */
+// Round 6 (P3): the check row comes after the deck at every width, so «Перевірити» is reachable, not first-view.
 const setupEssentials = prompted => [
   { sel: '.ng-su-intro .ng-su-task', count: 1 },
   { sel: '.ng-su-board .ng-action-line', count: 1 },
   ...(prompted ? [{ sel: '.ng-su-board .ng-action-line .ng-su-modes-q', count: 1 }] : []),
   ...[1, 2, 3].flatMap(n => ['[data-purpose]', '.ng-su-term', ...(prompted ? ['.ng-su-choice'] : [])]
     .map(part => ({ sel: `.ng-su-board .ng-reorder > .ng-reorder-item:nth-child(${n}) ${part}`, count: 1 }))),
-  { sel: '.ng-help-check', count: 1 },
+  { sel: '.ng-help-check', count: 1, reach: true },
 ];
 /**
  * «All» (spec 5b-1 essentials matrix; repair v1, Astra 2): exactly as many
@@ -419,8 +432,63 @@ export function essentialsOf(id, state) {
   if (id === 'binary' && state === 'first') return binaryEssentials('l3');
   if (id === 'binary' && state === 'l1-first') return binaryEssentials('toggles');
   if (id === 'binary' && state === 'l1-text') return binaryEssentials('text');
+  // Round 6 (P3): «Налаштуй порти» has its check row after the form at every width: reachable, not first-view.
+  if (id === 'vl-ports' && state === 'first') return vlEssentials[id].map(entry => (entry.sel.endsWith('.ng-help-check') ? { ...entry, reach: true } : entry));
   if (vlEssentials[id] && state === 'first') return vlEssentials[id];
   return null;
+}
+
+// ── The phone contract (round 6, plan-mobile v2 P6, v2.1) ─────────────────
+// At 390 × 844 a first view must show the task sentence and the next
+// action's control (with its action line, which sits directly above it):
+// `view` entries, measured as on a desktop. Every other declared essential
+// only has to be vertically reachable: `reach` entries are measured with the
+// same checks (count, size ≥ 12 px, paint, clipping, nothing painted over),
+// each text run after scrolling the page (and any scroller it is in)
+// vertically to it; nothing scrolls sideways, so a run cut off at the right
+// still fails. `first: n` measures the first n matches in view and the rest
+// as reachable. A diagram's labels are no phone essentials: the drawing pans
+// at 12 px (WCAG's reflow exception for 2-D content), «Текстом» opens by
+// default under 640 px and carries the same facts, and «Розгорнути схему»
+// shows the drawing full-screen; both are reachable essentials instead.
+// No lower font threshold and no blanket waiver.
+const svgLabel = entry => /-svg\b/.test(typeof entry === 'string' ? entry : entry.sel);
+const selOf = entry => (typeof entry === 'string' ? entry : entry.sel);
+/** The phone's first-view entries per recipe (the rest of the desktop list becomes `reach`). */
+function phoneFirstView(id, state) {
+  const prompted = id !== 'setup-mikrotik';
+  const firstItem = '.ng-reorder > .ng-reorder-item:nth-child(1)';
+  if (id === 'home') return [{ sel: '.ng-home-title', count: 1 }, { sel: '.ng-cards > li:first-child .ng-card-title', count: 1 }];
+  if (id === 'fw-predict') return [{ sel: '.ng-fw-variant-text', count: 1 }, { sel: '.ng-fw-work .ng-action-line', count: 1 }, { sel: '.ng-fw-door-option', count: 2 }];
+  if (id === 'fw-order2') return [{ sel: '.ng-fwo-task', count: 1 }, { sel: '.ng-fwo-list .ng-action-line', count: 1 }, { sel: `.ng-fwo-list ${firstItem} .ng-reorder-handle`, count: 1 }];
+  if (id.startsWith('setup-')) return [{ sel: '.ng-su-intro .ng-su-task', count: 1 }, { sel: '.ng-su-board .ng-action-line', count: 1 },
+    { sel: `.ng-su-board ${firstItem} ${prompted ? '.ng-su-choice' : '.ng-reorder-handle'}`, count: 1 }];
+  if (['rt-guided', 'rt-free', 'rt-hard', 'rt-mikrotik'].includes(id)) return [{ sel: '.ng-rt-desc:not(.ng-rt-failover)', count: 1 }, { sel: '.ng-rt-work .ng-action-line', count: 1 },
+    // Round 6 repair (Fable): the control is the row's first field; the other fields are reachable.
+    { sel: `${firstRow} .ng-rt-field:not(.ng-rt-f-dist):not(.ng-rt-f-blackhole)`, count: id === 'rt-mikrotik' ? 2 : 3, first: 1 }];
+  if (id === 'rt-fault') return [{ sel: '.ng-rf-task', count: 1 }, { sel: '.ng-rf-work .ng-action-line', count: 1 }, { sel: '.ng-rf-rowlist > .ng-rt-row:first-child', count: 1 }];
+  if (id === 'binary' && state === 'first') return [{ sel: '.ng-bin-question', count: 1 }, { sel: '.ng-bin-help', count: 1 }, { sel: '.ng-bitrow .ng-bit', count: 32, first: 8 }];
+  if (id === 'binary') return binaryEssentials(state === 'l1-text' ? 'text' : 'toggles').filter(e => selOf(e) !== '.ng-help-check');
+  if (id === 'vl-predict') return [{ sel: `${vlWork} .ng-vl-question`, count: 1 }, { sel: `${vlWork} .ng-action-line`, count: 1 }, { sel: `${vlWork} .ng-vl-choices button.ng-vl-choice`, first: 1 }];
+  if (id === 'vl-ports') return [{ sel: '.ng-vl-intro .ng-vl-task-text', count: 1 }, { sel: `${vlWork} .ng-action-line`, count: 1 }, { sel: `${vlWork} .ng-vl-form-table :is(.ng-vl-modes, .ng-vl-frames)`, first: 1 }];
+  if (id === 'vl-route') return [{ sel: '.ng-vl-intro .ng-vl-task-text', count: 1 }, { sel: `${vlWork} .ng-action-line`, count: 1 }, { sel: `${vlWork} .ng-vl-form-head [role="radiogroup"]`, count: 1 }];
+  if (id === 'vl-fault') return [{ sel: '.ng-vl-intro .ng-vl-task-text', count: 1 }, { sel: `${vlWork} .ng-action-line`, count: 1 }, { sel: `${vlWork} .ng-vf-grid .ng-vf-row.is-no`, first: 1 }];
+  return [];
+}
+/** A phone's essentials for a state (the desktop list, re-cast), or null. */
+export function phoneEssentials(id, state) {
+  id = baseOf(id);
+  const desk = id === 'home' && state === 'first' ? [{ sel: '.ng-card-title', count: 7 }] : essentialsOf(id, state);
+  if (!desk) return null;
+  // A first-view entry keeps the desktop entry's other declarations (a VLAN `countAttr`).
+  const deskBy = new Map(desk.map(entry => [selOf(entry), typeof entry === 'string' ? {} : entry]));
+  const view = phoneFirstView(id, state).map(entry => ({ ...deskBy.get(entry.sel), ...entry }));
+  const inView = new Set(view.map(selOf));
+  const rest = desk.filter(entry => !svgLabel(entry) && !inView.has(selOf(entry)))
+    .map(entry => ({ ...(typeof entry === 'string' ? { sel: entry } : entry), reach: true }));
+  // Round 6 repair: «Текстом» opens by default only where the first action needs it, so its button (with its line count) stands for the text.
+  const diagram = desk.some(svgLabel) ? [{ sel: '.ng-te-button', count: 1, reach: true }, { sel: '[data-diagram-expand]', count: 1, reach: true }] : [];
+  return [...view, ...rest, ...diagram];
 }
 
 /**
@@ -442,9 +510,9 @@ export function vlanCounts(list) {
   }
   return out;
 }
-/** Failures for a first view whose recipe requires essentials and declares none. */
-export function declaredEssentials(id, state) {
-  const list = essentialsOf(id, state);
+/** Failures for a first view whose recipe requires essentials and declares none. Round 6: `phone` re-casts them (phoneEssentials). */
+export function declaredEssentials(id, state, phone = false) {
+  const list = phone ? phoneEssentials(id, state) : essentialsOf(id, state);
   if (essentialRecipes.has(baseOf(id)) && isFirstView(state) && !list?.length) return { list: [], failures: [{ element: 'recipe', role: 'essential', reason: 'first view declares no essentials', distance: null }] };
   return { list: list ?? [], failures: [] };
 }
@@ -536,12 +604,13 @@ export function exampleRow({ mode, essentials = [], registered = false }) {
  * folded label measured on its own (measureEssentials). Returns
  * { mode, present, failures }.
  */
-export async function checkExample(page, { id, state, essentials = [] }) {
+export async function checkExample(page, { id, state, essentials = [], phone = false }) {
   const mode = exampleMode(state);
   const row = await page.evaluate(exampleRow, { mode, essentials, registered: exampleRecipes.has(baseOf(id)) });
   const failures = [...row.failures];
   if (row.present && mode === 'first') {
-    const label = await page.evaluate(measureEssentials, { essentials: [{ sel: EXAMPLE_LABEL, count: 1 }], minFont: MIN_FONT_PX });
+    // Round 6: on a phone the folded row is reachable content (only the task and the next control must be in view).
+    const label = await page.evaluate(measureEssentials, { essentials: [{ sel: EXAMPLE_LABEL, count: 1, ...(phone ? { reach: true } : {}) }], minFont: MIN_FONT_PX });
     failures.push(...label.failures.map(f => ({ ...f, role: 'worked example label' })));
   }
   return { mode, present: row.present, failures };
@@ -751,42 +820,80 @@ export function measureEssentials({ essentials, minFont }) {
   const all = [...document.querySelectorAll('*')];
   const saved = all.map(el => [el, el.style.getPropertyValue('pointer-events'), el.style.getPropertyPriority('pointer-events'), el.hasAttribute('style')]);
   for (const el of all) el.style.setProperty('pointer-events', 'auto', 'important');
+  // Round 6 (P6): `reach` matches are measured in a second pass, each text run after scrolling its
+  // scrollers (innermost first, then the page) vertically so that it is in the middle of the view; every
+  // touched scroller is put back afterwards. The first pass never scrolls, so in-view entries are
+  // measured on the view as it is.
+  const touched = new Map();
+  const page = document.scrollingElement;
+  function scrollersOf(owner) {
+    const chain = [];
+    let fixed = false;
+    for (let a = owner.parentElement; a; a = a.parentElement) {
+      if (a === page) break;
+      const st = getComputedStyle(a);
+      if (/(auto|scroll)/.test(st.overflowY) && a.scrollHeight > a.clientHeight + 1) chain.push(a);
+      if (st.position === 'fixed') { fixed = true; break; }   // a fixed sheet or dialog doesn't move with the page
+    }
+    if (!fixed && page && page.scrollHeight > page.clientHeight + 1) chain.push(page);
+    return chain;
+  }
+  /** A run's rect now, from where it was when collected and how far its owner has moved since. */
+  const rectNow = run => q => { const dy = run.owner.getBoundingClientRect().top - run.top0; return { ...q, top: q.top + dy, bottom: q.bottom + dy }; };
+  function bring(run, q) {
+    for (const sc of scrollersOf(run.owner)) {
+      if (!touched.has(sc)) touched.set(sc, sc.scrollTop);
+      const now = rectNow(run)(q);
+      const b = sc === page ? { top: 0, bottom: innerHeight } : (() => { const r = sc.getBoundingClientRect(); return { top: r.top + sc.clientTop, bottom: r.top + sc.clientTop + sc.clientHeight }; })();
+      sc.scrollTop += (now.top + now.bottom) / 2 - (Math.max(b.top, 0) + Math.min(b.bottom, innerHeight)) / 2;
+    }
+    return rectNow(run)(q);
+  }
   try {
-    for (const entry of essentials) {
+    for (const pass of ['view', 'reach']) for (const entry of essentials) {
       const { sel, count: declared } = typeof entry === 'string' ? { sel: entry } : entry;
+      const reachAll = typeof entry === 'object' && entry.reach === true;
+      const firstN = typeof entry === 'object' && Number.isInteger(entry.first) ? entry.first : null;
+      const isReach = index => reachAll || (firstN !== null && index >= firstN);
       // A count the screen states from its task data (allOf): `data-…` on `from`, times `times`.
       // Only digits count (repair v2, Astra): a blank, spaced or malformed value is no count; «0» is.
       const raw = declared && typeof declared === 'object' ? document.querySelector(declared.from)?.getAttribute(declared.attr) : null;
       const count = declared && typeof declared === 'object' ? (/^\d+$/.test(raw ?? '') ? Number(raw) * declared.times : NaN) : declared;
-      if (Number.isNaN(count)) { failures.push({ element: sel, role: 'essential', reason: `no count on ${declared.from}`, distance: null }); continue; }
       const els = [...document.querySelectorAll(sel)];
-      if (!els.length && count !== 0) { failures.push({ element: sel, role: 'essential', reason: 'missing essential', distance: null }); continue; }
-      if (count !== undefined && els.length !== count) failures.push({ element: sel, role: 'essential', reason: `expected ${count}, found ${els.length}`, distance: null });
-      for (const el of els) {
+      if (pass === 'view') {
+        if (Number.isNaN(count)) { failures.push({ element: sel, role: 'essential', reason: `no count on ${declared.from}`, distance: null }); continue; }
+        if (!els.length && count !== 0) { failures.push({ element: sel, role: 'essential', reason: 'missing essential', distance: null }); continue; }
+        if (count !== undefined && els.length !== count) failures.push({ element: sel, role: 'essential', reason: `expected ${count}, found ${els.length}`, distance: null });
+      } else if (Number.isNaN(count)) continue;
+      for (const [index, el] of els.entries()) {
+        const reach = isReach(index);
+        if ((pass === 'reach') !== reach) continue;
         const runs = [];
         const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
         for (let n = walker.nextNode(); n; n = walker.nextNode()) {
           if (!/\S/u.test(n.textContent) || n.parentElement.closest('.ng-sr-only')) continue;
           let rects = textRects(n);
           if (!rects.length && isSvg(n.parentElement)) rects = [box(n.parentElement.getBoundingClientRect())].filter(q => !empty(q));
-          runs.push({ owner: n.parentElement, text: n.textContent.trim(), rects });
+          runs.push({ owner: n.parentElement, text: n.textContent.trim(), rects, top0: n.parentElement.getBoundingClientRect().top });
         }
         const text = (el.textContent ?? '').replace(/\s+/gu, ' ').trim().slice(0, 120);
-        const fail = (reason, extra = {}) => failures.push({ element: sel, tag: short(el), text, role: 'essential', reason, distance: null, ...extra });
+        const fail = (reason, extra = {}) => failures.push({ element: sel, tag: short(el), text, role: 'essential', reason, distance: null, ...(reach ? { reach: true } : {}), ...extra });
         const before = failures.length;
         if (!runs.length) fail('empty essential');
-        for (const { owner, text: words, rects } of runs) {
+        for (const run of runs) {
+          const { owner, text: words, rects } = run;
           const hidden = hiddenBy(owner);
           if (hidden) { fail(`not rendered (${hidden})`); continue; }
           if (!rects.length) { fail('text has no box'); continue; }
           if (textAlpha(owner) <= 0) fail('text is not painted (transparent)');
           const plain = plainBox(owner, words.replace(/\s+/gu, ' '));
           const runWidth = rects.reduce((sum, r) => sum + (r.right - r.left), 0);
-          for (const q of rects) {
+          for (const q0 of rects) {
+            const q = reach ? bring(run, q0) : q0;
             const px = renderedPx(plain, q, runWidth);
             if (px < minFont - 0.25) fail(`text too small: ${px.toFixed(1)} px`, { fontPx: px });
             const out = { left: Math.max(0, -q.left), top: Math.max(0, -q.top), right: Math.max(0, q.right - innerWidth), bottom: Math.max(0, q.bottom - innerHeight) };
-            if (Object.values(out).some(v => v > 0.5)) fail('outside the viewport', { distance: out });
+            if (Object.values(out).some(v => v > 0.5)) fail(reach ? 'not reachable: outside the viewport after scrolling to it' : 'outside the viewport', { distance: out });
             const clip = clippedBy(owner, q);
             if (clip) fail(`clipped by ${clip.by}`, { distance: clip.distance });
             const over = new Set();
@@ -800,10 +907,11 @@ export function measureEssentials({ essentials, minFont }) {
             if (over.size) fail(`painted over by ${[...over].join(', ')}`);
           }
         }
-        targets.push({ selector: sel, tag: short(el), text, pass: failures.length === before });
+        targets.push({ selector: sel, tag: short(el), text, ...(reach ? { reach: true } : {}), pass: failures.length === before });
       }
     }
   } finally {
+    for (const [sc, top] of [...touched].reverse()) sc.scrollTop = top;
     for (const [el, value, priority, had] of saved) {
       if (value) el.style.setProperty('pointer-events', value, priority); else el.style.removeProperty('pointer-events');
       if (!had) el.removeAttribute('style');
@@ -812,6 +920,15 @@ export function measureEssentials({ essentials, minFont }) {
   }
   return { failures, targets };
 }
+
+/** Round 6: the phone's own gate-only views (phoneGates), at phone sizes only. */
+export const phoneStates = ['sheet-open', 'diagram-full', 'keyboard'];
+/** Recipes with a diagram (its «Розгорнути схему») and with a text field on the first view (the keyboard). */
+const hasDiagram = id => /^(rt|fw|vl)-/.test(id);
+const keyboardRecipes = new Set(['rt-guided', 'rt-hard', 'rt-free', 'rt-mikrotik', 'rt-fault', 'calc', 'mask-type', 'vl-ports']);
+/** The phone views a recipe gets: the sheet on every section screen, the diagram where there is one, the keyboard where a field is. */
+export const phoneStatesOf = exercise => phoneStates.filter(state => (state === 'sheet-open' ? exercise.id !== 'home'
+  : state === 'diagram-full' ? hasDiagram(exercise.id) : keyboardRecipes.has(exercise.id)));
 
 /** States a recipe can't reach on a screen, by design, with the reason (not skips). */
 export const notApplicable = {
@@ -824,8 +941,8 @@ export const notApplicable = {
   binary: { 'success-edit': 'a finished walk shows no row to edit: the accepted rows are read-only (as the mask)', 'success-recheck': 'no edit is possible after the last row, so no recheck' },
 };
 
-export function gateStates(exercise) {
-  return [...new Set([...exercise.states, ...(hasHints(exercise) ? ['hint2', 'reveal', 'reveal-next', 'restore'] : []),
+export function gateStates(exercise, size = null) {
+  return [...new Set([...(isPhoneSize(size) ? phoneStatesOf(exercise) : []), ...exercise.states, ...(hasHints(exercise) ? ['hint2', 'reveal', 'reveal-next', 'restore'] : []),
     // Round 5 (R5): level 1's other cards are first views too (each L1 destination's card is measured).
     ...(baseOf(exercise.id) === 'fw-predict' ? ['l1-card2', 'l1-card3', 'l2-card2', 'l2-card3', 'l2-card4', 'l2-card5', 'l2-card6'] : []),
     // Round 5 (5b-2 B, verification): the stepper's named steps; hint 1 before a check; the shadowing's packet walk.
@@ -955,9 +1072,19 @@ export function measurePage({ gate, rule } = {}) {
       }
     }
     if (gate.kind === 'empty' && (current.length || !adopted && [...root.querySelectorAll('.ng-feedback,.ng-reveal,.ng-rf-reveal,.ng-rt-reveal:has(.ng-rt-commands),.ng-hints-list > li')].some(content))) failures.push({ element: '[data-help-current], legacy message', role: 'reset', reason: 'message did not reset after next', distance: null });
+    // Round 6 repair: a declared reachable panel (a phone's deck with several marked rows stays whole):
+    // each part is inspected after scrolling to it, then the scrollers are put back.
+    const reaching = (el, fn) => {
+      if (!gate.reachPanel) return fn();
+      const scrolled = [];
+      for (let a = el.parentElement; a; a = a.parentElement) if (a.scrollHeight > a.clientHeight + 1) scrolled.push([a, a.scrollTop]);
+      el.scrollIntoView({ block: 'center', inline: 'nearest' });
+      fn();
+      for (const [a, top] of scrolled) a.scrollTop = top;
+    };
     for (const el of messages) {
       const long = el.hasAttribute('data-help-long') || Boolean(el.closest('[data-help-long]') || el.querySelector('[data-help-long]'));
-      inspect(el, 'message', long);
+      reaching(el, () => inspect(el, 'message', long));
       if (long) {
         const heading = el.querySelector('h1,h2,h3,h4,[role="heading"]') ?? el.closest('[data-help="message"]')?.querySelector('h1,h2,h3,h4,[role="heading"]');
         if (heading) inspect(heading, 'long heading'); else failMissing('long heading', '[data-help-long] :is(h1,h2,h3,h4,[role="heading"])');
@@ -965,7 +1092,9 @@ export function measurePage({ gate, rule } = {}) {
         // preview. A bare clipped script does not explain how to reach the rest.
         const cue = [...(el.closest('[data-help="message"]') ?? el).querySelectorAll('summary,button,a[href],[data-help-more],p,span')]
           .filter(content).find(node => node.hasAttribute('data-help-more') || /решт|прокрут|нижче|повн(?:ий|а|е)|детальніше|читати далі|показати все/iu.test(node.textContent));
-        const scroller = (() => { for (let a = el.parentElement; a; a = a.parentElement) if (/auto|scroll/.test(getComputedStyle(a).overflowY) && a.scrollHeight > a.clientHeight + 1) return a; })();
+        // Round 6: on a phone the page itself is the normal scroller (the document's scrolling element).
+        const scroller = (() => { for (let a = el.parentElement; a; a = a.parentElement) if (/auto|scroll/.test(getComputedStyle(a).overflowY) && a.scrollHeight > a.clientHeight + 1) return a;
+          const page = document.scrollingElement; return page && page.scrollHeight > page.clientHeight + 1 ? page : undefined; })();
         if (cue) inspect(cue, 'long continuation cue');
         else failures.push({ ...describe(el), role: 'long continuation', reason: 'missing visible cue for remaining long content', distance: null });
         if (!scroller) failures.push({ ...describe(el), role: 'long continuation', reason: 'remaining long content has no normal scrolling ancestor', distance: null });
@@ -993,7 +1122,15 @@ export function measurePage({ gate, rule } = {}) {
       if (el) evidence.push(el); else failMissing('evidence (partial baseline)', fallback);
     }
     // Without a visibility target (a first view, a restore) nothing may scroll, so evidence is not checked.
-    if (gate.kind) for (const el of evidence) inspect(el, 'evidence');
+    // Round 6: after «Далі» on a phone (reachRow) the new task's evidence follows its text: reachable.
+    const reachEvidence = el => {
+      const scrolled = [];
+      for (let a = el.parentElement; a; a = a.parentElement) if (a.scrollHeight > a.clientHeight + 1) scrolled.push([a, a.scrollTop]);
+      el.scrollIntoView({ block: 'center', inline: 'nearest' });
+      inspect(el, 'evidence');
+      for (const [a, top] of scrolled) a.scrollTop = top;
+    };
+    if (gate.kind) for (const el of evidence) ((gate.reachRow && gate.kind === 'empty') || gate.reachEvidence ? reachEvidence(el) : inspect(el, 'evidence'));
     // A state's own declared targets (e.g. a table the learner opened): the same full checks.
     for (const selector of gate.targets ?? []) {
       const els = [...root.querySelectorAll(selector)].filter(rendered);
@@ -1005,7 +1142,13 @@ export function measurePage({ gate, rule } = {}) {
       // HelpPanel's check row (data-help="row"): every control in it.
       const controls = [...helpRow.querySelectorAll('button,a[href],summary')].filter(rendered);
       if (!controls.length) failMissing('check row', '[data-help="row"] controls');
+      // Round 6: on a phone, after «Далі» (kind 'empty') the next task opens at its first field and the check
+      // row follows its form: it must be reachable (inspected after scrolling the page to it, then put back).
+      const scrolled = [];
+      for (let a = helpRow.parentElement; a; a = a.parentElement) if (a.scrollHeight > a.clientHeight + 1) scrolled.push([a, a.scrollTop]);
+      if ((gate.reachRow || gate.reachPanel) && controls.length) helpRow.scrollIntoView({ block: 'center', inline: 'nearest' });
       for (const control of controls) inspect(control, 'check row control');
+      if (gate.reachRow || gate.reachPanel) for (const [a, top] of scrolled) a.scrollTop = top;
     } else if (gate.row) {
       // No row hook (legacy screens): find the check/continue control by its name
       // and inspect all controls in the shared row, using legacy row classes.
@@ -1026,7 +1169,7 @@ export function measurePage({ gate, rule } = {}) {
     }
     if (!adopted) for (const control of root.querySelectorAll('.ng-vl-more,.ng-rt-fold-toggle')) if (rendered(control)) folds.add(control);
     // A waived message (declared) waives its fold controls with it.
-    if (!gate.waive?.message) for (const control of folds) inspect(control, 'fold control');
+    if (!gate.waive?.message) for (const control of folds) reaching(control, () => inspect(control, 'fold control'));
     if (gate.home && (root.scrollHeight > root.clientHeight + 1 || root.scrollWidth > root.clientWidth + 1)) failures.push({ element: '.ng-home', role: 'home', reason: 'start screen requires scrolling', distance: { bottom: Math.max(0, root.scrollHeight - root.clientHeight), right: Math.max(0, root.scrollWidth - root.clientWidth) } });
     return { pass: failures.length === 0, baseline: adopted ? 'HelpPanel' : 'partial baseline', expected: gate, targets, missing, waived, failures };
   }
@@ -1035,7 +1178,11 @@ export function measurePage({ gate, rule } = {}) {
     return b.width > 1 && b.height > 1 && el.clientHeight > 1 && el.scrollHeight > el.clientHeight + 1 && /auto|scroll/.test(s.overflowY) && !el.closest('[hidden]');
   }).map(el => ({ area: selector(el), height: el.scrollHeight, client: el.clientHeight, top: Math.round(el.scrollTop), below: Math.max(0, Math.round(el.scrollHeight - el.clientHeight - el.scrollTop)) }));
   const fallback = { area: selector(root), height: root.scrollHeight, client: root.clientHeight, top: Math.round(root.scrollTop), below: Math.max(0, Math.round(root.scrollHeight - root.clientHeight - root.scrollTop)) };
-  return { visibleText, words: visibleText.trim() ? visibleText.trim().split(/\s+/u).length : 0, controls, areas, fallback };
+  // Round 6: under 640 px the page itself scrolls (the document's scrolling element, `html`), first.
+  const page = document.scrollingElement;
+  const pageArea = page && page.scrollHeight > page.clientHeight + 1
+    ? [{ area: 'html', height: page.scrollHeight, client: page.clientHeight, top: Math.round(page.scrollTop), below: Math.max(0, Math.round(page.scrollHeight - page.clientHeight - page.scrollTop)) }] : [];
+  return { visibleText, words: visibleText.trim() ? visibleText.trim().split(/\s+/u).length : 0, controls, areas: [...pageArea, ...areas], fallback };
 }
 
 class Driver {
@@ -1047,7 +1194,25 @@ class Driver {
     // finishes packet animations; leave the browser clock otherwise untouched.
     await this.page.waitForTimeout(200);
   }
-  async click(locator, description, options) { await locator.click(options); this.note(description); await this.settle(); }
+  async click(locator, description, options) {
+    // Round 6: under 640 px a section's choices (vendor, mode, exercise, level, task) and the theme switch are
+    // in the bar's «⋯» sheet. A control that isn't on the page (role locators skip hidden ones) is looked for
+    // there: open the sheet, press it, close the sheet with «Готово» (as a learner does).
+    const sheet = this.page.locator('.ng-bar-sheet-button');
+    if (!await locator.count() && await sheet.count() && await sheet.isVisible() && await sheet.getAttribute('aria-expanded') !== 'true'
+      && !await locator.first().waitFor({ state: 'visible', timeout: 1000 }).then(() => true, () => false)) {
+      await sheet.click(); await this.settle();
+      if (await locator.count()) {
+        await locator.click(options);
+        this.note(`${description} (in the «⋯» sheet)`); await this.settle();
+        const done = this.page.locator('.ng-bar-end[data-sheet="open"] .ng-bar-sheet-done');
+        if (await done.count()) { await done.click(); await this.settle(); }
+        return;
+      }
+      await this.page.locator('.ng-bar-sheet-done').click(); await this.settle();
+    }
+    await locator.click(options); this.note(description); await this.settle();
+  }
   button(name) { return this.page.getByRole('button', { name, exact: typeof name === 'string' }); }
   async press(name, description) { await this.click(this.button(name), description); }
   async radio(name, description) { await this.click(this.page.getByRole('radio', { name, exact: typeof name === 'string' }), description); }
@@ -1165,9 +1330,48 @@ class Driver {
   }
   async gate(state, theme = 'dark', extra = {}) {
     await this.settle();
-    const result = await this.page.evaluate(measurePage, { gate: { ...expectedTargets(this.exercise.id, state), home: this.exercise.id === 'home', ...extra }, rule: evidenceRule.toString() });
+    // Round 6: a phone's start screen scrolls (seven cards in one column); its first view has the title and the first card (phoneEssentials).
+    const phone = isPhoneSize(this.page.viewportSize());
+    let expected = expectedTargets(this.exercise.id, state);
+    // Round 6 repair (Claude's decision 5): under 640 px a hint's evidence is reachable (the panel comes
+    // first, whole, and the hint names the row in words); measured after scrolling to it.
+    if (phone && expected.kind === 'hint') expected = { ...expected, reachEvidence: true, waive: { ...expected.waive, 'evidence-reachable': 'under 640 px a hint\'s evidence is measured as reachable: the panel (check row and hint) comes first, whole; the hint names its row in words' } };
+    // Round 6, a phone's one column: showing a path from «Початкова таблиця» scrolls to the drawing that
+    // shows it; the verdict, its evidence and the check row stay where they were, above it.
+    if (phone && baseOf(this.exercise.id) === 'rt-fault' && state === 'original-paths') {
+      const why = 'on a phone (one column) showing a path from «Початкова таблиця» brings the drawing that shows it into view; the verdict, its causes and the check row stay above it, reachable';
+      expected = { ...expected, kind: null, row: false, waive: { ...expected.waive, message: why, evidence: why, row: why } };
+    }
+    // Round 6 repair (Fable 4): under 640 px, with several rows marked on a screen whose check row follows its
+    // board, the board stays whole and its first marked row comes into view; the panel follows the board.
+    if (phone && ['verdict', 'hint'].includes(expected.kind) && ['setup-', 'fw-order', 'vl-ports'].some(prefix => baseOf(this.exercise.id).startsWith(prefix))
+      && await this.page.evaluate(() => document.querySelectorAll('.ng-screen .is-marked').length > 1)) {
+      expected = { ...expected, reachPanel: true, waive: { ...expected.waive, 'panel-reachable': 'under 640 px, several rows marked after a check: the board stays whole with its first marked row in view; the verdict, the check row and their folds follow the board (measured after scrolling to them)' } };
+    }
+    // After «Далі» (kind 'empty') the next task opens at its first input; where the check row follows the
+    // inputs (a phone; round 6 P3's screens at every size) it must be reachable, not in the first view.
+    const after = phone || ['setup-', 'fw-order', 'vl-ports'].some(prefix => baseOf(this.exercise.id).startsWith(prefix));
+    const result = await this.page.evaluate(measurePage, { gate: { ...expected, home: this.exercise.id === 'home' && !phone, ...(after && expected.kind === 'empty' ? { reachRow: true } : {}), ...extra }, rule: evidenceRule.toString() });
     // R5 must-see: the declared essentials of a first view, on the view as it is (before any capture scrolling).
-    const declared = declaredEssentials(this.exercise.id, state);
+    // The phone's original-path exception has its own assertion (round 6 repair, Astra): the path shown is
+    // drawn and visible on the drawing (in view, inside the frame), or written in «Текстом» when that is open.
+    if (phone && baseOf(this.exercise.id) === 'rt-fault' && state === 'original-paths') {
+      const seen = await this.page.evaluate(() => {
+        const panel = document.querySelector('.ng-rf-stage .ng-te-panel:not([hidden])');
+        if (panel) return { how: 'text', ok: /→|←/.test(panel.textContent) };
+        const frame = document.querySelector('.ng-rf-stage .ng-dg-frame');
+        const strokes = [...document.querySelectorAll('.ng-rf-stage .ng-dg-svg .ng-path-stroke')];
+        if (!frame || !strokes.length) return { how: 'drawing', ok: false, why: 'no path drawn' };
+        const f = frame.getBoundingClientRect();
+        const box = { left: Math.max(f.left, 0), top: Math.max(f.top, 0), right: Math.min(f.right, innerWidth), bottom: Math.min(f.bottom, innerHeight) };
+        const visible = strokes.filter(el => { const r = el.getBoundingClientRect(); return r.right > box.left && r.left < box.right && r.bottom > box.top && r.top < box.bottom; });
+        return { how: 'drawing', ok: visible.length > 0, strokes: strokes.length, visible: visible.length };
+      });
+      result.pathShown = seen;
+      if (!seen.ok) result.failures.push({ element: '.ng-rf-stage .ng-path-stroke', role: 'shown path', reason: `the path shown from «Початкова таблиця» is not visible (${seen.how}${seen.why ? `: ${seen.why}` : ''})`, distance: null });
+      result.pass = result.failures.length === 0;
+    }
+    const declared = declaredEssentials(this.exercise.id, state, phone);
     if (declared.list.length || declared.failures.length) {
       const must = declared.list.length ? await this.page.evaluate(measureEssentials, { essentials: declared.list, minFont: MIN_FONT_PX }) : { failures: [], targets: [] };
       result.essentials = { declared: declared.list, targets: must.targets };
@@ -1175,7 +1379,7 @@ class Driver {
       result.pass = result.failures.length === 0;
     }
     // The worked example's row, wherever a screen has one (and the gate-only example-open state).
-    const example = await checkExample(this.page, { id: this.exercise.id, state, essentials: declared.list });
+    const example = await checkExample(this.page, { id: this.exercise.id, state, essentials: declared.list, phone });
     if (example.present || example.failures.length) {
       result.example = { mode: example.mode, present: example.present };
       result.failures.push(...example.failures);
@@ -1837,7 +2041,7 @@ async function setupReference(d) {
     await d.reveal();
     recall = await Promise.all((await d.page.locator('.ng-su-recall-line').all()).map(async line => ({
       description: clean(await line.locator('.ng-su-recall-desc').innerText()).replace(/^\d+\.\s*/u, '').replace(/\s*показано$/u, ''),
-      command: await line.locator('input').inputValue(),
+      command: await line.locator('.ng-su-field').inputValue(),
     })));
   }
   return { cards, recall };
@@ -1869,7 +2073,7 @@ async function recallLine(d, reference, index, wrong = false) {
   const known = reference.recall.find(r => sameText(r.description, description));
   if (!known) throw new Error(`No recall command read for: ${description}`);
   const value = wrong ? `x${known.command}` : known.command.replace(/<пароль>/g, 'Practice!Example1');
-  const field = line.locator('input');
+  const field = line.locator('.ng-su-field');
   await field.fill(value); await field.press('Enter'); await d.settle();
   d.note(`${wrong ? 'Mistype the first word of' : 'Type'} recall line ${index + 1} and press Enter`);
 }
@@ -1895,7 +2099,7 @@ async function setupExtra(exercise, withDriver) {
   };
   await withDriver('recall-first', async d => {
     await solved(d); await d.shot('recall-first');
-    const empty = d.page.locator('.ng-su-recall-line input').first();
+    const empty = d.page.locator('.ng-su-recall-line .ng-su-field').first();
     await empty.press('Enter'); await d.settle(); d.note('Press Enter on the empty first line'); await d.shot('recall-wrong');
     await empty.press('Enter'); await d.settle(); d.note('Press Enter on it again'); await d.shot('recall-repeat');
     await recallLine(d, reference, 0, true); await d.shot('recall-mistake');
@@ -1904,7 +2108,7 @@ async function setupExtra(exercise, withDriver) {
     for (const n of [2, 3]) await d.press(new RegExp(`^Підказка ${n} з`, 'u'), `Open recall hint ${n}`);
     await d.shot('recall-hints-all');
     await recallLine(d, reference, 2, true); await d.shot('recall-late');
-    const last = d.page.locator('.ng-su-recall-line input').nth(2);
+    const last = d.page.locator('.ng-su-recall-line .ng-su-field').nth(2);
     await last.fill(''); await d.settle();
     d.note('Edit the checked third line (its verdict goes «до змін»)'); await d.shot('recall-edit');
     await recallLine(d, reference, 2); await d.shot('recall-recheck');
@@ -2282,7 +2486,12 @@ async function lifecycleGates(exercise, withDriver) {
     await d.open(); await openExample(d); await d.gate('example-open');
     // The opened card in the light theme too, on one firewall and one VLAN screen (5b-2 repair v1, Fable 5).
     if (['fw-order2', 'vl-route'].includes(exercise.id)) {
-      await d.press('Світла тема', 'Switch to light theme with the shell button'); await d.gate('example-open', 'light');
+      // Round 6: on a phone the bar (and its «⋯») scrolls away with the page; reaching the theme switch
+      // scrolls up to it, and the learner then scrolls back to the example they had open.
+      const top = await d.page.evaluate(() => document.scrollingElement.scrollTop);
+      await d.press('Світла тема', 'Switch to light theme with the shell button');
+      if (isPhoneSize(d.page.viewportSize()) && top) { await d.page.evaluate(y => { document.scrollingElement.scrollTop = y; }, top); d.note(`Scroll back to the opened example (${top} px)`); await d.settle(); }
+      await d.gate('example-open', 'light');
       await d.press('Темна тема', 'Switch back to dark theme with the shell button');
     }
   });
@@ -2324,7 +2533,9 @@ async function lifecycleGates(exercise, withDriver) {
       // The shell focuses the new screen's heading on navigation (Shell.jsx): that is intended. Fail only when
       // focus lands elsewhere, e.g. in the help panel, a verdict or a hint.
       const focus = event => { if (event.target.closest?.('.ng-screen,.ng-bar') && !event.target.matches?.('h1[tabindex="-1"]')) events.push({ type: 'focus', element: event.target.outerHTML.slice(0, 240) }); };
-      const scroll = event => { const el = event.target === document ? document.scrollingElement : event.target; if (el?.closest?.('.ng-screen') || el === document.scrollingElement) events.push({ type: 'scroll', top: el.scrollTop, left: el.scrollLeft }); };
+      // A diagram frame placing its own drawing when it mounts (its start position) is not the page scrolling
+      // (round 6 repair: a phone's 190 px routing preview pans vertically too).
+      const scroll = event => { const el = event.target === document ? document.scrollingElement : event.target; if (el?.matches?.('.ng-dg-frame, .ng-fw-frame, .ng-vl-frame')) return; if (el?.closest?.('.ng-screen') || el === document.scrollingElement) events.push({ type: 'scroll', top: el.scrollTop, left: el.scrollLeft }); };
       document.addEventListener('focusin', focus, true); document.addEventListener('scroll', scroll, true);
       window.__shotsRestoreAudit = { events, finish() { document.removeEventListener('focusin', focus, true); document.removeEventListener('scroll', scroll, true); return events; } };
     });
@@ -2335,6 +2546,163 @@ async function lifecycleGates(exercise, withDriver) {
     result.restoreEvents = events; result.pass = result.failures.length === 0;
     // gate() stores a copy so include the restore audit in the emitted record.
     Object.assign(d.gates.at(-1), result);
+  });
+}
+
+// ── The phone's own views (round 6, plan-mobile v2 P1, P2, P6) ───────────
+// Gate-only, at phone sizes: the «⋯» sheet open, the full-screen diagram and
+// a field with the keyboard up (the viewport shrunk to 500 px high: an
+// emulation, no real keyboard). Each view is measured by the gate as a view
+// (no visibility target), and its own facts are checked in the page.
+
+/** The open «⋯» sheet (self-contained: runs in the page). */
+export function sheetFacts() {
+  const failures = [];
+  const fail = reason => failures.push({ element: '.ng-bar-end[data-sheet]', role: 'sheet', reason, distance: null });
+  const sheet = document.querySelector('.ng-bar-end[data-sheet="open"]');
+  if (!sheet) { fail('the «⋯» sheet did not open'); return { failures, groups: [] }; }
+  if (sheet.getAttribute('role') !== 'dialog' || sheet.getAttribute('aria-modal') !== 'true' || !sheet.getAttribute('aria-labelledby')) fail('the open sheet is not a named modal dialog');
+  if (!sheet.contains(document.activeElement)) fail('focus is not in the open sheet');
+  for (const el of document.querySelectorAll('.ng-screen, .ng-standalone')) if (!el.inert) fail('the page behind the open sheet is not inert');
+  const r = sheet.getBoundingClientRect();
+  if (r.top < -1 || r.bottom > innerHeight + 1 || r.left < -1 || r.right > innerWidth + 1) fail('the open sheet is not inside the viewport');
+  for (const el of sheet.querySelectorAll('button, [role="radio"]')) {
+    const b = el.getBoundingClientRect();
+    if (b.height < 44 - 0.5 || b.width < 44 - 0.5) fail(`a target smaller than 44 px: ${(el.getAttribute('aria-label') ?? el.textContent).trim().slice(0, 40)} (${Math.round(b.width)} × ${Math.round(b.height)})`);
+  }
+  if (!sheet.querySelector('.ng-theme-switch')) fail('no theme switch in the sheet');
+  return { failures, groups: [...sheet.querySelectorAll('[role="radiogroup"]')].map(g => g.getAttribute('aria-label')) };
+}
+
+/** The diagram's facts (in the page): the dialog if open, its frame, the smallest drawn text. */
+export function diagramFacts() {
+  const frameSel = ':is(.ng-dg-frame, .ng-fw-frame, .ng-vl-frame)';
+  const dialog = document.querySelector('.ng-dx.is-open');
+  const frame = (dialog ?? document).querySelector(`.ng-dx ${frameSel}, .ng-dx.is-open ${frameSel}`);
+  const smallest = (() => {
+    let min = Infinity;
+    // The labels that carry facts (R3: every address, port and VLAN label has data-hl), as the R5 essentials.
+    for (const t of (dialog ?? document.createElement('i')).querySelectorAll('svg [data-hl]')) {
+      if (!/\S/u.test(t.textContent)) continue;
+      const size = parseFloat(getComputedStyle(t).fontSize), ctm = t.getScreenCTM?.();
+      if (!size || !ctm) continue;
+      min = Math.min(min, size * Math.sqrt(Math.abs(ctm.a * ctm.d - ctm.b * ctm.c)));
+    }
+    return Number.isFinite(min) ? min : null;
+  })();
+  const box = el => { const r = el?.getBoundingClientRect(); return r ? { left: r.left, top: r.top, width: r.width, height: r.height } : null; };
+  return {
+    open: Boolean(dialog), modal: dialog?.getAttribute('role') === 'dialog' && dialog?.getAttribute('aria-modal') === 'true',
+    focus: document.activeElement?.className ?? null, inDialog: Boolean(dialog?.contains(document.activeElement)),
+    dialog: box(dialog), frame: box(frame), scale: frame?.getAttribute('data-scale') ?? null, zoom: frame?.getAttribute('data-zoom') ?? null, pans: Boolean(frame?.classList.contains('is-pan')),
+    smallest, viewport: { width: innerWidth, height: innerHeight }, scrollLocked: getComputedStyle(document.documentElement).overflow === 'hidden',
+  };
+}
+
+/** A focused field with the keyboard up (in the page): in the visible area, hit by a tap at its middle, nothing fixed over it. */
+export function keyboardFacts() {
+  const failures = [];
+  const el = document.activeElement;
+  const fail = reason => failures.push({ element: el ? el.tagName.toLowerCase() + (el.id ? `#${el.id}` : '') : 'focus', role: 'keyboard', reason, distance: null });
+  if (!el || !el.matches('input, textarea')) { fail('no field has the focus'); return { failures }; }
+  const r = el.getBoundingClientRect();
+  if (r.top < -0.5 || r.bottom > innerHeight + 0.5 || r.left < -0.5 || r.right > innerWidth + 0.5) fail('the focused field is not inside the visible area');
+  const hit = document.elementFromPoint((r.left + r.right) / 2, (r.top + r.bottom) / 2);
+  if (!hit || !(hit === el || el.contains(hit))) fail(`the focused field is covered at its middle by ${hit ? hit.tagName.toLowerCase() + '.' + [...hit.classList].join('.') : 'nothing'}`);
+  for (const other of document.querySelectorAll('body *')) {
+    const st = getComputedStyle(other);
+    if (!['fixed', 'sticky'].includes(st.position) || st.display === 'none' || st.visibility !== 'visible') continue;
+    const o = other.getBoundingClientRect();
+    if (o.width && o.height && o.left < r.right && o.right > r.left && o.top < r.bottom && o.bottom > r.top && !other.contains(el)) fail(`a ${st.position} element over the focused field: ${other.tagName.toLowerCase()}.${[...other.classList].join('.')}`);
+  }
+  return { failures };
+}
+
+async function phoneGates(exercise, withDriver, size) {
+  const states = phoneStatesOf(exercise);
+  const record = (d, failures, extra = {}) => {
+    const last = d.gates.at(-1);
+    last.failures.push(...failures);
+    Object.assign(last, extra, { pass: last.failures.length === 0 });
+  };
+  if (states.includes('sheet-open')) await withDriver('sheet-open', async d => {
+    await d.open();
+    await d.click(d.page.locator('.ng-bar-sheet-button'), 'Open the bar\'s «⋯» sheet');
+    const facts = await d.page.evaluate(sheetFacts);
+    // Every choice in it: readable and reachable inside the sheet (it scrolls on its own when taller). The page
+    // behind is inert (not hit-tested, which the paint-order query needs) and lies under the sheet's layer and its
+    // backdrop, so it can't paint over the sheet: it is taken out of sight for this measurement only, then put back.
+    await d.page.evaluate(() => { for (const el of document.querySelectorAll('.ng-screen')) el.style.setProperty('visibility', 'hidden'); });
+    const must = await d.page.evaluate(measureEssentials, { essentials: [{ sel: '.ng-bar-end[data-sheet="open"] :is(.ng-bar-sheet-title, .ng-bar-sheet-done, [role="radio"], .ng-theme-switch)', reach: true }], minFont: MIN_FONT_PX });
+    await d.page.evaluate(() => { for (const el of document.querySelectorAll('.ng-screen')) el.style.removeProperty('visibility'); });
+    await d.gate('sheet-open');
+    const failures = [...facts.failures, ...must.failures.map(f => ({ ...f, role: 'sheet choice' }))];
+    // Tab stays in the sheet (it wraps), both ways.
+    for (const key of ['Tab', 'Shift+Tab']) for (let i = 0; i < 24; i++) {
+      await d.page.keyboard.press(key);
+      if (!await d.page.evaluate(() => Boolean(document.activeElement?.closest('.ng-bar-end[data-sheet="open"]')))) { failures.push({ element: '.ng-bar-end', role: 'sheet', reason: `${key} left the open sheet`, distance: null }); break; }
+    }
+    d.note('Tab and Shift+Tab through the sheet (focus stays inside)');
+    await d.page.keyboard.press('Escape'); d.note('Close the sheet with Escape'); await d.settle();
+    const after = await d.page.evaluate(() => ({ closed: !document.querySelector('.ng-bar-end[data-sheet="open"]'),
+      focus: Boolean(document.activeElement?.matches('.ng-bar-sheet-button')), inert: document.querySelectorAll('[inert]').length }));
+    if (!after.closed) failures.push({ element: '.ng-bar-end', role: 'sheet', reason: 'Escape did not close the sheet', distance: null });
+    if (!after.focus) failures.push({ element: '.ng-bar-sheet-button', role: 'sheet', reason: 'focus did not return to «⋯» after closing', distance: null });
+    if (after.inert) failures.push({ element: '[inert]', role: 'sheet', reason: 'the page stays inert after closing', distance: null });
+    record(d, failures, { phone: { view: 'sheet', groups: facts.groups } });
+  });
+  if (states.includes('diagram-full')) await withDriver('diagram-full', async d => {
+    await d.open();
+    const button = d.page.locator('[data-diagram-expand]');
+    if (!await button.count()) {
+      await d.gate('diagram-full');
+      record(d, [{ element: '[data-diagram-expand]', role: 'diagram', reason: 'no «Розгорнути схему» button on the first view', distance: null }]);
+      return;
+    }
+    // The stored zoom, inline, with «Текстом» closed (the drawing in the page).
+    const text = d.page.locator('.ng-te-button[aria-expanded="true"]');
+    if (await text.count()) await d.click(text.first(), 'Close «Текстом» to see the drawing in the page');
+    const before = await d.page.evaluate(diagramFacts);
+    await d.click(button.first(), 'Open the full-screen diagram («Розгорнути схему»)');
+    const open = await d.page.evaluate(diagramFacts);
+    await d.gate('diagram-full');
+    const failures = [];
+    const fail = reason => failures.push({ element: '.ng-dx', role: 'diagram', reason, distance: null });
+    if (!open.open || !open.modal) fail('the full-screen diagram is not an open modal dialog');
+    if (!open.focus?.includes('ng-dx-close')) fail('focus is not on «Закрити» in the open diagram');
+    if (open.dialog && (Math.abs(open.dialog.width - open.viewport.width) > 1 || Math.abs(open.dialog.height - open.viewport.height) > 1)) fail('the open diagram does not fill the window');
+    if (open.frame && open.frame.height < 0.5 * open.viewport.height) fail(`the drawing's frame takes ${Math.round(open.frame.height)} px of ${open.viewport.height}`);
+    // Round 6 repair (Fable 3): in portrait it opens at the whole drawing («Уся схема»); «+» gives detail.
+    if (open.pans) fail('in portrait the full-screen diagram does not open at the whole drawing');
+    if (!open.scrollLocked) fail('the page behind the open diagram still scrolls');
+    // Its own zoom («+» where the bar shows) and a turn to landscape keep it open; closing restores the stored zoom.
+    const plus = d.page.locator('.ng-dx.is-open :is(.ng-dg-zoom, .ng-fw-zoom, .ng-vl-zoom) button').nth(1);
+    if (await plus.count() && await plus.getAttribute('aria-disabled') !== 'true') await d.click(plus, 'Zoom in inside the full-screen diagram');
+    await d.page.setViewportSize({ width: size.height, height: size.width }); d.note(`Turn to landscape (${size.height} × ${size.width})`); await d.settle();
+    const turned = await d.page.evaluate(diagramFacts);
+    if (!turned.open) fail('turning to landscape closed the diagram');
+    else if (turned.dialog && (Math.abs(turned.dialog.width - turned.viewport.width) > 1 || Math.abs(turned.dialog.height - turned.viewport.height) > 1)) fail('in landscape the open diagram does not fill the window');
+
+    await d.page.setViewportSize(size); d.note('Back to portrait'); await d.settle();
+    await d.page.keyboard.press('Escape'); d.note('Close the full-screen diagram with Escape'); await d.settle();
+    const after = await d.page.evaluate(diagramFacts);
+    if (after.open) fail('Escape did not close the full-screen diagram');
+    if (!await d.page.evaluate(() => Boolean(document.activeElement?.matches('[data-diagram-expand]')))) fail('focus did not return to «Розгорнути схему»');
+    if (after.zoom !== before.zoom || after.scale !== before.scale) fail(`the stored zoom changed: ${before.zoom ?? before.scale} → ${after.zoom ?? after.scale}`);
+    record(d, failures, { phone: { view: 'diagram', open: { smallest: open.smallest, frame: open.frame }, landscape: { smallest: turned.smallest }, zoom: { before: before.zoom ?? before.scale, after: after.zoom ?? after.scale } } });
+  });
+  if (states.includes('keyboard')) await withDriver('keyboard', async d => {
+    await d.open();
+    const fields = d.page.locator('.ng-screen input:not([type=radio]):not([type=checkbox]):not([readonly]):not(:disabled), .ng-screen textarea');
+    let field = null;
+    for (const f of await fields.all()) if (await f.isVisible()) { field = f; break; }
+    const keyboard = { width: size.width, height: Math.min(size.height, 500) };
+    await d.page.setViewportSize(keyboard); d.note(`Shrink the viewport to ${keyboard.width} × ${keyboard.height} (the keyboard up; an emulation)`); await d.settle();
+    if (field) await d.click(field, 'Tap the first text field');
+    const facts = field ? await d.page.evaluate(keyboardFacts) : { failures: [{ element: 'input', role: 'keyboard', reason: 'no text field on the first view', distance: null }] };
+    await d.gate('keyboard');
+    record(d, facts.failures, { viewport: size, phone: { view: 'keyboard', viewport: keyboard } });
+    await d.page.setViewportSize(size); await d.settle();
   });
 }
 
@@ -2465,6 +2833,7 @@ async function main() {
         });
         await extraShots(exercise, drive);
         await lifecycleGates(exercise, drive);
+        if (isPhoneSize(size)) await phoneGates(exercise, drive, size);
       }
       console.log(`${exercise.id}: ${records.filter(r => r.exercise === exercise.id).length} PNGs`);
     }
@@ -2490,7 +2859,7 @@ async function main() {
       }
     }
     // A stopped recipe must not turn missing state/size pairs into a pass.
-    for (const exercise of selected) for (const size of options.sizes) for (const state of gateStates(exercise)) {
+    for (const exercise of selected) for (const size of options.sizes) for (const state of gateStates(exercise, size)) {
       if (!gates.some(g => g.exercise === exercise.id && g.state === state && g.theme === 'dark' && g.viewport.width === size.width && g.viewport.height === size.height)) {
         gates.push({ exercise: exercise.id, state, theme: 'dark', viewport: size, pass: false, baseline: 'not measured', expected: expectedTargets(exercise.id, state), failures: [{ element: 'recipe', reason: 'expected state/size was not measured', distance: null }] });
       }

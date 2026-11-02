@@ -54,10 +54,12 @@ import predict, { commit as commitRound } from '../logic/predict.js';
 import { useExercise } from '../../../ui/useExercise.js';
 import { useStore } from '../../../ui/useStore.js';
 import Segmented from '../../../ui/components/Segmented.jsx';
+import { SheetChoice } from '../../../ui/BarSlot.jsx';
 import HelpPanel from '../../../ui/components/HelpPanel.jsx';
 import DoneMark, { earnedBy } from '../../../ui/components/DoneMark.jsx';
 import Aside, { useAsideFold } from '../../../ui/components/Aside.jsx';
-import TextEquivalent, { TextEquivalentButton } from '../../../ui/components/TextEquivalent.jsx';
+import TextEquivalent, { TextEquivalentButton, lineCount } from '../../../ui/components/TextEquivalent.jsx';
+import DiagramExpand, { ExpandButton, useDiagramExpand, useTextOpen } from '../../../ui/topology/DiagramExpand.jsx';
 import ActionLine from '../../../ui/components/ActionLine.jsx';
 import VlanDiagram from './VlanDiagram.jsx';
 import GivenConfig from './GivenConfig.jsx';
@@ -139,7 +141,9 @@ export default function PredictView({ record, syntax, place, setPlace, head, ski
 
   const questionRef = useRef(null);
   const textButton = useRef(null);
-  const [textOpen, setTextOpen] = useState(false);
+  // Round 6 (P2): «Текстом» starts open on a phone; the full-screen diagram has a zoom of its own.
+  const [textOpen, setTextOpen] = useTextOpen(false);   // closed on a phone (round 6 repair: the first action's facts are on the screen)
+  const expand = useDiagramExpand({ zoom: ex.view.zoom, onZoom: zoom => setView({ zoom }) });
   const focusQuestion = useRef(false);
   useEffect(() => {
     if (!focusQuestion.current) return;
@@ -223,8 +227,8 @@ export default function PredictView({ record, syntax, place, setPlace, head, ski
       <div className="ng-vl-side">
         <header className="ng-vl-head">
           {head}
-          <Segmented label={ui.shape} value={shape} onChange={chooseShape} className="ng-vl-variants"
-            options={record.variants.map(v => ({ value: v.id, label: <>{v.title}<DoneMark done={earned.has(v.id)} /></> }))} />
+          <SheetChoice stepper label={ui.shape} value={shape} onChange={chooseShape} className="ng-vl-variants"
+            options={record.variants.map(v => ({ value: v.id, label: <>{v.title}<DoneMark done={earned.has(v.id)} /></>, step: v.title }))} />
         </header>
         <div className="ng-vl-intro">
           <Aside screen={SCREEN} id="primer" title={ui.intro}>
@@ -235,15 +239,18 @@ export default function PredictView({ record, syntax, place, setPlace, head, ski
           </Aside>
         </div>
         <section ref={stageRef} className="ng-vl-stage" aria-label={ui.diagramLabel}>
-          <VlanDiagram geo={geo} topology={task.topology} zoom={ex.view.zoom} onZoom={zoom => setView({ zoom })} viewKey={ex.key}
-            covered={textOpen} scene={scene} domains={domains} third={third} selected={selection} source={current.from} tokens={tokens} chips={chips} quietIps
+          <DiagramExpand expand={expand}>
+          <VlanDiagram geo={geo} topology={task.topology} zoom={expand.zoom} onZoom={expand.onZoom} viewKey={ex.key}
+            covered={expand.covered(textOpen)} scene={scene} domains={domains} third={third} selected={selection} source={current.from} tokens={tokens} chips={chips} quietIps
             highlight={facts.highlight}
             onHost={committed ? null : tap} activeSwitch={switchId} activeTag={ui.shownTag} onSwitch={id => setView({ switchId: id })}
             tools={<>
-              <TextEquivalentButton buttonRef={textButton} id="ng-vl-text" label={ui.textButton} open={textOpen} onToggle={() => setTextOpen(o => !o)} />
+              <TextEquivalentButton buttonRef={textButton} id="ng-vl-text" label={ui.textButton} open={textOpen} onToggle={() => setTextOpen(o => !o)} count={lineCount(sections)} />
+              <ExpandButton expand={expand} />
               {motion && motion.total > 0 && !player.reduced && <button type="button" className="ng-vl-btn ng-vl-replay" onClick={player.replay}>{ui.replay}</button>}
             </>}
-            overlays={<TextEquivalent id="ng-vl-text" title={ui.textTitle} sections={sections} open={textOpen} onClose={() => { setTextOpen(false); textButton.current?.focus(); }} />} />
+            overlays={<TextEquivalent id="ng-vl-text" title={ui.textTitle} sections={sections} open={expand.covered(textOpen)} onClose={() => { setTextOpen(false); textButton.current?.focus(); }} />} />
+          </DiagramExpand>
         </section>
       </div>
 

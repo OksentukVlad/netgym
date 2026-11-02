@@ -185,3 +185,13 @@
 .ng-bitband .ng-bitoctet-weights {
   display: none;
 }
+
+/* Round 6 repair (Fable/Astra: binary evidence visible with its panel): under
+   640 px the four octets are one column; tighter lines keep the step list (the
+   accepted step's ✓) and the help panel under the octets in one view. */
+@media (max-width: 639.98px) {
+  .ng-bitrow { gap: 3px; }
+  .ng-bitoctet, .ng-bittext { gap: 1px; }
+  .ng-bitoctet-caption { font-size: var(--ng-font-caption); line-height: 1.2; }
+  .ng-bitoctet-weights span { line-height: 1.2; }
+}

@@ -36,6 +36,7 @@
 // (`describedBy`) describes each octet's group of toggles (heard once, not
 // on every arrow key) or each text field; an octet marked after a check
 // («Перевір цей октет») has its cells or field described by its message.
+import { isPhoneNow } from '../../../ui/phone.js';
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { binaryUi } from '../uk.js';
 import '../../../ui/tokens.css';
@@ -187,7 +188,9 @@ export default function BitRowInput({ row, cells, onChange, onEnter, onNotice, m
   const isGiven = o => Boolean(given[o]);
   useEffect(() => {
     if (!focusRef) return undefined;
-    focusRef.current = () => (text ? fields.current[firstOpen] : refs.current[firstOpen * 8])?.focus();
+    // Round 6: on a phone the new row's first cell takes the focus without scrolling, so the verdict that
+    // accepted the last row (the help panel just brought it into view under the rows) stays in sight.
+    focusRef.current = () => (text ? fields.current[firstOpen] : refs.current[firstOpen * 8])?.focus(isPhoneNow() ? { preventScroll: true } : undefined);
     return () => { focusRef.current = null; };
   });
 

@@ -8,6 +8,9 @@ export const uk = {
   // Round 4 (A7): a chip on the first card, inside its button (part of its name).
   startHere: 'Почни тут',
   backToSections: '← Розділи',
+  // Round 6: the same words in two parts, so a phone shows the arrow alone (its name stays «← Розділи»).
+  backArrow: '←',
+  backWord: ' Розділи',
   // The theme switch (Bar.jsx): each label names the theme pressing it gives.
   theme: { dark: 'Темна тема', light: 'Світла тема' },
   // The web build only (platform.js): a quiet note on the start screen, and

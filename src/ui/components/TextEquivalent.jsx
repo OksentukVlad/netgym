@@ -9,21 +9,27 @@
 // caller lays its overlays. Closing returns focus to the button (the caller
 // passes the button's ref back to it).
 import Overlay from './Overlay.jsx';
+import { usePhone } from '../phone.js';
 import '../tokens.css';
 import './TextEquivalent.css';
 
 /**
- * @param {{ id: string, label: string, open: boolean, onToggle: () => void, buttonRef?: object, variant?: 'link'|'button' }} props
+ * @param {{ id: string, label: string, open: boolean, onToggle: () => void, buttonRef?: object, variant?: 'link'|'button', count?: number|null }} props
  * `id`: the panel's id. `variant`: round 4 (spec A3) makes «Текстом» a small
  * text link in the same place by default; 'button' keeps the old look.
  */
-export function TextEquivalentButton({ id, label, open, onToggle, buttonRef, variant = 'link' }) {
+export function TextEquivalentButton({ id, label, open, onToggle, buttonRef, variant = 'link', count = null }) {
+  // Round 6 repair: on a phone the closed button says how many lines the text has («Текстом (12) ▼»).
+  const phone = usePhone();
   return (
     <button ref={buttonRef} type="button" className={`ng-te-button${variant === 'link' ? ' is-link' : ''}`} aria-expanded={open} aria-controls={id} onClick={onToggle}>
-      {label} <span aria-hidden="true">{open ? '▲' : '▼'}</span>
+      {label}{phone && !open && count ? <span className="ng-te-count"> ({count})</span> : null} <span aria-hidden="true">{open ? '▲' : '▼'}</span>
     </button>
   );
 }
+
+/** How many lines a text equivalent has (its sections' items). */
+export const lineCount = sections => sections.reduce((n, section) => n + section.items.length, 0);
 
 /**
  * @param {{

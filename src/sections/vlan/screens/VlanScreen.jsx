@@ -32,7 +32,8 @@ import predict from '../logic/predict.js';
 import ports from '../logic/ports.js';
 import route from '../logic/route.js';
 import { usePlace, usePref } from '../../../ui/useStore.js';
-import { BarControls } from '../../../ui/BarSlot.jsx';
+import { BarControls, SheetCaption, SheetChoice } from '../../../ui/BarSlot.jsx';
+import { visibleHeightOf } from '../../../ui/phone.js';
 import Segmented from '../../../ui/components/Segmented.jsx';
 import PredictView from './PredictView.jsx';
 import PortsView from './PortsView.jsx';
@@ -64,11 +65,13 @@ function useMode(ref) {
     const measure = () => {
       setMode(modeFor(el.clientWidth));
       if (!screen) return;
-      if (screen.clientHeight > 0) setHeight(screen.clientHeight);
-      el.style.setProperty('--ng-vl-screen', `${screen.clientHeight}px`);
+      // Round 6: on a phone the page scrolls, so the visible height is the window's.
+      const visible = visibleHeightOf(el);
+      if (visible > 0) setHeight(visible);
+      el.style.setProperty('--ng-vl-screen', `${visible}px`);
       const now = el.querySelector('.ng-vl-side');
       if (now && now !== side) { if (side) observer.unobserve?.(side); side = now; observer.observe(side); }
-      if (side) el.style.setProperty('--ng-vl-top', `${Math.min(6, screen.clientHeight - side.offsetHeight - 6)}px`);
+      if (side) el.style.setProperty('--ng-vl-top', `${Math.min(6, visible - side.offsetHeight - 6)}px`);
     };
     const observer = new ResizeObserver(measure);
     observer.observe(el);
@@ -122,7 +125,7 @@ export default function VlanScreen({ bank }) {
 
   const head = <>
     <h1 className="ng-vl-h1">{ui.heading}</h1>
-    <Segmented label={ui.exercise} value={exercise} onChange={id => setPlace({ exercise: id })} className="ng-vl-exercises"
+    <SheetChoice label={ui.exercise} value={exercise} onChange={id => setPlace({ exercise: id })} className="ng-vl-exercises"
       options={exercises.map(id => ({ value: id, label: ui.exercises[id] }))} />
   </>;
 
@@ -131,6 +134,7 @@ export default function VlanScreen({ bank }) {
       onPointerDownCapture={skip} onKeyDownCapture={skip}>
       <BarControls>
         <div className="ng-vl-controls">
+          <SheetCaption label={ui.syntax} />
           <Segmented label={ui.syntax} value={syntax} onChange={setSyntax} options={SYNTAXES.map(id => ({ value: id, label: ui.syntaxes[id] }))} />
         </div>
       </BarControls>

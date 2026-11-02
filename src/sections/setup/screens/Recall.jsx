@@ -15,7 +15,8 @@
 // (not announced). The line the current message is about is
 // data-evidence="current". The logic's identities (the recall-only SVI line
 // included) never reach the DOM: ids are positional.
-import { useId } from 'react';
+import { useId, useRef } from 'react';
+import { useIsoLayoutEffect } from '../../../ui/phone.js';
 import { uk as shared } from '../../../ui/uk.js';
 import { text, ui } from '../uk.js';
 
@@ -63,6 +64,23 @@ export function lineSummary(n, value, result) {
  *   fieldRef: (index: number) => (el: HTMLInputElement|null) => void,
  * }} props
  */
+/** The recall line's field: a text area of one line that grows with its command (height = its content). */
+function CommandField({ fieldRef, id, readOnly, placeholder, value, invalid, onChange, onEnter }) {
+  const own = useRef(null);
+  useIsoLayoutEffect(() => {
+    const el = own.current;
+    if (!el?.style || typeof el.scrollHeight !== 'number') return;
+    el.style.height = 'auto';
+    if (el.scrollHeight > 0) el.style.height = `${el.scrollHeight + (el.offsetHeight - el.clientHeight)}px`;
+  });
+  return (
+    <textarea ref={el => { own.current = el; fieldRef(el); }} id={id} className="ng-su-field" rows={1} autoComplete="off" autoCapitalize="off" spellCheck={false}
+      enterKeyHint="done" readOnly={readOnly} placeholder={placeholder} value={value} aria-invalid={invalid || undefined}
+      onChange={event => onChange(event.target.value.replace(/\r?\n/g, ' '))}
+      onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); onEnter(); } }} />
+  );
+}
+
 export default function Recall({ rows, readOnly, current, onChange, onEnter, fieldRef }) {
   const base = useId();
   return (
@@ -80,11 +98,11 @@ export default function Recall({ rows, readOnly, current, onChange, onEnter, fie
             </label>
             <div className="ng-su-recall-field">
               <span className="ng-su-recall-prompt" aria-hidden="true">{row.prompt}</span>
-              <input ref={fieldRef(i)} id={fieldId} className="ng-su-field" type="text" autoComplete="off" autoCapitalize="off" spellCheck={false}
-                readOnly={readOnly} placeholder={readOnly ? undefined : ui.recallPlaceholder} value={row.value ?? ''}
-                aria-invalid={result && !result.ok ? true : undefined}
-                onChange={event => onChange(row.id, event.target.value)}
-                onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); if (!readOnly) onEnter(row.id); } }} />
+              {/* Round 6 repair: a one-line text area that wraps and grows, so a long command is shown whole on a
+                  phone (no inner scroll hides part of it); Enter still checks the line and never adds one. */}
+              <CommandField fieldRef={fieldRef(i)} id={fieldId} readOnly={readOnly} placeholder={readOnly ? undefined : ui.recallPlaceholder}
+                value={row.value ?? ''} invalid={Boolean(result && !result.ok)}
+                onChange={value => onChange(row.id, value)} onEnter={() => { if (!readOnly) onEnter(row.id); }} />
               {row.locked && !row.shown && <span className="ng-su-recall-ok" aria-hidden="true">✓</span>}
             </div>
             {finding && typeof finding.start === 'number' && (

@@ -92,12 +92,14 @@ import { formatCode, parseCode } from '../logic/codes.js';
 import { syntaxList, syntaxes } from '../syntax/index.js';
 import { useExercise } from '../../../ui/useExercise.js';
 import { usePlace, usePref, useStore } from '../../../ui/useStore.js';
-import { BarControls } from '../../../ui/BarSlot.jsx';
+import { BarControls, SheetCaption, SheetChoice, SheetControls } from '../../../ui/BarSlot.jsx';
+import { usePhone } from '../../../ui/phone.js';
+import DiagramExpand, { ExpandButton, useDiagramExpand } from '../../../ui/topology/DiagramExpand.jsx';
 import Segmented from '../../../ui/components/Segmented.jsx';
 import HelpPanel from '../../../ui/components/HelpPanel.jsx';
 import MoreMenu from '../../../ui/components/MoreMenu.jsx';
 import { AsideButton, useAsideFold } from '../../../ui/components/Aside.jsx';
-import TextEquivalent, { TextEquivalentButton } from '../../../ui/components/TextEquivalent.jsx';
+import TextEquivalent, { TextEquivalentButton, lineCount } from '../../../ui/components/TextEquivalent.jsx';
 import { describeNetwork } from '../../../ui/topology/describe.js';
 import { comprehension, faultsUi, t, ui } from '../uk.js';
 import { levelClass, routerClass } from './theme.js';
@@ -210,7 +212,9 @@ export function Legend({ task, syntax, routers, short = false }) {
   const { state, dispatch } = useStore();
   const place = state.places[ASIDE_SCREEN] ?? {};
   const choice = place.asides?.legend;
-  const open = typeof choice === 'boolean' ? choice : !place.started && !short;
+  // Round 6: folded at first on a phone too, as every aside is (Aside.jsx).
+  const phone = usePhone();
+  const open = typeof choice === 'boolean' ? choice : !place.started && !short && !phone;
   const toggle = () => dispatch({ type: 'place', scope: ASIDE_SCREEN, patch: { asides: { ...place.asides, legend: !open } } });
   const bodyId = useId();
   const facts = legendFacts(task, syntax);
@@ -230,6 +234,10 @@ export function Legend({ task, syntax, routers, short = false }) {
     </div>
   );
 }
+
+/** «☰ Задачі» in two parts: a phone shows «☰» alone (its name stays «☰ Задачі»). */
+const [drawerIcon, ...drawerRest] = ui.shared.drawer.split(' ');
+const drawerWord = ` ${drawerRest.join(' ')}`;
 
 /** The screen's id for its asides (the legend): places[ASIDE_SCREEN].asides. */
 export const ASIDE_SCREEN = 'routing.tasks';
@@ -266,11 +274,14 @@ export default function RoutingScreen({ bank }) {
     // The first opening builds its instance after a paint (FaultsView.jsx).
     dispatch({ type: 'place', scope: FAULTS_SCOPE, patch: { open: id === 'faults' } });
   }
+  // Round 6: on a phone the switch is in the bar's «⋯» sheet (SheetControls; the same element, never remounted).
   const exerciseSwitch = offered ? (
-    <div ref={switchBox} className="ng-rt-exercises-box">
-      <Segmented label={faultsUi.exercise} value={exercise} onChange={choose} className="ng-rt-exercises"
-        options={['tasks', 'faults'].map(value => ({ value, label: faultsUi.exercises[value] }))} />
-    </div>
+    <SheetControls label={faultsUi.exercise}>
+      <div ref={switchBox} className="ng-rt-exercises-box">
+        <Segmented label={faultsUi.exercise} value={exercise} onChange={choose} className="ng-rt-exercises"
+          options={['tasks', 'faults'].map(value => ({ value, label: faultsUi.exercises[value] }))} />
+      </div>
+    </SheetControls>
   ) : null;
   return exercise === 'faults'
     ? <FaultsView bank={bank} exerciseSwitch={exerciseSwitch} />
@@ -372,6 +383,8 @@ function TasksView({ bank, exerciseSwitch = null }) {
   // this render, and stored, so coming back to an instance (A → B → A, a
   // task or a variant) doesn't bring back what it showed before, such as a
   // lap that would play again without a check.
+  // Round 6 repair: «Текстом» starts closed here on a phone too («Адреси цього роутера» carries the
+  // first route's facts; the full-screen diagram shows the rest).
   const [checkView, setCheckView] = useState(() => initialCheckView(ex.key));
   const cv = checkView.key === ex.key ? checkView : checkViewReducer(checkView, { type: 'instance', key: ex.key });
   if (cv !== checkView) setCheckView(cv);
@@ -622,6 +635,8 @@ function TasksView({ bank, exerciseSwitch = null }) {
   const shownView = { ...fresh[ex.key], ...ex.view };
   const setShownView = patch => (stored ? ex.setView(patch) : setFresh(f => ({ ...f, [ex.key]: { ...f[ex.key], ...patch } })));
   const onZoom = value => setShownView({ zoom: value });
+  // Round 6 (P2): the full-screen diagram on a phone; it has a zoom of its own, the stored one stays.
+  const expand = useDiagramExpand({ zoom: shownView.zoom, onZoom });
   // The drawer closes when the layout gets room for the list.
   useEffect(() => { if (!drawer) setDrawerOpen(false); }, [drawer]);
 
@@ -783,7 +798,9 @@ function TasksView({ bank, exerciseSwitch = null }) {
       onPointerDownCapture={skipLap} onKeyDownCapture={skipLap}>
       <BarControls>
         <div className="ng-rt-controls">
+          <SheetCaption label={ui.shared.syntax} />
           <Segmented label={ui.shared.syntax} options={syntaxList.map(x => ({ value: x.id, label: x.label }))} value={syntax.id} onChange={switchSyntax} />
+          <SheetCaption label={ui.shared.mode} />
           <Segmented label={ui.shared.mode} value={mode} onChange={setModePref} className="ng-rt-modes"
             options={['guided', 'free'].map(value => ({ value, label: ui.shared.modes[value] }))} />
         </div>
@@ -797,7 +814,9 @@ function TasksView({ bank, exerciseSwitch = null }) {
 
         <main className="ng-rt-main">
           <div className="ng-rt-taskbar">
-            <button ref={drawerButton} type="button" className="ng-rt-btn ng-rt-drawer-button" aria-expanded={drawerOpen} aria-controls="ng-rt-tasks" onClick={() => setDrawerOpen(true)}>{ui.shared.drawer}</button>
+            <button ref={drawerButton} type="button" className="ng-rt-btn ng-rt-drawer-button" aria-label={ui.shared.drawer} aria-expanded={drawerOpen} aria-controls="ng-rt-tasks" onClick={() => setDrawerOpen(true)}>
+              <span aria-hidden="true">{drawerIcon}</span><span className="ng-rt-drawer-word" aria-hidden="true">{drawerWord}</span>
+            </button>
             <h1 className="ng-rt-h1">{ui.shared.heading}</h1>
             <span className={`ng-rt-level ${levelClass(record.level)}`}>{ui.shared.levelLabels[record.level]}</span>
             {/* Round 4: the task's title only (the list keeps the codes). */}
@@ -848,18 +867,22 @@ function TasksView({ bank, exerciseSwitch = null }) {
                 <div className="ng-rt-stage-head">
                   <p className="ng-rt-caption">{ui.shared.diagramCaption}</p>
                   {drawnPath && cv.overlay === null && <PathLegend />}
+                  {/* Round 6 (P2): «Розгорнути схему» on a phone, at the stage's head (no row of its own). */}
+                  <ExpandButton expand={expand} className="ng-rt-expand" />
                 </div>
+                <DiagramExpand expand={expand}>
                 <TopologyMap
                   ref={mapRef}
                   topo={topo} activeRouter={router} setActiveRouter={selectRouter} fitHeight={layout !== 'narrow'}
-                  viewKey={ex.key} zoom={shownView.zoom} onZoom={onZoom}
-                  covered={cv.overlay === 'text'} fit={lapPlay.playing}
+                  viewKey={ex.key} zoom={expand.zoom} onZoom={expand.onZoom}
+                  covered={expand.covered(cv.overlay === 'text')} fit={lapPlay.playing}
                   underlay={<><PathUnder plan={plan} step={step} ids={markers} /><LapUnder frame={lapNow} ids={markers} /></>}
                   overlay={<><PathOver plan={plan} step={step} solved={presented?.ok && !lapShown ? solvedMarks(geo) : null} /><LapOver frame={lapNow} /></>}
-                  overlays={<TextEquivalent id="ng-rt-text" title={ui.shared.textTitle} sections={textSections} open={cv.overlay === 'text'} onClose={closeOverlay} />}
+                  overlays={<TextEquivalent id="ng-rt-text" title={ui.shared.textTitle} sections={textSections} open={expand.covered(cv.overlay === 'text')} onClose={closeOverlay} />}
                 >
-                  <TextEquivalentButton buttonRef={textButton} id="ng-rt-text" label={ui.shared.textButton} open={cv.overlay === 'text'} onToggle={toggleText} />
+                  <TextEquivalentButton buttonRef={textButton} id="ng-rt-text" label={ui.shared.textButton} open={cv.overlay === 'text'} onToggle={toggleText} count={lineCount(textSections)} />
                 </TopologyMap>
+                </DiagramExpand>
               </section>
             </div>
 

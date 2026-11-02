@@ -68,6 +68,25 @@ export const uk = {
   fact: {
     show: ({ value }) => `${value} — показати на схемі`,
   },
+  // Round 6 (the phone layer): the one-row stepper under 640 px (BarSlot.jsx Stepper).
+  stepper: {
+    prev: ({ label, name }) => `${label}: попередня — ${name}`,
+    next: ({ label, name }) => `${label}: наступна — ${name}`,
+    none: ({ label }) => `${label}: далі немає`,
+  },
+  // The bar's «⋯» sheet under 640 px (src/app/Bar.jsx).
+  sheet: {
+    button: 'Налаштування',
+    title: 'Налаштування',
+    done: 'Готово',
+  },
+  // The full-screen diagram (ui/topology/DiagramExpand.jsx).
+  expand: {
+    button: 'Розгорнути схему',
+    title: 'Схема',
+    close: 'Закрити',
+    hint: 'Збільш «+» або поверни телефон.',
+  },
   // WorkedExample (round 5, spec 5b-2 A): one finished answer on other values, folded.
   example: {
     toggle: 'Приклад',                          // «Приклад ▸ готова відповідь (інші числа)»

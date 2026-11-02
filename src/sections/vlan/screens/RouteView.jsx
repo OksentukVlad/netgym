@@ -50,11 +50,14 @@ import route from '../logic/route.js';
 import { useExercise } from '../../../ui/useExercise.js';
 import { useStore } from '../../../ui/useStore.js';
 import Segmented from '../../../ui/components/Segmented.jsx';
+import { SheetChoice } from '../../../ui/BarSlot.jsx';
 import HelpPanel from '../../../ui/components/HelpPanel.jsx';
+import { isPhoneNow } from '../../../ui/phone.js';
 import MoreMenu from '../../../ui/components/MoreMenu.jsx';
 import DoneMark, { earnedBy } from '../../../ui/components/DoneMark.jsx';
 import Aside, { useAsideFold } from '../../../ui/components/Aside.jsx';
-import TextEquivalent, { TextEquivalentButton } from '../../../ui/components/TextEquivalent.jsx';
+import TextEquivalent, { TextEquivalentButton, lineCount } from '../../../ui/components/TextEquivalent.jsx';
+import DiagramExpand, { ExpandButton, useDiagramExpand, useTextOpen } from '../../../ui/topology/DiagramExpand.jsx';
 import ActionLine from '../../../ui/components/ActionLine.jsx';
 import WorkedExample from '../../../ui/components/WorkedExample.jsx';
 import { interVlanExample } from '../logic/examples.js';
@@ -262,9 +265,12 @@ export default function RouteView({ records, syntax, place, setPlace, head, skip
   useEffect(() => {
     if (!focusForm.current) return;
     focusForm.current = false;
-    formHeading.current?.focus();
+    // Round 6 repair: on a phone the new task starts at its top; focus doesn't scroll past it.
+    formHeading.current?.focus(isPhoneNow() ? { preventScroll: true } : undefined);
   }, [ex.key]);
-  const [textOpen, setTextOpen] = useState(false);
+  // Round 6 (P2): «Текстом» starts open on a phone; the full-screen diagram has a zoom of its own.
+  const [textOpen, setTextOpen] = useTextOpen(false);   // closed on a phone (round 6 repair: open, its first view didn't hold the device tabs)
+  const expand = useDiagramExpand({ zoom: ex.view.zoom, onZoom: zoom => ex.setView({ zoom }) });
   const hintIndex = ex.session.hintIndex;
   const hintTexts = hintIndex > 0
     ? routeHintTexts(task, route.hints(task, answer, { syntax }), route.compile(task, answer, { syntax }).topology.attachments)
@@ -334,7 +340,12 @@ export default function RouteView({ records, syntax, place, setPlace, head, skip
   const reference = ex.solution ? route.render(ex.solution, syntax, task.topology) : null;
 
   const previous = stale ? ` · ${ui.previous}` : '';
-  const givens = useMemo(() => [...route.describe(task, { syntax }), ...linkLines(task, syntax)], [task, syntax]);
+  // Round 6 repair (Fable 1): «Текстом» says what the drawing shows; route.describe starts with the
+  // task's title and its condition, already on the screen (and in «Умова повністю»): left out here.
+  const givens = useMemo(() => {
+    const lines = route.describe(task, { syntax });
+    return [...lines.slice(lines[0] === task.title ? 2 : 0), ...linkLines(task, syntax)];
+  }, [task, syntax]);
   const traceText = dir => (probe?.[dir] ? [...(dir === 'request' ? [routeUi.walkAbstraction] : []), ...traceLines(task, syntax, probe[dir], attachments)] : []);
   const sections = [
     { heading: ui.schemeGoals, items: givens },
@@ -430,8 +441,8 @@ export default function RouteView({ records, syntax, place, setPlace, head, skip
       <div className="ng-vl-side">
         <header className="ng-vl-head">
           {head}
-          <Segmented label={ui.task} value={record.id} onChange={chooseTask} className="ng-vl-variants"
-            options={offered.map(r => ({ value: r.id, label: <>{`${r.variants[0].task} · ${routeUi.taskShort[r.id] ?? r.variants[0].title}`}<DoneMark done={earned.has(r.id)} /></>, title: r.variants[0].title }))} />
+          <SheetChoice stepper label={ui.task} value={record.id} onChange={chooseTask} className="ng-vl-variants"
+            options={offered.map(r => ({ value: r.id, label: <>{`${r.variants[0].task} · ${routeUi.taskShort[r.id] ?? r.variants[0].title}`}<DoneMark done={earned.has(r.id)} /></>, title: r.variants[0].title, step: routeUi.taskShort[r.id] ?? r.variants[0].title }))} />
           <MoreMenu disclosureHost={moreHost} items={[
             { id: 'other', label: ui.otherNumbersMenu, onSelect: otherNumbers },
             previousSeed !== null && { id: 'previous', label: ui.previousNumbers, onSelect: previousNumbers },
@@ -454,14 +465,17 @@ export default function RouteView({ records, syntax, place, setPlace, head, skip
         </div>
         <section className="ng-vl-stage" aria-label={ui.diagramLabel}>
           {stale && scene && <p className="ng-vl-previous">{ui.previous}</p>}
-          <VlanDiagram geo={geo} topology={task.topology} zoom={ex.view.zoom} onZoom={zoom => ex.setView({ zoom })} viewKey={ex.key}
-            covered={textOpen} scene={scene} third={third} fourth={fourth} activeSwitch={device.id} onSwitch={chooseDevice}
+          <DiagramExpand expand={expand}>
+          <VlanDiagram geo={geo} topology={task.topology} zoom={expand.zoom} onZoom={expand.onZoom} viewKey={ex.key}
+            covered={expand.covered(textOpen)} scene={scene} third={third} fourth={fourth} activeSwitch={device.id} onSwitch={chooseDevice}
             tokens={tokens} chips={chips} stepMs={stepMs} caption={routing ? routeUi.newFrame(routing) : null}
             tools={<>
-              <TextEquivalentButton buttonRef={textButton} id="ng-vl-text" label={ui.textButton} open={textOpen} onToggle={() => setTextOpen(o => !o)} />
+              <TextEquivalentButton buttonRef={textButton} id="ng-vl-text" label={ui.textButton} open={textOpen} onToggle={() => setTextOpen(o => !o)} count={lineCount(sections)} />
+              <ExpandButton expand={expand} />
               {seq && !player.reduced && <button type="button" className="ng-vl-btn ng-vl-replay" onClick={player.replay}>{ui.replay}</button>}
             </>}
-            overlays={<TextEquivalent id="ng-vl-text" title={ui.textTitle} sections={sections} open={textOpen} onClose={() => { setTextOpen(false); textButton.current?.focus(); }} />} />
+            overlays={<TextEquivalent id="ng-vl-text" title={ui.textTitle} sections={sections} open={expand.covered(textOpen)} onClose={() => { setTextOpen(false); textButton.current?.focus(); }} />} />
+          </DiagramExpand>
         </section>
       </div>
 

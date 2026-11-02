@@ -40,6 +40,9 @@
 //
 // Long boards (`boardRef`): the panel lives next to the board in the DOM,
 // before it when the board is taller than half the viewport, else after it
+// (round 6, P3: `placement="after"` keeps it after the board at any height,
+// so the task and the inputs come before «Перевірити» in the DOM and on
+// screen: VLAN ports, firewall order, the setup decks)
 // (its "home", decided once per task and step (`layoutKey`, by default the
 // `stepKey`: a new stage is a new layout) and again only when the board's width
 // changes: a check that adds marks never moves «Перевірити»). When the verdict marks a row (`data-evidence="current"`
@@ -68,6 +71,7 @@ import { createPortal } from 'react-dom';
 import Button from './Button.jsx';
 import { CLEAR_MS } from './Feedback.jsx';
 import { uk } from '../uk.js';
+import { isPhoneNow } from '../phone.js';
 import '../tokens.css';
 import './Feedback.css';
 import './HintLadder.css';
@@ -145,19 +149,23 @@ function focusLost() {
   return !active || active === document.body || !document.documentElement.contains(active);
 }
 
-/** The ancestors that scroll vertically, innermost first. */
+/** The ancestors that scroll vertically, innermost first. Round 6: on a
+ * phone the page itself scrolls (the document's scrolling element, last). */
 function scrollers(el) {
   const out = [];
   for (let a = el?.parentElement; a; a = a.parentElement) {
     const style = window.getComputedStyle(a);
     if (/(auto|scroll)/.test(style.overflowY ?? '') && a.scrollHeight > a.clientHeight + 1) out.push(a);
   }
+  const page = typeof document !== 'undefined' ? document.scrollingElement : null;
+  if (page && el && page.contains?.(el) && !out.includes(page) && page.scrollHeight > page.clientHeight + 1) out.push(page);
   return out;
 }
 
 /** A scroller's visible band in client px, inside the window, less its scroll padding. */
 function band(scroller) {
-  const top = scroller ? Math.max(scroller.getBoundingClientRect().top + (scroller.clientTop ?? 0), 0) : 0;
+  const page = scroller && typeof document !== 'undefined' && scroller === document.scrollingElement;
+  const top = scroller && !page ? Math.max(scroller.getBoundingClientRect().top + (scroller.clientTop ?? 0), 0) : 0;
   const bottom = scroller ? Math.min(top + scroller.clientHeight, window.innerHeight) : window.innerHeight;
   const style = scroller ? window.getComputedStyle(scroller) : null;
   const pad = name => parseFloat(style?.[name]) || 0;
@@ -200,6 +208,19 @@ export function bringIntoView(els, behavior = 'auto') {
 }
 
 /**
+ * The check row, the current item and its evidence into view together; round 6: under 640 px, when
+ * the three can't fit, the check row and the current item come first if they fit (a hint: always,
+ * its evidence is reachable above); a long verdict or reveal keeps the three's top first. At 640 px
+ * and wider, all three as one group, always (the panel anchors next to its evidence so they fit).
+ */
+export function bringPanelIntoView(row, current, evidence, behavior = 'auto', { hint = false } = {}) {
+  const all = [row, current, evidence];
+  // Round 6 repair: at 640 px and wider the evidence is never dropped (the panel anchors next to it
+  // instead); under 640 px a short panel comes first and its evidence is reachable above it.
+  bringIntoView(isPhoneNow() && !fitsTogether(all) && (hint || fitsTogether([row, current])) ? [row, current] : all, behavior);
+}
+
+/**
  * @param {{
  *   taskKey: any,                       // instance identity: a change resets the panel's memory
  *   stepKey?: any,                      // a step inside the task: a change forgets the verdict
@@ -216,12 +237,14 @@ export function bringIntoView(els, behavior = 'auto') {
  *   primary?: 'check'|'continue'|'next'|'none',
  *   evidence?: Function,                // brings the referenced input/evidence into view first
  *   boardRef?: { current: Element|null },  // a long board: see the top of this file
+ *   placement?: 'auto'|'after',         // round 6 (P3): 'after' keeps the panel's home after the board at every height
+ *   viewKey?: any,                      // round 6 repair: a view change the learner made (a device tab): re-anchor and scroll as after an event
  *   className?: string,
  * }} props
  */
 export default function HelpPanel(props) {
   const { taskKey, stepKey = null, layoutKey = stepKey, check = null, verdict: given = null, stale = false, hints = null, reveal = null,
-    next = null, continueAction = null, evidence, boardRef = null, className = '' } = props;
+    next = null, continueAction = null, evidence, boardRef = null, placement = 'auto', viewKey = null, className = '' } = props;
   const shown = hints ? Math.min(hints.shown, hints.texts.length) : 0;
   const revealed = Boolean(reveal?.revealed);
   const memRef = useRef(null);
@@ -257,7 +280,17 @@ export default function HelpPanel(props) {
   useIsoLayoutEffect(() => { memRef.current = mem; });
   useIsoLayoutEffect(() => { hintHold.current = holdHint; hintWasOpen.current = Boolean(hintOpen); });
   // A new task: nothing pressed carries over (focus there is the screen's: its first input).
-  useIsoLayoutEffect(() => { pressed.current = null; anchored.current = false; hintHold.current = false; hintWasOpen.current = false; }, [taskKey]);
+  // Round 6: on a phone, where the page itself scrolls, a new task opened by «Далі» starts at the
+  // page's top, as a new screen does (the screen's focus may then bring its first input into view).
+  const firstTask = useRef(true);
+  useIsoLayoutEffect(() => {
+    if (!firstTask.current && pressed.current === 'next' && isPhoneNow()) {
+      const page = document.scrollingElement;
+      if (page && page.scrollTop) page.scrollTop = 0;
+    }
+    firstTask.current = false;
+    pressed.current = null; anchored.current = false; hintHold.current = false; hintWasOpen.current = false;
+  }, [taskKey]);
   useEffect(() => {
     if (settled === mem.seq) return undefined;
     const timer = setTimeout(() => setSettled(mem.seq), CLEAR_MS);
@@ -294,7 +327,7 @@ export default function HelpPanel(props) {
   const homeMemo = useRef(null);
   const home = () => {
     const board = boardRef?.current;
-    if (!board) return 'after';
+    if (!board || placement === 'after') return 'after';
     const width = Math.round(board.getBoundingClientRect().width);
     const memo = homeMemo.current;
     if (memo && memo.taskKey === taskKey && memo.layoutKey === layoutKey && memo.width === width) return memo.where;
@@ -320,20 +353,58 @@ export default function HelpPanel(props) {
   // learner is looking at that row). It follows that row while it stays the
   // evidence, and returns home on «Далі» or a new task.
   const wasStale = useRef(stale);
+  const latest = useRef(null);
+  latest.current = { verdict, current };
+  // Round 6 repair: a hint that names a row anchors as a verdict does, at 640 px and wider (under
+  // 640 px its evidence is reachable above the panel). With `placement="after"` and more than one
+  // marked row, nothing anchors: the deck stays whole, the panel at home, the first marked row in view.
+  const anchorable = () => Boolean(latest.current.verdict) || (latest.current.current === 'hint' && !isPhoneNow());
+  const manyMarked = () => placement === 'after' && isPhoneNow() && (boardRef?.current?.querySelectorAll('.is-marked').length ?? 0) > 1;
+  /** Evidence above the board, outside it (a device tab in the form's head): the panel can anchor just before the board. */
+  const aboveBoard = el => {
+    const board = boardRef?.current;
+    return Boolean(el && board && !board.contains(el) && !container?.contains(el) && (el.compareDocumentPosition(board) & 4));
+  };
   useIsoLayoutEffect(() => {
     if (!container) return;
     if (stale && !wasStale.current && verdict && rowOf(evidenceEl())) anchored.current = true;
     wasStale.current = stale;
-    const row = anchored.current && verdict ? rowOf(evidenceEl()) : null;
+    if (anchored.current === 'before') {
+      if (anchorable() && aboveBoard(evidenceEl())) { place('before'); return; }
+      anchored.current = false;
+    }
+    const row = anchored.current && anchorable() && !manyMarked() ? rowOf(evidenceEl()) : null;
     if (!row) anchored.current = false;
     place(row ? { row } : home());
   });
   useEffect(() => () => { container?.parentNode?.removeChild(container); }, []);
 
+  /** Anchoring (the current verdict's, or a hint's at 640 px and wider) and scrolling. */
+  function settleNow() {
+    const behavior = reducedMotion() ? 'auto' : 'smooth';
+    if (container && latest.current.current === 'verdict' && manyMarked()) {
+      place(home());
+      const first = boardRef.current.querySelector('.is-marked');
+      bringIntoView([first], behavior);
+      return;
+    }
+    if (container && anchorable()) {
+      const ev = evidenceEl();
+      const row = rowOf(ev);
+      if (row && !anchored.current) {
+        place(home());
+        if (!fitsTogether([rowRef.current, currentRef.current, row])) { anchored.current = true; place({ row }); }
+      } else if (!row && !anchored.current && aboveBoard(ev)) {
+        // Round 6 repair: evidence above the board (a device tab): the panel comes up to just before the board.
+        place(home());
+        if (!fitsTogether([rowRef.current, currentRef.current, ev])) { anchored.current = 'before'; place('before'); }
+      }
+    }
+    bringPanelIntoView(rowRef.current, currentRef.current, evidenceEl(), behavior, { hint: latest.current.current === 'hint' });
+  }
+
   // ── After an event: focus, then (after `evidence()` has committed its
   // update) anchoring and scrolling ──
-  const latest = useRef(null);
-  latest.current = { verdict };
   useIsoLayoutEffect(() => {
     if (!mem.event || handled.current === mem.seq) return;
     handled.current = mem.seq;
@@ -343,21 +414,21 @@ export default function HelpPanel(props) {
     if (mem.event === 'reveal' && by === 'reveal') focusRef.current?.focus();
     else if (mem.event === 'hint' && by === 'hint' && shown >= total) focusRef.current?.focus();
     else if (by && focusLost()) buttons.current[primary]?.focus();
-    const settle = () => {
-      // Anchoring follows the current verdict and its evidence row (a check after a reveal too).
-      if (container && latest.current.verdict) {
-        const row = rowOf(evidenceEl());
-        if (row && !anchored.current) {
-          place(home());
-          if (!fitsTogether([rowRef.current, currentRef.current, row])) { anchored.current = true; place({ row }); }
-        }
-      }
-      bringIntoView([rowRef.current, currentRef.current, evidenceEl()], reducedMotion() ? 'auto' : 'smooth');
-    };
+    const settle = settleNow;
     if (evidence) {
       evidence();
       (window.requestAnimationFrame ?? (fn => setTimeout(fn, 0)))(settle);
     } else settle();
+  });
+
+  // Round 6 repair: a view change (a device tab) settles as an event does: anchoring, then scrolling.
+  const lastView = useRef(viewKey);
+  useIsoLayoutEffect(() => {
+    if (Object.is(lastView.current, viewKey)) return;
+    lastView.current = viewKey;
+    if (!current) return;
+    anchored.current = false;
+    settleNow();
   });
 
   // ── A current item is long when it is taller than 60% of the viewport or

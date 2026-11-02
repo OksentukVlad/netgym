@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import StoreProvider from './StoreProvider.jsx';
 import Bar from './Bar.jsx';
-import { BarSlotContext } from '../ui/BarSlot.jsx';
+import { BarSlotContext, SheetAreaContext } from '../ui/BarSlot.jsx';
 import { usePref } from '../ui/useStore.js';
 import '../ui/tokens.css';
 
@@ -32,12 +32,15 @@ function StandaloneArea({ section }) {
 
 function WithBar({ section, title }) {
   const [slot, setSlot] = useState(null);
+  const [sheetArea, setSheetArea] = useState(null);
   return (
     <BarSlotContext.Provider value={slot}>
-      <div className="ng-standalone-frame">
-        <Bar title={title} slotRef={setSlot} />
-        <StandaloneArea section={section} />
-      </div>
+      <SheetAreaContext.Provider value={sheetArea}>
+        <div className="ng-standalone-frame">
+          <Bar title={title} slotRef={setSlot} sheetRef={setSheetArea} />
+          <StandaloneArea section={section} />
+        </div>
+      </SheetAreaContext.Provider>
     </BarSlotContext.Provider>
   );
 }

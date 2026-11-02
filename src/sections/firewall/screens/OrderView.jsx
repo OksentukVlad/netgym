@@ -79,7 +79,7 @@ import { hintsForState, initialState, transition } from '../logic/order-state.js
 import { orderExample } from '../logic/examples.js';
 import { useExercise } from '../../../ui/useExercise.js';
 import { usePlace, usePref } from '../../../ui/useStore.js';
-import { BarControls } from '../../../ui/BarSlot.jsx';
+import { BarControls, SheetChoice } from '../../../ui/BarSlot.jsx';
 import Segmented from '../../../ui/components/Segmented.jsx';
 import HelpPanel, { bringIntoView } from '../../../ui/components/HelpPanel.jsx';
 import { useReducedMotion } from '../../../ui/motion.js';
@@ -90,7 +90,9 @@ import Purpose from '../../../ui/components/Purpose.jsx';
 import ActionLine from '../../../ui/components/ActionLine.jsx';
 import WorkedExample from '../../../ui/components/WorkedExample.jsx';
 import CopyBlock from '../../../ui/components/CopyBlock.jsx';
-import TextEquivalent, { TextEquivalentButton } from '../../../ui/components/TextEquivalent.jsx';
+import TextEquivalent, { TextEquivalentButton, lineCount } from '../../../ui/components/TextEquivalent.jsx';
+import DiagramExpand, { ExpandButton, useDiagramExpand, useTextOpen } from '../../../ui/topology/DiagramExpand.jsx';
+import { isPhoneNow } from '../../../ui/phone.js';
 import FirewallDiagram from './FirewallDiagram.jsx';
 import PacketCard from './PacketCard.jsx';
 import { cardLines, natRuleOf } from './walkView.js';
@@ -204,7 +206,9 @@ export default function OrderView({ bank }) {
   const listRef = useRef(null);
   const textButton = useRef(null);
   const freshList = useRef(false);
-  const [textOpen, setTextOpen] = useState(false);
+  // Round 6 (P2): «Текстом» starts open on a phone; the full-screen diagram has a zoom of its own.
+  const [textOpen, setTextOpen] = useTextOpen();
+  const expand = useDiagramExpand({ zoom: ex.view.zoom, onZoom: zoom => ex.setView({ zoom }) });
 
   const rows = useMemo(() => orderRows(task, state.answer.order), [task, state.answer.order]);
   // A reveal sets aside the check before it: no row mark, «Ще ні» or packet
@@ -294,7 +298,11 @@ export default function OrderView({ bank }) {
     if (!walkToggled.current) return;
     walkToggled.current = false;
     const current = root.current?.querySelector('[data-help-current]');
-    if (current) bringIntoView([current], reduced ? 'auto' : 'smooth');
+    // Round 6 repair: on a phone with several rules marked the list stays whole (HelpPanel), so the walk is
+    // shown where it is drawn: on the rows, from the first marked one.
+    const marked = root.current?.querySelectorAll('.ng-fwo-list .is-marked') ?? [];
+    if (isPhoneNow() && marked.length > 1) bringIntoView([marked[0]], reduced ? 'auto' : 'smooth');
+    else if (current) bringIntoView([current], reduced ? 'auto' : 'smooth');
   }, [state.walkOpen]);
   /** A hint, counted by the session (the one counter, which drives the
    * transition); the second checks the list first if it wasn't, opens that
@@ -318,10 +326,10 @@ export default function OrderView({ bank }) {
   /** «Далі →»: a new shuffle of this level; the list's heading takes the focus. */
   function onAnother() {
     freshList.current = true;
-    setTextOpen(false);
+    setTextOpen(isPhoneNow());   // a new list: «Текстом» as it starts (open on a phone)
     setPlace({ seeds: { ...place.seeds, [variant.id]: nextSeed(seed) } });
   }
-  const chooseLevel = id => { setTextOpen(false); setPlace({ variantId: id }); };
+  const chooseLevel = id => { setTextOpen(isPhoneNow()); setPlace({ variantId: id }); };
   function closeText() {
     setTextOpen(false);
     textButton.current?.focus();
@@ -372,10 +380,12 @@ export default function OrderView({ bank }) {
 
   const stage = (
     <section className="ng-fwo-stage" aria-label={ui.diagramLabel}>
-      <FirewallDiagram scene={scene} topology={task.topology} zoom={ex.view.zoom} onZoom={zoom => ex.setView({ zoom })} viewKey={ex.key}
-        covered={textOpen}
-        tools={<TextEquivalentButton buttonRef={textButton} id="ng-fwo-text" label={ui.textButton} open={textOpen} onToggle={() => setTextOpen(o => !o)} />}
-        overlays={<TextEquivalent id="ng-fwo-text" title={orderUi.textTitle} sections={sections} open={textOpen} onClose={closeText} />} />
+      <DiagramExpand expand={expand}>
+      <FirewallDiagram scene={scene} topology={task.topology} zoom={expand.zoom} onZoom={expand.onZoom} viewKey={ex.key}
+        covered={expand.covered(textOpen)}
+        tools={<><TextEquivalentButton buttonRef={textButton} id="ng-fwo-text" label={ui.textButton} open={textOpen} onToggle={() => setTextOpen(o => !o)} count={lineCount(sections)} /><ExpandButton expand={expand} /></>}
+        overlays={<TextEquivalent id="ng-fwo-text" title={orderUi.textTitle} sections={sections} open={expand.covered(textOpen)} onClose={closeText} />} />
+      </DiagramExpand>
     </section>
   );
 
@@ -397,8 +407,8 @@ export default function OrderView({ bank }) {
       <div className="ng-fwo-side">
         <header className="ng-fw-head">
           <h1 className="ng-fw-h1">{ui.heading}</h1>
-          <Segmented label={orderUi.level} value={variant.id} onChange={chooseLevel} className="ng-fw-variants"
-            options={record.variants.map(v => ({ value: v.id, label: <>{v.title}<DoneMark done={earned.has(v.id)} /></> }))} />
+          <SheetChoice stepper label={orderUi.level} value={variant.id} onChange={chooseLevel} className="ng-fw-variants"
+            options={record.variants.map(v => ({ value: v.id, label: <>{v.title}<DoneMark done={earned.has(v.id)} /></>, step: v.title }))} />
         </header>
         <div className="ng-fw-intro ng-fwo-intro">
           <p className="ng-fwo-task">{sentence}</p>
@@ -432,6 +442,7 @@ export default function OrderView({ bank }) {
         <HelpPanel
           taskKey={task.instanceKey}
           boardRef={listRef}
+          placement="after"
           check={{ label: orderUi.check, onCheck }}
           verdict={panelVerdict}
           stale={stale}
