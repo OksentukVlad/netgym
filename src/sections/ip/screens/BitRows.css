@@ -1,0 +1,117 @@
+/* Read-only bit rows (BitRows.jsx). One of three drawings shows, by the
+   container's width: four octets per line, two, or one. */
+.ng-bitrows {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ng-bitrows-drawings {
+  min-width: 0;
+}
+
+.ng-bitrows-per {
+  display: none;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.ng-bitrows-per-1 {
+  display: flex;
+}
+
+@container (min-width: 560px) {
+  .ng-bitrows-per-1 { display: none; }
+  .ng-bitrows-per-2 { display: flex; }
+}
+
+@container (min-width: 1040px) {
+  .ng-bitrows-per-2 { display: none; }
+  .ng-bitrows-per-4 { display: flex; }
+}
+
+.ng-bitrows-table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.ng-bitrows-table th,
+.ng-bitrows-table td {
+  padding: 0;
+  text-align: center;
+}
+
+.ng-bitrows-weight {
+  width: 25px;
+  min-width: 25px;
+  padding-bottom: 2px;
+  color: var(--ng-muted);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-caption);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -1px;
+  white-space: nowrap;
+}
+
+/* «Октет 3» / «Октети 1–2» over the row names of a band. */
+.ng-bitrows-band {
+  padding-right: 8px !important;
+  color: var(--ng-muted);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-caption);
+  font-weight: 400;
+  text-align: left !important;
+  white-space: nowrap;
+}
+
+.ng-bitrows-label {
+  padding-right: 8px !important;
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+  text-align: left !important;
+  white-space: nowrap;
+}
+
+.ng-bitrows-bit {
+  width: 25px;
+  height: 28px;
+  color: var(--ng-muted);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+}
+
+.ng-bitrows-bit.is-one {
+  color: var(--ng-text);
+  font-weight: 700;
+}
+
+/* A gap between octets. */
+.ng-bitrows-table .is-octet {
+  padding-left: 10px;
+}
+
+/* The prefix line: network bits on its left, device bits on its right. */
+.ng-bitrows-table .is-line {
+  box-shadow: inset 3px 0 0 var(--ng-cyan);
+}
+
+.ng-bitrows-table .is-octet.is-line {
+  padding-left: 10px;
+  box-shadow: inset 3px 0 0 var(--ng-cyan);
+}
+
+.ng-bitrows-table .is-line-after {
+  box-shadow: inset -3px 0 0 var(--ng-cyan);
+}
+
+.ng-bitrows-caption {
+  margin: 0;
+  color: var(--ng-muted);
+  font-size: var(--ng-font-small);
+}

@@ -1,0 +1,35 @@
+{
+  "home-basic": [
+    "/ip firewall filter add chain=input action=accept connection-state=established,related,untracked",
+    "/ip firewall filter add chain=input action=drop connection-state=invalid",
+    "/ip firewall filter add chain=input action=accept protocol=icmp",
+    "/ip firewall filter add chain=input action=accept in-interface-list=LAN",
+    "/ip firewall filter add chain=input action=drop",
+    "/ip firewall filter add chain=forward action=fasttrack-connection connection-state=established,related",
+    "/ip firewall filter add chain=forward action=accept connection-state=established,related,untracked",
+    "/ip firewall filter add chain=forward action=drop connection-state=invalid",
+    "/ip firewall filter add chain=forward action=drop connection-state=new connection-nat-state=!dstnat in-interface-list=WAN"
+  ],
+  "home-disabled": [
+    "/ip firewall filter add chain=input action=accept connection-state=established,related,untracked",
+    "/ip firewall filter add chain=input action=drop connection-state=invalid",
+    "/ip firewall filter add chain=input action=accept protocol=icmp",
+    "/ip firewall filter add chain=input action=accept in-interface-list=LAN disabled=yes",
+    "/ip firewall filter add chain=input action=drop",
+    "/ip firewall filter add chain=forward action=fasttrack-connection connection-state=established,related",
+    "/ip firewall filter add chain=forward action=accept connection-state=established,related,untracked",
+    "/ip firewall filter add chain=forward action=drop connection-state=invalid",
+    "/ip firewall filter add chain=forward action=drop connection-state=new connection-nat-state=!dstnat in-interface-list=WAN"
+  ],
+  "home-drop-above": [
+    "/ip firewall filter add chain=input action=accept connection-state=established,related,untracked",
+    "/ip firewall filter add chain=input action=drop connection-state=invalid",
+    "/ip firewall filter add chain=input action=accept protocol=icmp",
+    "/ip firewall filter add chain=input action=drop",
+    "/ip firewall filter add chain=input action=accept in-interface-list=LAN",
+    "/ip firewall filter add chain=forward action=fasttrack-connection connection-state=established,related",
+    "/ip firewall filter add chain=forward action=accept connection-state=established,related,untracked",
+    "/ip firewall filter add chain=forward action=drop connection-state=invalid",
+    "/ip firewall filter add chain=forward action=drop connection-state=new connection-nat-state=!dstnat in-interface-list=WAN"
+  ]
+}

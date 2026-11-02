@@ -1,0 +1,1495 @@
+/* The routing screen (round 2 step 7): plain classes on src/ui/tokens.css,
+ * the round 1 Cisco trainer's look at readable sizes.
+ *
+ * Type: captions 14 px mono (1.5 px spacing); prose, notes, hints and
+ * feedback 18 px sans; inputs 18 px mono; field labels 14 px mono; buttons,
+ * score, interface lines and command blocks 16 px mono.
+ *
+ * Layout (RoutingScreen.jsx sets data-mode from the screen's width):
+ *   wide   ≥ 1440  task list | description, legend, diagram | work panel
+ *   desk   960–1439  drawer; task bar; description, legend, diagram | work panel
+ *   narrow < 960   one column, diagram first
+ * Round 4 (spec A2): the page is the only scroller. In two columns the
+ * diagram's column sticks, as tall as the screen below the columns' top
+ * (--ng-rt-stage-h, layoutMode.js useStageHeight); the work panel grows
+ * with its content and scrolls with the page. */
+
+/* ── Colour pickers: a router's or a level's shade from the tokens ───── */
+
+.ng-rc-0 { --ng-rc: var(--ng-router-0); }
+.ng-rc-1 { --ng-rc: var(--ng-router-1); }
+.ng-rc-2 { --ng-rc: var(--ng-router-2); }
+.ng-rc-3 { --ng-rc: var(--ng-router-3); }
+.ng-rc-4 { --ng-rc: var(--ng-router-4); }
+.ng-rc-5 { --ng-rc: var(--ng-router-5); }
+.ng-rc-6 { --ng-rc: var(--ng-router-6); }
+.ng-rc-7 { --ng-rc: var(--ng-router-7); }
+
+.ng-lv-0 { --ng-lv: var(--ng-cyan); }
+.ng-lv-1 { --ng-lv: var(--ng-level-1); }
+.ng-lv-2 { --ng-lv: var(--ng-level-2); }
+.ng-lv-3 { --ng-lv: var(--ng-level-3); }
+.ng-lv-4 { --ng-lv: var(--ng-level-4); }
+.ng-lv-5 { --ng-lv: var(--ng-level-5); }
+
+/* ── The screen ──────────────────────────────────────────── */
+
+.ng-rt {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  background: var(--ng-bg);
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-body);
+  line-height: 1.35;
+  text-align: left;
+}
+
+.ng-rt *,
+.ng-rt *::before,
+.ng-rt *::after {
+  box-sizing: border-box;
+}
+
+/* Round 4: the screen grows with its content; the page scrolls. */
+.ng-rt[data-mode="desk"],
+.ng-rt[data-mode="wide"] {
+  min-height: 100%;
+}
+
+.ng-rt-layout {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.ng-rt[data-mode="wide"] .ng-rt-layout {
+  display: grid;
+  grid-template-columns: 330px minmax(0, 1fr);
+  align-items: start;
+}
+
+.ng-rt-main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 8px 12px 10px;
+}
+
+.ng-rt[data-mode="desk"] .ng-rt-main,
+.ng-rt[data-mode="wide"] .ng-rt-main {
+  min-height: 0;
+}
+
+/* ── Shared parts ────────────────────────────────────────── */
+
+.ng-rt-caption,
+.ng-rt-h1 {
+  margin: 0;
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  font-weight: 400;
+  letter-spacing: 1.5px;
+  line-height: 1.3;
+  color: var(--ng-muted);
+}
+
+.ng-rt-note {
+  margin: 0;
+  font-size: var(--ng-font-body);
+  line-height: 1.35;
+  color: var(--ng-muted);
+}
+
+.ng-rt-btn,
+.ng-rt-icon,
+.ng-rt-router,
+.ng-rt-level-filter,
+.ng-rt-task {
+  min-height: var(--ng-target);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  background: var(--ng-input-bg);
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+  line-height: 1.25;
+  cursor: pointer;
+}
+
+.ng-rt-btn {
+  padding: 0 14px;
+}
+
+.ng-rt-icon {
+  min-width: var(--ng-target);
+  padding: 0 8px;
+  font-size: 18px;
+}
+
+.ng-rt-btn:hover,
+.ng-rt-icon:hover:not(:disabled) {
+  background: var(--ng-blue-bg);
+  border-color: var(--ng-blue);
+}
+
+.ng-rt-icon:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.ng-rt button:focus-visible,
+.ng-rt input:focus-visible,
+.ng-rt [tabindex]:focus-visible,
+.ng-rt-controls button:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}
+
+.ng-rt-pre {
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  overflow-x: auto;
+  background: var(--ng-code-bg);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  color: var(--ng-code);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+/* ── Bar controls (in the top bar's slot, or in place without a bar) ── */
+
+.ng-rt-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.ng-rt-controls .ng-segmented-options {
+  padding: 0;
+}
+
+
+.ng-rt-controls .ng-rt-icon {
+  min-height: var(--ng-target);
+  min-width: var(--ng-target);
+  padding: 0 8px;
+  background: var(--ng-input-bg);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  color: var(--ng-text);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.ng-rt-controls .ng-rt-icon:hover {
+  background: var(--ng-blue-bg);
+  border-color: var(--ng-blue);
+}
+
+.ng-rt-controls button:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}
+
+/* ── Task list: a column (wide) or a drawer ───────────────── */
+
+.ng-rt-tasks {
+  /* Positioned: its screen-reader-only text scrolls with the list instead of
+     stretching the screen below it. */
+  position: relative;
+  display: none;
+  overflow-y: auto;
+  padding: 12px;
+  background: var(--ng-side);
+  border-right: 1px solid var(--ng-stroke);
+}
+
+.ng-rt[data-mode="wide"] .ng-rt-tasks {
+  display: block;
+  /* A task list in its own column may scroll (spec A2); it sticks with the page. */
+  position: sticky;
+  top: 0;
+  max-height: calc(100vh - 52px);
+  min-height: 0;
+}
+
+.ng-rt[data-mode="wide"] .ng-rt-tasks-close,
+.ng-rt[data-mode="wide"] .ng-rt-drawer-button {
+  display: none;
+}
+
+.ng-rt:not([data-mode="wide"]) .ng-rt-tasks.is-open {
+  display: block;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 40;
+  width: min(380px, 90vw);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+}
+
+.ng-rt-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.ng-rt-tasks-close {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.ng-rt-tasks .ng-rt-caption {
+  margin-bottom: 6px;
+}
+
+.ng-rt-levels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.ng-rt-level-filter {
+  flex: 1 1 0;
+  min-width: var(--ng-target);
+  padding: 0 4px;
+  font-size: var(--ng-font-caption);
+  border-color: color-mix(in srgb, var(--ng-lv) 50%, var(--ng-stroke));
+  color: var(--ng-muted);
+}
+
+.ng-rt-level-filter[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--ng-lv) var(--ng-tint), var(--ng-input-bg));
+  border-color: var(--ng-lv);
+  color: var(--ng-lv);
+}
+
+.ng-rt-tasklist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The level is the left edge's colour (and screen reader text). */
+.ng-rt-task {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  width: 100%;
+  padding: 7px 10px;
+  background: transparent;
+  border-left: 5px solid var(--ng-lv);
+  color: var(--ng-muted);
+  font-weight: 400;
+  text-align: left;
+}
+
+.ng-rt-task:hover {
+  background: var(--ng-blue-bg);
+}
+
+.ng-rt-task[aria-current="true"] {
+  background: var(--ng-blue-bg);
+  border-color: var(--ng-blue);
+  border-left-color: var(--ng-lv);
+  color: var(--ng-text);
+}
+
+.ng-rt-task-title {
+  flex: 1;
+}
+
+
+/* ── Task bar and description ────────────────────────────── */
+
+.ng-rt-taskbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.ng-rt-h1 {
+  text-transform: uppercase;
+}
+
+.ng-rt-level {
+  padding: 1px 8px;
+  border: 1px solid var(--ng-lv);
+  border-radius: 6px;
+  color: var(--ng-lv);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+}
+
+.ng-rt-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--ng-title);
+}
+
+.ng-rt-step {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.ng-rt-desc {
+  margin: 0;
+  max-width: 120ch;
+  font-size: var(--ng-font-body);
+  line-height: 1.35;
+  color: var(--ng-text); /* the instruction, not a note */
+}
+
+/* ── Step 9: the task's code, the address row, «Код задачі» ── */
+
+/* The code in the heading: «#3b · A3b-0042 — …». */
+.ng-rt-code {
+  font-family: var(--ng-mono);
+  font-size: 18px;
+  color: var(--ng-cyan);
+  white-space: nowrap;
+}
+
+/* Under the task bar: the variant switch (tasks 3, 8), then «Скопіювати
+   код», «Інші адреси» and «Основні адреси», so the first two never move;
+   then the subtitle and the previous code. */
+.ng-rt-addr {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+.ng-rt-addr-note {
+  margin: 0 0 0 4px;
+  font-size: var(--ng-font-small);
+  line-height: 1.35;
+  color: var(--ng-muted);
+}
+
+.ng-rt-addr-sub {
+  font-style: italic;
+}
+.ng-rt-addr-failed {
+  margin: 0;
+  flex-basis: 100%;
+  font-size: var(--ng-font-small);
+  color: var(--ng-amber);
+}
+
+.ng-rt-addr-failed:empty {
+  display: none;
+}
+
+/* «Код задачі» at the top of the task list. */
+.ng-rt-codefield {
+  margin-bottom: 12px;
+}
+
+.ng-rt-codefield-label {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.ng-rt-codefield-row {
+  display: flex;
+  gap: 6px;
+}
+
+.ng-rt-codefield-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: var(--ng-target);
+  padding: 0 10px;
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  background: var(--ng-input-bg);
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-body);
+}
+
+.ng-rt-codefield-input::placeholder {
+  color: var(--ng-muted);
+  opacity: 1;
+}
+
+.ng-rt-codefield-input[aria-invalid="true"] {
+  border-color: var(--ng-amber);
+}
+
+.ng-rt-codefield-open[aria-disabled="true"] {
+  cursor: progress;
+  color: var(--ng-muted);
+}
+
+.ng-rt-codefield-error {
+  margin: 6px 0 0;
+  font-size: var(--ng-font-small);
+  line-height: 1.35;
+  color: var(--ng-amber);
+}
+
+.ng-rt-codefield-error:empty {
+  display: none;
+}
+
+/* ── Columns: diagram | work panel ───────────────────────── */
+
+.ng-rt-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+
+.ng-rt[data-mode="desk"] .ng-rt-cols,
+.ng-rt[data-mode="wide"] .ng-rt-cols {
+  /* Repair v1: at 1000 px at least half (as «Знайди несправність»), so a
+     route's heading and its next-hop label stay on one line. */
+  grid-template-columns: minmax(0, 1fr) minmax(min(488px, 50%), min(540px, 43%));
+  align-items: start;
+  margin-top: 2px;
+}
+
+.ng-rt-stage,
+.ng-rt-work {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 6px;
+  background: var(--ng-panel);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius-l);
+}
+
+/* Round 5: the task's column (RoutingScreen): the description, the
+   legend, then the diagram, which takes the rest of its height. */
+.ng-rt-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ng-rt[data-mode="desk"] .ng-rt-left > .ng-rt-stage,
+.ng-rt[data-mode="wide"] .ng-rt-left > .ng-rt-stage {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+/* Two columns: the diagram's column sticks while the work panel scrolls
+   with the page; it is as tall as the screen below the columns' top. */
+.ng-rt[data-mode="desk"] .ng-rt-left,
+.ng-rt[data-mode="wide"] .ng-rt-left {
+  position: sticky;
+  top: 6px;
+  height: var(--ng-rt-stage-h, calc(100vh - 220px));
+  min-height: 0;
+}
+
+/* The diagram's caption, and the path's legend beside it while one is drawn. */
+.ng-rt-stage-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px 10px;
+  min-height: 18px;  /* Never squeezed by the diagram (the legend Aside stays whole). */
+  flex-shrink: 0;
+}
+
+.ng-rt-stage-head > .ng-rt-caption {
+  letter-spacing: 1px;
+}
+.ng-rt-rules-panel .ng-overlay-body {
+  font-size: var(--ng-font-body);
+  line-height: 1.4;
+}
+
+.ng-rt-rules-syntax {
+  margin: 0;
+}
+
+.ng-rt-rules-list {
+  margin: 8px 0 0;
+  padding-left: 1.4em;
+}
+
+.ng-rt-rules-list li + li {
+  margin-top: 6px;
+}
+
+.ng-rt-rules-panel code {
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+}
+
+/* ── Diagram ─────────────────────────────────────────────── */
+
+.ng-dg {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+}
+
+.ng-rt[data-mode="desk"] .ng-dg,
+.ng-rt[data-mode="wide"] .ng-dg {
+  /* The diagram takes the rest of the column, in desk mode as in wide. */
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+/* The diagram frame: a tool row («Правила», zoom), then the drawing, with
+   the overlays laid over the drawing (TopologyMap.jsx). */
+.ng-dg-box {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--ng-svg-bg);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+}
+
+.ng-rt[data-mode="desk"] .ng-dg-box,
+.ng-rt[data-mode="wide"] .ng-dg-box {
+  flex: 1 1 0;
+}
+
+.ng-dg-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  box-sizing: border-box;
+  /* Round 4 A3: the zoom bar's row height is reserved, so its appearance moves nothing. */
+  min-height: calc(var(--ng-target) + 6px);
+  padding: 6px 6px 0;
+}
+
+.ng-dg-zoom {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.ng-rt .ng-dg-zoom-step {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.ng-rt .ng-dg-zoom [aria-disabled="true"] {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.ng-rt .ng-dg-zoom [aria-disabled="true"]:hover {
+  background: var(--ng-input-bg);
+  border-color: var(--ng-stroke);
+}
+
+/* The drawing's area: the overlays fill it, so it keeps its size. */
+.ng-dg-view {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* The drawing keeps a floor that shows a router with its LANs (fix round
+   O3): under it are only the router buttons, the check bar and the strip;
+   if even those don't fit, the column scrolls. */
+.ng-rt[data-mode="desk"] .ng-dg-view,
+.ng-rt[data-mode="wide"] .ng-dg-view {
+  flex: 1 1 0;
+  min-height: 220px;
+}
+
+/* One column: the drawing may be short, so an open overlay gets room. */
+.ng-rt[data-mode="narrow"] .ng-dg-view.has-overlay {
+  min-height: min(70vh, 560px);
+}
+
+.ng-dg-frame {
+  display: flex;
+  padding: 8px; /* TopologyMap FRAME_PAD */
+  overflow: hidden;
+  border-radius: var(--ng-radius);
+}
+
+/* The frame takes the column's free height (desk, wide). */
+.ng-dg-frame.is-fit {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+/* Under an open overlay: out of sight and out of the Tab order. */
+.ng-dg-frame.is-covered {
+  visibility: hidden;
+}
+
+/* The frame takes focus for «+» and «−»: its ring sits inside its edge. */
+.ng-rt .ng-dg-frame:focus-visible {
+  outline-offset: -3px;
+}
+
+.ng-dg-frame.is-pan {
+  overflow: auto;
+  cursor: grab;
+}
+
+.ng-dg-frame.is-pan:not(.is-fit) {
+  max-height: 70vh;
+}
+
+.ng-dg-frame.is-pan:active {
+  cursor: grabbing;
+}
+
+/* Centred while it fits; auto margins drop to 0 once it overflows, so a
+   pannable diagram scrolls from its top left. */
+.ng-dg-svg {
+  display: block;
+  flex: none;
+  margin: auto;
+}
+
+.ng-dg-svg text {
+  font-family: var(--ng-mono);
+}
+
+.ng-dg-svg .ng-dg-sans,
+.ng-dg-svg .ng-dg-name {
+  font-family: var(--ng-sans);
+}
+
+.ng-dg-arrow { fill: var(--ng-muted); }
+.ng-dg-link { stroke: var(--ng-link); }
+.ng-dg-net-box { fill: var(--ng-net-fill); stroke: color-mix(in srgb, var(--ng-blue) 47%, transparent); }
+.ng-dg-net { fill: var(--ng-blue); }
+.ng-dg-port-name { fill: var(--ng-rc); }
+.ng-dg-octet { fill: var(--ng-muted); }
+
+.ng-dg-ep { --ng-ep: var(--ng-rc); }
+.ng-dg-ep.ng-dg-internet { --ng-ep: var(--ng-cyan); }
+.ng-dg-ep.ng-dg-server { --ng-ep: var(--ng-amber); }
+.ng-dg-ep-line { stroke: var(--ng-ep); }
+.ng-dg-port-bg { fill: var(--ng-svg-bg); }
+.ng-dg-ep .ng-dg-port-name { fill: var(--ng-ep); }
+.ng-dg-ep-box { fill: var(--ng-net-fill); stroke: var(--ng-ep); }
+.ng-dg-ep-label { fill: var(--ng-ep); }
+.ng-dg-ep-ip { fill: var(--ng-text); }
+.ng-dg-ep-prefix { fill: var(--ng-muted); }
+
+.ng-dg-router { cursor: pointer; }
+.ng-dg-ring { fill: none; stroke: var(--ng-rc); }
+.ng-dg-circle { fill: var(--ng-surf); stroke: color-mix(in srgb, var(--ng-rc) var(--ng-edge), var(--ng-surf)); }
+.ng-dg-router.is-active .ng-dg-circle { fill: color-mix(in srgb, var(--ng-rc) var(--ng-tint-strong), var(--ng-svg-bg)); stroke: var(--ng-rc); }
+.ng-dg-name { fill: var(--ng-rc); }
+
+/* Router buttons, then «Текстом» (its panel is an overlay on the diagram). */
+.ng-rt-routers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ng-rt-router {
+  flex: 1 1 auto;
+  min-width: 72px;
+  padding: 0 10px;
+  color: var(--ng-muted);
+}
+
+.ng-rt-router[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--ng-rc) var(--ng-tint), var(--ng-input-bg));
+  border-color: var(--ng-rc);
+  color: var(--ng-rc);
+}
+
+.ng-rt-routers .ng-te-button {
+  flex: none;
+}
+
+/* ── Work panel ──────────────────────────────────────────── */
+
+.ng-rt-empty {
+  margin: 0;
+  padding: 20px 8px;
+  text-align: center;
+  color: var(--ng-muted);
+}
+
+.ng-rt-rc-text {
+  color: var(--ng-rc);
+}
+
+.ng-rt-card,
+.ng-rt-reveal {
+  padding: 4px 10px 6px;
+  background: var(--ng-surf);
+  border: 1px solid color-mix(in srgb, var(--ng-rc) 45%, var(--ng-stroke));
+  border-radius: 10px;
+}
+
+.ng-rt-ifaces {
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  line-height: 1.4;
+}
+
+.ng-rt-if-name {
+  color: var(--ng-rc);
+  font-weight: 700;
+}
+
+.ng-rt-if-note {
+  color: var(--ng-muted);
+}
+
+.ng-rt-if-ip {
+  color: var(--ng-text);
+}
+
+.ng-rt-dhcp {
+  margin: 2px 0 4px;
+  padding: 2px 0 2px 10px;
+  border-left: 3px solid var(--ng-cyan);
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-small);
+}
+
+.ng-rt-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ng-rt-rows-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.ng-rt-rowlist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ng-rt-row {
+  padding: 6px;
+  background: var(--ng-surf);
+  border: 1px solid var(--ng-stroke);
+  border-radius: 10px;
+}
+
+.ng-rt-row.is-ok {
+  background: var(--ng-green-bg);
+  border-color: var(--ng-green);
+}
+
+.ng-rt-row.is-wrong {
+  background: var(--ng-red-bg);
+  border-color: var(--ng-red);
+}
+
+.ng-rt-row-head {
+  margin: 0 0 4px;
+  font-size: var(--ng-font-body);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--ng-text);
+}
+
+.ng-rt-row-n {
+  color: var(--ng-muted);
+}
+
+.ng-rt-dest {
+  color: var(--ng-cyan);
+}
+
+.ng-rt-role {
+  color: var(--ng-purple);
+}
+
+/* Two columns, so each 18 px field is at least 180 px wide (in 420 px).
+   Cisco: network, mask / next hop, distance. MikroTik: dst-address /
+   gateway, distance (a gateway without distance takes the whole line). */
+.ng-rt-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 8px;
+}
+
+.ng-rt-fields-routeros .ng-rt-f-dst,
+.ng-rt-fields-routeros:not(.has-dist) .ng-rt-f-gw,
+.ng-rt-fields-cisco:not(.has-dist) .ng-rt-f-gw {
+  grid-column: 1 / -1;
+}
+
+.ng-rt-field {
+  min-width: 0;
+}
+
+.ng-rt-field label {
+  display: block;
+  margin-bottom: 1px;
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  letter-spacing: 1px;
+  line-height: 1.25;
+  color: var(--ng-muted);
+}
+
+.ng-rt-field label.is-distance {
+  color: var(--ng-purple);
+}
+
+.ng-rt-input {
+  display: block;
+  width: 100%;
+  height: var(--ng-target);
+  padding: 0 10px;
+  background: var(--ng-input-bg);
+  border: 1px solid var(--ng-line);
+  border-radius: 6px;
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-body);
+}
+
+.ng-rt-input::placeholder {
+  color: var(--ng-muted);
+  opacity: 1;
+}
+
+.ng-rt-input.is-distance {
+  border-color: color-mix(in srgb, var(--ng-purple) 55%, var(--ng-stroke));
+}
+
+.ng-rt-input.is-invalid {
+  border: 2px solid var(--ng-red);
+}
+.ng-rt .ng-rt-check {
+  min-width: 140px;
+  background: var(--ng-button-bg);
+  border-color: var(--ng-blue);
+  color: var(--ng-button-text);
+}
+
+.ng-rt-feedback {
+  margin: 6px 0 0;
+  font-size: var(--ng-font-body);
+  line-height: 1.3;
+  white-space: pre-line;
+}
+
+.ng-rt-feedback.is-wrong {
+  color: var(--ng-red);
+}
+
+.ng-rt-feedback.is-ok {
+  color: var(--ng-green);
+}
+
+.ng-rt-feedback code {
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  color: inherit;
+}
+.ng-rt-copy {
+  width: 100%;
+  margin-top: 6px;
+  background: var(--ng-button-bg);
+  border-color: var(--ng-blue);
+  color: var(--ng-button-text);
+}
+
+/* ── Step 6: the mode switch ─────────────────────────────── */
+
+.ng-rt-modes .ng-segmented-options {
+  padding: 0;
+}
+
+/* ── Step 6: free rows, «Інші маршрути», form marks ──────── */
+
+.ng-rt-free-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.ng-rt-free-head .ng-rt-row-head {
+  margin: 0;
+}
+
+.ng-rt .ng-rt-delete {
+  color: var(--ng-muted);
+}
+
+.ng-rt .ng-rt-delete:hover {
+  background: var(--ng-red-bg);
+  border-color: var(--ng-red);
+  color: var(--ng-red);
+}
+
+.ng-rt-add {
+  align-self: flex-start;
+  margin-top: 2px;
+  background: var(--ng-button-bg);
+  border-color: var(--ng-blue);
+  color: var(--ng-button-text);
+}
+
+.ng-rt-extras {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.ng-rt-row.is-marked {
+  border-color: var(--ng-amber);
+}
+
+/* What the network check stopped on, until the row's text changes. */
+/* Polish: the other syntax holds text for this row that couldn't be converted. */
+.ng-rt-convert-note {
+  margin: 6px 0 0;
+  padding: 2px 10px;
+  border-left: 3px solid var(--ng-line);
+  font-size: var(--ng-font-small);
+}
+
+.ng-rt-form-mark {
+  margin: 6px 0 0;
+  padding: 4px 10px;
+  background: var(--ng-amber-bg);
+  border-left: 3px solid var(--ng-amber);
+  border-radius: 4px;
+  color: var(--ng-text);
+  font-size: var(--ng-font-body);
+  line-height: 1.35;
+}
+/* The diagram never gets smaller than its frame's floor plus its tool row
+   and router buttons (desk, wide): the column scrolls instead, and the
+   drawing never spills out of its frame over the buttons. */
+.ng-rt[data-mode="desk"] .ng-rt-stage > .ng-dg,
+.ng-rt[data-mode="wide"] .ng-rt-stage > .ng-dg,
+.ng-rt[data-mode="desk"] .ng-dg-box,
+.ng-rt[data-mode="wide"] .ng-dg-box {
+  min-height: auto;
+}
+.ng-rt-success {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 6px 8px;
+}
+
+.ng-rt-advice,
+.ng-rt-demo {
+  flex: 1 1 100%;
+}
+
+.ng-rt-advice {
+  margin: 0;
+  padding-left: 1.2em;
+  color: var(--ng-text);
+  font-size: var(--ng-font-small);
+  line-height: 1.4;
+}
+
+.ng-rt-demo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.ng-rt-demo-text {
+  flex: 1 1 260px;
+  margin: 0;
+  color: var(--ng-text);
+  font-size: var(--ng-font-small);
+  line-height: 1.4;
+}
+
+.ng-rt-other {
+  flex: 1 1 auto;
+}
+
+.ng-rt-other-toggle[aria-expanded="true"] {
+  background: var(--ng-blue-bg);
+  border-color: var(--ng-blue);
+}
+
+.ng-rt-other-body {
+  margin-top: 6px;
+}
+
+.ng-rt-other-body .ng-rt-note {
+  margin-top: 6px;
+  color: var(--ng-text);
+}
+
+.ng-rt-other-router + .ng-rt-other-router {
+  margin-top: 6px;
+}
+
+.ng-rt-other-router .ng-rt-pre {
+  margin-top: 2px;
+}
+/* ── Step 6: «Усі перевірки» (an overlay on the diagram) ──── */
+
+.ng-rt-checks-panel .ng-overlay-body {
+  font-size: var(--ng-font-small);
+  line-height: 1.35;
+}
+
+.ng-rt-checks-group + .ng-rt-checks-group {
+  margin-top: 10px;
+}
+
+.ng-rt-checks-heading {
+  margin: 0 0 4px;
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+  color: var(--ng-muted);
+}
+
+.ng-rt-checks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ng-rt-checkline-body {
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 12px;
+  width: 100%;
+  min-height: var(--ng-target);
+  margin: 0;
+  padding: 6px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--ng-radius);
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-small);
+  line-height: 1.35;
+  text-align: left;
+}
+
+button.ng-rt-checkline-body {
+  cursor: pointer;
+  border-color: var(--ng-stroke);
+  background: var(--ng-input-bg);
+}
+
+button.ng-rt-checkline-body:hover,
+.ng-rt-checkline.is-shown button.ng-rt-checkline-body {
+  background: var(--ng-blue-bg);
+  border-color: var(--ng-blue);
+}
+
+.ng-rt-checkline-label {
+  font-family: var(--ng-mono);
+  font-weight: 700;
+}
+
+/* The short state («✓», «✗ зупинився на R2»), after the label. */
+.ng-rt-checkline-state {
+  font-family: var(--ng-mono);
+  font-weight: 700;
+  color: var(--ng-muted);
+}
+
+.ng-rt-checkline.is-pass .ng-rt-checkline-state { color: var(--ng-green); }
+.ng-rt-checkline.is-fail .ng-rt-checkline-state { color: var(--ng-amber); }
+.ng-rt-checkline.is-advice .ng-rt-checkline-state { color: var(--ng-purple); }
+
+/* The picked check's sentence, on its own line. */
+.ng-rt-checkline-text {
+  flex: 1 1 100%;
+  color: var(--ng-text);
+}
+
+/* ── Step 6: the packet path on the diagram (PathLayer.jsx) ─ */
+
+.ng-path-layer {
+  pointer-events: none;
+}
+
+.ng-path-casing { stroke: var(--ng-svg-bg); fill: none; }
+.ng-path-line.is-request .ng-path-stroke { stroke: var(--ng-path); fill: none; }
+.ng-path-line.is-reply .ng-path-stroke { stroke: var(--ng-path-reply); fill: none; }
+.ng-path-arrow.is-request { fill: var(--ng-path); }
+.ng-path-arrow.is-reply { fill: var(--ng-path-reply); }
+.ng-path-hop-dot { fill: var(--ng-path); stroke: var(--ng-svg-bg); stroke-width: 0.5; }
+.ng-path-hop-n { fill: var(--ng-svg-bg); font-family: var(--ng-sans); }
+.ng-path-loop-label { fill: var(--ng-amber); stroke: var(--ng-svg-bg); stroke-width: 0.6; paint-order: stroke; font-family: var(--ng-sans); }
+.ng-path-stop-ring { stroke: var(--ng-amber); }
+.ng-path-stop.is-expected .ng-path-stop-ring { stroke: var(--ng-path-down); }
+.ng-path-mark-dot { stroke: var(--ng-svg-bg); stroke-width: 0.5; }
+.ng-path-mark.is-ok .ng-path-mark-dot { fill: var(--ng-green); }
+.ng-path-mark.is-stop .ng-path-mark-dot { fill: var(--ng-amber); }
+.ng-path-mark-text { fill: var(--ng-svg-bg); font-family: var(--ng-sans); }
+.ng-path-down-casing { stroke: var(--ng-svg-bg); }
+.ng-path-down-line { stroke: var(--ng-path-down); }
+.ng-path-down-label { fill: var(--ng-path-down); stroke: var(--ng-svg-bg); stroke-width: 0.7; paint-order: stroke; font-family: var(--ng-sans); }
+.ng-path-envelope-box { fill: var(--ng-svg-bg); stroke: var(--ng-path); }
+.ng-path-envelope-flap { stroke: var(--ng-path); }
+
+/* The move under way fades in behind the envelope (0.45 s, PathLayer STEP_MS). */
+.ng-path-line.is-entering {
+  animation: ng-path-enter 0.45s linear both;
+}
+
+@keyframes ng-path-enter {
+  from { opacity: 0.15; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ng-path-line.is-entering { animation: none; }
+}
+
+/* ── Polish: the success lap (LapLayer.jsx) ─────────────────
+   The lines keep the path's colours; they fade while an ending plays.
+   Each box reached settles a green outline and ✓ in about 0.3 s. */
+.ng-lap-lines { transition: opacity 0.4s ease; }
+.ng-lap-lines.is-faded { opacity: 0.3; }
+.ng-lap-outline { stroke: var(--ng-green); animation: ng-lap-settle 0.3s ease-out both; }
+.ng-lap-mark { animation: ng-lap-mark 0.3s ease-out both; }
+
+@keyframes ng-lap-settle {
+  from { opacity: 0; stroke-width: 2.6; }
+  to { opacity: 1; }
+}
+
+@keyframes ng-lap-mark {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ng-lap-lines { transition: none; }
+  .ng-lap-outline,
+  .ng-lap-mark { animation: none; }
+}
+
+/* «суцільна — запит, пунктир — відповідь», on the diagram caption's line
+   while a path is drawn (on the drawing it would cover boxes). */
+.ng-path-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 12px;
+  margin: 0;
+  padding: 0 6px;
+  background: var(--ng-svg-bg);
+  border-radius: 4px;
+  color: var(--ng-text);
+  font-size: var(--ng-font-caption);
+  line-height: 1.3;
+}
+
+.ng-path-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ng-path-legend-line.is-request { stroke: var(--ng-path); }
+.ng-path-legend-line.is-reply { stroke: var(--ng-path-reply); }
+
+/* ── OPT-1 UI: discard input, tips after a solve, ★, the known table ──
+   MikroTik's «blackhole (відкидати)»: its label is the 44 px target; while
+   it is ticked the gateway is empty and disabled («—»). */
+.ng-rt-f-blackhole {
+  grid-column: 1 / -1;
+}
+
+.ng-rt-field .ng-rt-check-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--ng-target);
+  margin: 0;
+  padding: 0 8px 0 2px;
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  letter-spacing: 0;
+  cursor: pointer;
+}
+
+.ng-rt-checkbox {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--ng-cyan);
+  cursor: pointer;
+}
+
+.ng-rt-input:disabled {
+  background: var(--ng-surf);
+  border-style: dashed;
+  cursor: not-allowed;
+}
+
+/* A tip points here: the row (or the router's rows) outlined. */
+.ng-rt-row.is-target,
+.ng-rt-rows.is-target {
+  outline: 3px solid var(--ng-focus);
+  outline-offset: 2px;
+}
+
+.ng-rt-row-head:focus,
+.ng-rt-rows-head .ng-rt-caption:focus {
+  outline: none;
+}
+
+/* «Що можна покращити…»: the check's design advice and the review's tips. */
+.ng-rt-improve {
+  flex: 1 1 100%;
+}
+
+.ng-rt-improve .ng-rt-advice li + li {
+  margin-top: 6px;
+}
+
+.ng-rt-improve-head {
+  margin: 0 0 2px;
+  color: var(--ng-text);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+}
+
+/* A link in its list item, top-aligned so the bullet stays on its first
+   line; the padding widens what a click or tap hits. */
+.ng-rt-tip-link {
+  vertical-align: top;
+  max-width: 100%;
+  min-height: var(--ng-target);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ng-cyan);
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.ng-rt-best-toggle[aria-expanded="true"] {
+  background: var(--ng-blue-bg);
+  border-color: var(--ng-blue);
+}
+
+/* ── Round 4 (spec R1) ───────────────────────────────────── */
+
+/* «⋯» at the end of the task bar. */
+.ng-rt-more {
+  margin-left: auto;
+}
+
+/* The exercise switch and «⋯» end the task bar. */
+.ng-rt-bar-end {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.ng-rt-bar-end .ng-rt-more {
+  margin-left: 0;
+}
+
+/* An address row with nothing to say takes no room (its polite line stays in the page). */
+.ng-rt-addr.is-empty {
+  display: contents;
+}
+
+/* Task 15's simulated failure, beside the task. */
+.ng-rt-failover {
+  color: var(--ng-text);
+}
+
+/* Repair v2: the legend's «?» and «Уся умова» share one row. */
+.ng-rt-asides {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 4px 20px;
+}
+
+.ng-rt-asides > .ng-rt-legend.is-open {
+  flex-basis: 100%;
+}
+
+.ng-rt-details {
+  min-height: 28px;
+  margin: -2px 0;
+  font-size: var(--ng-font-small);
+}
+
+/* The diagram's legend (an Aside), full width above the columns. */
+.ng-rt-legend {
+  font-size: var(--ng-font-small);
+}
+
+.ng-rt-legend p {
+  margin: 0;
+}
+
+/* A right row's quiet mark. */
+.ng-rt-row-ok {
+  margin: 0;
+  color: var(--ng-green);
+  font-size: var(--ng-font-small);
+}
+
+/* The help panel under the rows; a disclosure from «⋯» under it. Its
+   height is held while the learner edits after a check (RoutingScreen
+   helpHold): a folding verdict moves nothing. */
+.ng-rt-help {
+  margin-top: 4px;
+  min-height: var(--ng-rt-help-hold, 0px);
+}
+
+.ng-rt-disclosures:empty {
+  display: none;
+}
+
+.ng-rt-disclosures .ng-rt-checks-list {
+  margin: 0;
+  padding: 0;
+}
+
+/* Quiet links inside the success box. */
+.ng-rt-success-links {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.ng-rt-link {
+  min-height: var(--ng-target);
+  padding: 0 4px;
+  background: none;
+  border: none;
+  color: var(--ng-cyan);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-small);
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.ng-rt-link:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}
+
+/* «Відповідь» / «Моя відповідь» on the rows' heading after a reveal. */
+.ng-rt-mine {
+  margin-left: auto;
+}
+
+.ng-rt-reveal .ng-rt-rows-head .ng-rt-caption {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* The help panel is never the browser's scroll anchor (its height is held
+   while the learner edits; see .ng-rt-help). */
+.ng-rt .ng-help-host,
+.ng-rt .ng-rt-help,
+.ng-rt .ng-rt-left,
+.ng-rt .ng-rt-stage {
+  /* (the sticky diagram neither: it doesn't move with the work column) */
+  overflow-anchor: none;
+}
+
+/* Repair v1: a short window (≤ 760 px high, RoutingScreen data-short) keeps
+   task 15's two routes, both distances and «Перевірити» in view at 1000×700:
+   slimmer fields and gaps in the work column (still well above 24 px). */
+.ng-rt[data-short] .ng-rt-work .ng-rt-input {
+  height: 36px;
+}
+
+.ng-rt[data-short] .ng-rt-work .ng-rt-row {
+  padding: 3px 6px;
+}
+
+.ng-rt[data-short] .ng-rt-work .ng-rt-field label {
+  margin-bottom: 0;
+}
+
+/* The panel's own spacing, in this screen only (a long board puts it above the routes). */
+.ng-rt[data-short] .ng-rt-work > .ng-help-host {
+  margin-block: 0;
+}
+
+.ng-rt[data-short] .ng-rt-help .ng-help-reveal-link {
+  min-height: 32px;
+}
+
+.ng-rt[data-short] .ng-rt-ifaces {
+  line-height: 1.25;
+}
+
+.ng-rt[data-short] .ng-rt-work .ng-rt-card {
+  padding-bottom: 3px;
+}
+
+.ng-rt[data-short] .ng-rt-work,
+.ng-rt[data-short] .ng-rt-rowlist {
+  gap: 4px;
+}
+
+.ng-rt[data-short] .ng-rt-work .ng-rt-row-head {
+  margin-bottom: 2px;
+}

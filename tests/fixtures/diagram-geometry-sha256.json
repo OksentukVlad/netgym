@@ -1,0 +1,165 @@
+{
+  "source": "Step 2 fa0ce78 geometry.json snapshots; SHA-256 of JSON.stringify(geometry), all properties in captured order",
+  "rows": [
+    {
+      "syntax": "cisco",
+      "task": 1,
+      "sha256": "5bf4a4db2e8aea24a5802305447f1103490aa3e5a04e6ca5ba59e0f37e4e69f0"
+    },
+    {
+      "syntax": "cisco",
+      "task": 2,
+      "sha256": "4a034c5c17f34162600894aaebc2b632d9d0db27efdf16f606fbb7e7c5ab13fe"
+    },
+    {
+      "syntax": "cisco",
+      "task": 3,
+      "sha256": "160093c52833307f7e10de427373282c2dc1d0af25e20a09449d9de00c5d1811"
+    },
+    {
+      "syntax": "cisco",
+      "task": 4,
+      "sha256": "e8c143f76b82bafb7b96ac51d9fe0ac2021cbfa6a751db8a91a556f7df394edf"
+    },
+    {
+      "syntax": "cisco",
+      "task": 5,
+      "sha256": "3775a1a0b1a9c2bb6ad778d80cd88969adf3d230d898d2fc494af369a7e323f1"
+    },
+    {
+      "syntax": "cisco",
+      "task": 6,
+      "sha256": "3b2e942e41fb4062486bb48573268816ada046cc8c34cecb3eca2d4d752736c9"
+    },
+    {
+      "syntax": "cisco",
+      "task": 7,
+      "sha256": "27e7c7717f72607db938eb01b0502c118bc3d44320880728c1742b813832e8ea"
+    },
+    {
+      "syntax": "cisco",
+      "task": 8,
+      "sha256": "759abee16b94311a8a51c25209237f6732f4a62ceb9912f3007dd9ecb7b844fd"
+    },
+    {
+      "syntax": "cisco",
+      "task": 9,
+      "sha256": "8cf5b44334bea719d15f0c086d0c244992297caaafb58048365d2eb46a3f73a4"
+    },
+    {
+      "syntax": "cisco",
+      "task": 10,
+      "sha256": "f65d99cf796050709e3d91009c363bbf795bc211f5f8dc4c962aeee8cbe5f59e"
+    },
+    {
+      "syntax": "cisco",
+      "task": 11,
+      "sha256": "2fb155cfcb886ff3fba654bc9aa5420c309e1ce02d70b4b5e1c67267b61d2453"
+    },
+    {
+      "syntax": "cisco",
+      "task": 12,
+      "sha256": "65b88b4eda318c0adaa577059b16f183af23d677a6390e53e33d470614324c2f"
+    },
+    {
+      "syntax": "cisco",
+      "task": 13,
+      "sha256": "7450dce423bda1503dece7b5e695cae10c04c020679b17b1cf99cd9358b6c2ab"
+    },
+    {
+      "syntax": "cisco",
+      "task": 14,
+      "sha256": "3d34748754156f801231a546077c15fed0bde289b8f13a9bb81699a1dcfd4cf7"
+    },
+    {
+      "syntax": "cisco",
+      "task": 15,
+      "sha256": "ad460686fcd97cf85d9ed37d9603ac1c9fc01015ddeda030c8c7f9f13511a01b"
+    },
+    {
+      "syntax": "cisco",
+      "task": 16,
+      "sha256": "4a518d8d0e1b9071c727db1bd28232383bdb97345523c27c3b2b07ccf118d248"
+    },
+    {
+      "syntax": "routeros",
+      "task": 1,
+      "sha256": "b7a17cab70e20dc9f30f1de9e3328c6b327302b0de3da4b30ff94b322bf4e74c"
+    },
+    {
+      "syntax": "routeros",
+      "task": 2,
+      "sha256": "96c3fd5b5e39aa53174db247fa8cad727cbd8c6926f148f4a781c6a5c97cc228"
+    },
+    {
+      "syntax": "routeros",
+      "task": 3,
+      "sha256": "a0ba5c7de73e81d18ccf70bdee1738d6c0b22fff3fe2d499b7ba0617d30d96fd"
+    },
+    {
+      "syntax": "routeros",
+      "task": 4,
+      "sha256": "21747f78be9e3c5bbec7e66d86ea2b056bfa11834cd2579be5b5ef00eb79e6c5"
+    },
+    {
+      "syntax": "routeros",
+      "task": 5,
+      "sha256": "76ff5676a9ee771495b210003a8cc682091982e87b823e2fe4b0bed36fcf81a7"
+    },
+    {
+      "syntax": "routeros",
+      "task": 6,
+      "sha256": "fcef9aa32fa3213ca5dad71729b114ddb483c86b30029fde2e3fdd04fbb0ef04"
+    },
+    {
+      "syntax": "routeros",
+      "task": 7,
+      "sha256": "016ebc59263d36b009682e7a57ff9c5e728ea7632ae6b25e2f2e1f350b64b0e4"
+    },
+    {
+      "syntax": "routeros",
+      "task": 8,
+      "sha256": "68acaa10b4838fd768a5b3cff6f72de98ece9e18793db1a733f612dedf7aaf49"
+    },
+    {
+      "syntax": "routeros",
+      "task": 9,
+      "sha256": "1e523fa95e3d3d5694655a0409e80baf55ba7d9d77894249ba071b4d90ed4185"
+    },
+    {
+      "syntax": "routeros",
+      "task": 10,
+      "sha256": "a075bf70894c1998dd02c70b736f1a47d7a02a56c85a6d8369aeeb1b74888bdd"
+    },
+    {
+      "syntax": "routeros",
+      "task": 11,
+      "sha256": "7061d5f7e979f950678cec7a4760f2f782c9006fc050e1e5a9d425b9f1f995c1"
+    },
+    {
+      "syntax": "routeros",
+      "task": 12,
+      "sha256": "9bd696bacb89d755963a3c0ffcd58eb95956526626e724fbbc025e8f191c645b"
+    },
+    {
+      "syntax": "routeros",
+      "task": 13,
+      "sha256": "e9b34d3a052e75118daa573475b6cae13cc5f0aec0b17e481218c3a05e8bb256"
+    },
+    {
+      "syntax": "routeros",
+      "task": 14,
+      "sha256": "52f4fce6dbc09a57657bdd5d95785f7f10d392088763f4bfb3e36c837805b3ee"
+    },
+    {
+      "syntax": "routeros",
+      "task": 15,
+      "sha256": "9559279a3c4a445e2f885d7b3a9899304711a04d6efbef0a4b1c637fbc51d232"
+    },
+    {
+      "syntax": "routeros",
+      "task": 16,
+      "sha256": "605e5bc07c136e602038340285b263a864cd8826cee463e26766fffc80c83fe0"
+    }
+  ]
+}

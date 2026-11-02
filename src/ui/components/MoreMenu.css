@@ -1,0 +1,104 @@
+/* «⋯» and its menu (MoreMenu.jsx). The menu drops under the button, over the
+   page (it is short-lived); a disclosure's content opens in the flow. */
+.ng-more {
+  position: relative;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.ng-more-button {
+  box-sizing: border-box;
+  min-width: var(--ng-target);
+  min-height: var(--ng-target);
+  padding: 0 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--ng-radius);
+  color: var(--ng-muted);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ng-more-button:hover,
+.ng-more-button[aria-expanded="true"] {
+  border-color: var(--ng-stroke);
+  color: var(--ng-text);
+}
+
+.ng-more-button:focus-visible,
+.ng-more-item:focus-visible,
+.ng-more-close:focus-visible,
+.ng-more-panel-heading:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}
+
+.ng-more-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  min-width: 14em;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--ng-panel);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.35);
+}
+
+.ng-more-item {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  min-height: var(--ng-target);
+  padding: 0 12px;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-small);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ng-more-item:hover,
+.ng-more-item:focus {
+  background: var(--ng-blue-bg);
+}
+
+.ng-more-panel {
+  flex-basis: 100%;
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: var(--ng-surf);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  color: var(--ng-text);
+  font-size: var(--ng-font-small);
+}
+
+.ng-more-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.ng-more-close {
+  min-height: var(--ng-target);
+  padding: 0 8px;
+  background: transparent;
+  border: 0;
+  color: var(--ng-muted);
+  text-decoration: underline;
+  cursor: pointer;
+}

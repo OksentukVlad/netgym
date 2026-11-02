@@ -1,0 +1,75 @@
+/* Aside: «?» and, on the first visit, the note beside it. */
+.ng-aside {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ng-aside-q {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  min-width: var(--ng-target);
+  min-height: var(--ng-target);
+  margin: -8px;
+  padding: 0 8px;
+  background: transparent;
+  border: 0;
+  border-radius: var(--ng-radius);
+  color: var(--ng-muted);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* A small circle inside the 44 px target. */
+.ng-aside-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--ng-stroke);
+  border-radius: 50%;
+}
+
+.ng-aside-q:hover .ng-aside-dot,
+.ng-aside-q[aria-expanded="true"] .ng-aside-dot {
+  border-color: var(--ng-cyan);
+  color: var(--ng-cyan);
+}
+
+.ng-aside-q:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}
+
+.ng-aside-body {
+  min-width: 0;
+  padding: 2px 0 0;
+  color: var(--ng-muted);
+  font-size: var(--ng-font-small);
+  line-height: 1.45;
+}
+
+.ng-aside-body p {
+  margin: 0;
+}
+
+.ng-aside-body .ng-aside-title {
+  color: var(--ng-text);
+  font-weight: 700;
+}
+
+/* Folded: the title, muted, beside «?». */
+.ng-aside-label {
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-small);
+  font-weight: 400;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

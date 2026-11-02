@@ -1,0 +1,66 @@
+.ng-segmented {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ng-segmented-label {
+  color: var(--ng-muted);
+}
+
+.ng-segmented-options {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 2px;
+  background: var(--ng-input-bg);
+  border: 1px solid var(--ng-stroke);
+  border-radius: calc(var(--ng-radius) + 2px);
+}
+
+.ng-segmented-option {
+  box-sizing: border-box;
+  min-height: var(--ng-target);
+  min-width: var(--ng-target);
+  padding: 0 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--ng-radius);
+  color: var(--ng-muted);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.ng-segmented-option:hover {
+  color: var(--ng-text);
+  background: var(--ng-blue-bg);
+}
+
+/* Read-only: the choice stays visible, nothing invites a change. */
+.ng-segmented.is-readonly .ng-segmented-option {
+  cursor: default;
+}
+
+.ng-segmented.is-readonly .ng-segmented-option:not([aria-checked="true"]):hover {
+  color: var(--ng-muted);
+  background: transparent;
+}
+
+.ng-segmented-option[aria-checked="true"] {
+  background: var(--ng-button-bg);
+  border-color: var(--ng-blue);
+  color: var(--ng-button-text);
+}
+
+.ng-segmented-option.is-invalid {
+  border-color: var(--ng-red);
+}
+
+.ng-segmented-option:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}

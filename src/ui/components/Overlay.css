@@ -1,0 +1,78 @@
+/* Fills its nearest positioned ancestor; the body scrolls on its own. */
+.ng-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  background: var(--ng-surf);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+  color: var(--ng-text);
+  text-align: left;
+}
+
+.ng-overlay[hidden] {
+  display: none;
+}
+
+.ng-overlay-head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 6px 6px 14px;
+  border-bottom: 1px solid var(--ng-stroke);
+}
+
+.ng-overlay-title {
+  margin: 0;
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--ng-text);
+}
+
+.ng-overlay-close {
+  box-sizing: border-box;
+  flex: none;
+  min-width: var(--ng-target);
+  min-height: var(--ng-target);
+  padding: 0 14px;
+  background: var(--ng-input-bg);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ng-overlay-close:hover {
+  background: var(--ng-blue-bg);
+  border-color: var(--ng-blue);
+}
+
+.ng-overlay-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 10px 14px 12px;
+  scrollbar-width: thin;
+}
+
+.ng-overlay-close:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}
+
+/* Inside the panel: the ring sits on the body's own edge. */
+.ng-overlay-body:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: -3px;
+}

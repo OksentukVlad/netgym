@@ -1,0 +1,206 @@
+/* NetGym design tokens (ARCHITECTURE §6). Imported by the shell and by every
+ * generic component.
+ *
+ * Colours are the apps' familiar palette as semantic variables. Dark is the
+ * default; a subtree with data-theme="light" gets the round 1 Cisco light
+ * theme (the shell's own bar stays dark). */
+
+:root,
+[data-theme="dark"] {
+  /* Native scrollbars and form controls follow the theme (light grey
+   * scrollbars on the dark diagram otherwise). */
+  color-scheme: dark;
+  --ng-bg: #050a14;
+  --ng-panel: #0a1628;
+  --ng-surf: #0d1f33;
+  --ng-header: #07101f;
+  --ng-stroke: #1e3a5f;
+  --ng-text: #e2e8f0;
+  --ng-title: #ffffff;
+  --ng-muted: #7a9dbf;
+  --ng-cyan: #00d4ff;
+  --ng-blue: #3b82f6;
+  --ng-blue-bg: #0d1f3c;
+  --ng-button-bg: #1e3a5f;
+  --ng-button-text: #93c5fd;
+  --ng-input-bg: #0d1a30;
+  --ng-green: #22c55e;
+  --ng-green-bg: #052010;
+  --ng-red: #f87171;
+  --ng-red-bg: #1a0505;
+  --ng-amber: #fbbf24;
+  --ng-amber-bg: #1c1300;
+  --ng-code: #7dd3fc;
+  --ng-code-bg: #050a14;
+  --ng-focus: #00d4ff;
+  /* The routing screen's round 1 palette (step 7): side bar, diagram and
+     accents. Text shades meet 4.5:1 on the panels (tests/contrast.test.mjs). */
+  --ng-side: #080e1c;
+  --ng-svg-bg: #050a14;
+  --ng-net-fill: #050a14;
+  --ng-link: #6366f1;
+  --ng-purple: #c084fc;
+  --ng-line: #5b7fa6;
+  /* Tints of a router or level colour (color-mix with a panel), and the
+     strength of an unselected router circle's edge. */
+  --ng-tint: 16%;
+  --ng-tint-strong: 20%;
+  --ng-edge: 60%;
+  --ng-router-0: #00d4ff;
+  --ng-router-1: #a78bfa;
+  --ng-router-2: #f472b6;
+  --ng-router-3: #10b981;
+  --ng-router-4: #f59e0b;
+  --ng-router-5: #f87171;
+  --ng-router-6: #38bdf8;
+  --ng-router-7: #c084fc;
+  --ng-level-1: #4ade80;
+  --ng-level-2: #60a5fa;
+  --ng-level-3: #fbbf24;
+  --ng-level-4: #f87171;
+  --ng-level-5: #c084fc;
+  /* Step 6: the packet path on the diagram (lines ≥ 3:1 on --ng-svg-bg, its
+     words ≥ 4.5:1; tests/contrast.test.mjs). The stop ring is --ng-amber. */
+  --ng-path: #f1f5f9;
+  --ng-path-reply: #bef264;
+  --ng-path-down: #94a3b8;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --ng-bg: #eef2f7;
+  --ng-panel: #ffffff;
+  --ng-surf: #f1f5fb;
+  --ng-header: #e2e9f2;
+  --ng-stroke: #c2d1e2;
+  --ng-text: #16263a;
+  --ng-title: #16263a;
+  --ng-muted: #42597a;
+  --ng-cyan: #006d96;
+  --ng-blue: #1d6fb8;
+  --ng-blue-bg: #dcebfb;
+  --ng-button-bg: #dcebfb;
+  --ng-button-text: #1d4f86;
+  --ng-input-bg: #f7fafd;
+  --ng-green: #087238;
+  --ng-green-bg: #dcf5e6;
+  --ng-red: #b91c1c;
+  --ng-red-bg: #fbe4e4;
+  --ng-amber: #8a5800;
+  --ng-amber-bg: #fff5da;
+  --ng-code: #8ed0ff;
+  --ng-code-bg: #0d1b2e;
+  --ng-focus: #0088bb;
+  /* Darker router and level shades than the dark theme's, for 4.5:1 on white. */
+  --ng-side: #f4f7fb;
+  --ng-svg-bg: #f7fafd;
+  --ng-net-fill: #ffffff;
+  --ng-link: #5b6ee0;
+  --ng-purple: #7c22cc;
+  --ng-line: #687f9a;
+  --ng-tint: 8%;
+  --ng-tint-strong: 12%;
+  --ng-edge: 100%;
+  --ng-router-0: #006a93;
+  --ng-router-1: #6d4ed6;
+  --ng-router-2: #bb2771;
+  --ng-router-3: #036b4e;
+  --ng-router-4: #9a5800;
+  --ng-router-5: #c42020;
+  --ng-router-6: #0369a1;
+  --ng-router-7: #8a2fcf;
+  --ng-level-1: #137535;
+  --ng-level-2: #1d5fb8;
+  --ng-level-3: #8a5800;
+  --ng-level-4: #b91c1c;
+  --ng-level-5: #7e22ce;
+  --ng-path: #1e293b;
+  --ng-path-reply: #4d7c0f;
+  --ng-path-down: #56657a;
+}
+
+:root {
+  /* Type: captions never below 14 px, body and inputs 18 px. */
+  --ng-font-caption: 14px;
+  --ng-font-small: 16px;
+  --ng-font-body: 18px;
+  --ng-font-title: 22px;
+  --ng-font-title-l: 26px;
+  --ng-mono: "Courier New", monospace;
+  --ng-sans: "Segoe UI", system-ui, sans-serif;
+
+  /* Targets and focus. */
+  --ng-target: 44px;
+  --ng-focus-width: 3px;
+  --ng-radius: 8px;
+  --ng-radius-l: 12px;
+}
+
+@media (pointer: coarse) {
+  :root {
+    --ng-target: 48px;
+  }
+}
+
+/* A caption: small monospace capitals, as in the round 1 apps, but readable
+   (14 px; 1–2 px letter-spacing, which Cyrillic capitals can take). */
+.ng-caption {
+  margin: 0;
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  font-weight: 400;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ng-cyan);
+}
+
+/* Present for screen readers only. */
+.ng-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* A single-section build: one screen high, the screen scrolls inside, as it
+   does under the NetGym bar. */
+.ng-standalone {
+  height: 100vh;
+  overflow: auto;
+}
+
+/* With the top bar (Standalone `title`): the bar, then the scrolling area. */
+.ng-standalone-frame {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ng-standalone-frame > .ng-standalone {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
+
+/* The screen's scrolling area. Round 4 (spec A2): the page is the one
+   vertical scroller; scroll-into-view (HelpPanel, focus) keeps
+   --ng-scroll-pad clear at the top and bottom, so nothing lands against the
+   top bar or the window's edge. Positioned, so absolutely placed content
+   (the visually hidden status) scrolls with the screen instead of growing
+   the page. */
+.ng-standalone,
+.ng-screen {
+  --ng-scroll-pad: 12px;
+  position: relative;
+  scroll-padding: var(--ng-scroll-pad) 0;
+}
+
+.ng-standalone > * {
+  min-height: 100%;
+}

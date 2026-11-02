@@ -1,0 +1,870 @@
+{
+  "commit": "54eb189",
+  "source": "apps/mikrotik-routing/App.jsx",
+  "rows": [
+    {
+      "task": 1,
+      "variant": "main",
+      "router": "R1",
+      "dst": "192.168.2.0/24",
+      "gateway": "10.0.0.2",
+      "command": "/ip route add dst-address=192.168.2.0/24 gateway=10.0.0.2"
+    },
+    {
+      "task": 1,
+      "variant": "main",
+      "router": "R2",
+      "dst": "192.168.1.0/24",
+      "gateway": "10.0.0.1",
+      "command": "/ip route add dst-address=192.168.1.0/24 gateway=10.0.0.1"
+    },
+    {
+      "task": 2,
+      "variant": "main",
+      "router": "R1",
+      "dst": "10.10.0.0/24",
+      "gateway": "172.16.0.2",
+      "command": "/ip route add dst-address=10.10.0.0/24 gateway=172.16.0.2"
+    },
+    {
+      "task": 2,
+      "variant": "main",
+      "router": "R2",
+      "dst": "0.0.0.0/0",
+      "gateway": "172.16.0.1",
+      "command": "/ip route add dst-address=0.0.0.0/0 gateway=172.16.0.1"
+    },
+    {
+      "task": 3,
+      "variant": "explicit-routes",
+      "router": "R1",
+      "dst": "10.3.0.0/24",
+      "gateway": "192.168.0.2",
+      "command": "/ip route add dst-address=10.3.0.0/24 gateway=192.168.0.2"
+    },
+    {
+      "task": 3,
+      "variant": "explicit-routes",
+      "router": "R1",
+      "dst": "10.4.0.0/24",
+      "gateway": "192.168.0.2",
+      "command": "/ip route add dst-address=10.4.0.0/24 gateway=192.168.0.2"
+    },
+    {
+      "task": 3,
+      "variant": "explicit-routes",
+      "router": "R2",
+      "dst": "10.1.0.0/24",
+      "gateway": "192.168.0.1",
+      "command": "/ip route add dst-address=10.1.0.0/24 gateway=192.168.0.1"
+    },
+    {
+      "task": 3,
+      "variant": "explicit-routes",
+      "router": "R2",
+      "dst": "10.2.0.0/24",
+      "gateway": "192.168.0.1",
+      "command": "/ip route add dst-address=10.2.0.0/24 gateway=192.168.0.1"
+    },
+    {
+      "task": 4,
+      "variant": "main",
+      "router": "R1",
+      "dst": "192.168.2.0/24",
+      "gateway": "10.0.0.2",
+      "command": "/ip route add dst-address=192.168.2.0/24 gateway=10.0.0.2"
+    },
+    {
+      "task": 4,
+      "variant": "main",
+      "router": "R1",
+      "dst": "10.0.0.4/30",
+      "gateway": "10.0.0.2",
+      "command": "/ip route add dst-address=10.0.0.4/30 gateway=10.0.0.2"
+    },
+    {
+      "task": 4,
+      "variant": "main",
+      "router": "R1",
+      "dst": "192.168.3.0/24",
+      "gateway": "10.0.0.2",
+      "command": "/ip route add dst-address=192.168.3.0/24 gateway=10.0.0.2"
+    },
+    {
+      "task": 4,
+      "variant": "main",
+      "router": "R2",
+      "dst": "192.168.1.0/24",
+      "gateway": "10.0.0.1",
+      "command": "/ip route add dst-address=192.168.1.0/24 gateway=10.0.0.1"
+    },
+    {
+      "task": 4,
+      "variant": "main",
+      "router": "R2",
+      "dst": "192.168.3.0/24",
+      "gateway": "10.0.0.6",
+      "command": "/ip route add dst-address=192.168.3.0/24 gateway=10.0.0.6"
+    },
+    {
+      "task": 4,
+      "variant": "main",
+      "router": "R3",
+      "dst": "192.168.1.0/24",
+      "gateway": "10.0.0.5",
+      "command": "/ip route add dst-address=192.168.1.0/24 gateway=10.0.0.5"
+    },
+    {
+      "task": 4,
+      "variant": "main",
+      "router": "R3",
+      "dst": "192.168.2.0/24",
+      "gateway": "10.0.0.5",
+      "command": "/ip route add dst-address=192.168.2.0/24 gateway=10.0.0.5"
+    },
+    {
+      "task": 4,
+      "variant": "main",
+      "router": "R3",
+      "dst": "10.0.0.0/30",
+      "gateway": "10.0.0.5",
+      "command": "/ip route add dst-address=10.0.0.0/30 gateway=10.0.0.5"
+    },
+    {
+      "task": 5,
+      "variant": "main",
+      "router": "R1",
+      "dst": "10.1.1.4/30",
+      "gateway": "10.1.1.2",
+      "command": "/ip route add dst-address=10.1.1.4/30 gateway=10.1.1.2"
+    },
+    {
+      "task": 5,
+      "variant": "main",
+      "router": "R1",
+      "dst": "192.168.20.0/24",
+      "gateway": "10.1.1.2",
+      "command": "/ip route add dst-address=192.168.20.0/24 gateway=10.1.1.2"
+    },
+    {
+      "task": 5,
+      "variant": "main",
+      "router": "R1",
+      "dst": "172.20.0.0/24",
+      "gateway": "10.1.1.2",
+      "command": "/ip route add dst-address=172.20.0.0/24 gateway=10.1.1.2"
+    },
+    {
+      "task": 5,
+      "variant": "main",
+      "router": "R2",
+      "dst": "0.0.0.0/0",
+      "gateway": "10.1.1.1",
+      "command": "/ip route add dst-address=0.0.0.0/0 gateway=10.1.1.1"
+    },
+    {
+      "task": 5,
+      "variant": "main",
+      "router": "R2",
+      "dst": "172.20.0.0/24",
+      "gateway": "10.1.1.6",
+      "command": "/ip route add dst-address=172.20.0.0/24 gateway=10.1.1.6"
+    },
+    {
+      "task": 5,
+      "variant": "main",
+      "router": "R3",
+      "dst": "0.0.0.0/0",
+      "gateway": "10.1.1.5",
+      "command": "/ip route add dst-address=0.0.0.0/0 gateway=10.1.1.5"
+    },
+    {
+      "task": 6,
+      "variant": "main",
+      "router": "R1",
+      "dst": "10.10.0.0/23",
+      "gateway": "172.16.0.2",
+      "command": "/ip route add dst-address=10.10.0.0/23 gateway=172.16.0.2"
+    },
+    {
+      "task": 6,
+      "variant": "main",
+      "router": "R2",
+      "dst": "192.168.1.0/24",
+      "gateway": "172.16.0.1",
+      "command": "/ip route add dst-address=192.168.1.0/24 gateway=172.16.0.1"
+    },
+    {
+      "task": 7,
+      "variant": "main",
+      "router": "R-HUB",
+      "dst": "172.16.1.0/24",
+      "gateway": "10.0.1.2",
+      "command": "/ip route add dst-address=172.16.1.0/24 gateway=10.0.1.2"
+    },
+    {
+      "task": 7,
+      "variant": "main",
+      "router": "R-HUB",
+      "dst": "172.16.2.0/24",
+      "gateway": "10.0.2.2",
+      "command": "/ip route add dst-address=172.16.2.0/24 gateway=10.0.2.2"
+    },
+    {
+      "task": 7,
+      "variant": "main",
+      "router": "R-HUB",
+      "dst": "172.16.3.0/24",
+      "gateway": "10.0.3.2",
+      "command": "/ip route add dst-address=172.16.3.0/24 gateway=10.0.3.2"
+    },
+    {
+      "task": 7,
+      "variant": "main",
+      "router": "R1",
+      "dst": "0.0.0.0/0",
+      "gateway": "10.0.1.1",
+      "command": "/ip route add dst-address=0.0.0.0/0 gateway=10.0.1.1"
+    },
+    {
+      "task": 7,
+      "variant": "main",
+      "router": "R2",
+      "dst": "0.0.0.0/0",
+      "gateway": "10.0.2.1",
+      "command": "/ip route add dst-address=0.0.0.0/0 gateway=10.0.2.1"
+    },
+    {
+      "task": 7,
+      "variant": "main",
+      "router": "R3",
+      "dst": "0.0.0.0/0",
+      "gateway": "10.0.3.1",
+      "command": "/ip route add dst-address=0.0.0.0/0 gateway=10.0.3.1"
+    },
+    {
+      "task": 8,
+      "variant": "specific",
+      "router": "R1",
+      "dst": "192.168.2.0/24",
+      "gateway": "10.0.0.2",
+      "command": "/ip route add dst-address=192.168.2.0/24 gateway=10.0.0.2"
+    },
+    {
+      "task": 8,
+      "variant": "specific",
+      "router": "R1",
+      "dst": "10.0.0.4/30",
+      "gateway": "10.0.0.2",
+      "command": "/ip route add dst-address=10.0.0.4/30 gateway=10.0.0.2"
+    },
+    {
+      "task": 8,
+      "variant": "specific",
+      "router": "R1",
+      "dst": "192.168.3.0/24",
+      "gateway": "10.0.0.2",
+      "command": "/ip route add dst-address=192.168.3.0/24 gateway=10.0.0.2"
+    },
+    {
+      "task": 8,
+      "variant": "specific",
+      "router": "R1",
+      "dst": "10.0.0.8/30",
+      "gateway": "10.0.0.2",
+      "command": "/ip route add dst-address=10.0.0.8/30 gateway=10.0.0.2"
+    },
+    {
+      "task": 8,
+      "variant": "specific",
+      "router": "R1",
+      "dst": "192.168.4.0/24",
+      "gateway": "10.0.0.2",
+      "command": "/ip route add dst-address=192.168.4.0/24 gateway=10.0.0.2"
+    },
+    {
+      "task": 8,
+      "variant": "specific",
+      "router": "R2",
+      "dst": "192.168.1.0/24",
+      "gateway": "10.0.0.1",
+      "command": "/ip route add dst-address=192.168.1.0/24 gateway=10.0.0.1"
+    },
+    {
+      "task": 8,
+      "variant": "specific",
+      "router": "R2",
+      "dst": "192.168.3.0/24",
+      "gateway": "10.0.0.6",
+      "command": "/ip route add dst-address=192.168.3.0/24 gateway=10.0.0.6"
+    },
+    {
+      "task": 8,
+      "variant": "specific",
+      "router": "R2",
+      "dst": "10.0.0.8/30",
+      "gateway": "10.0.0.6",
+      "command": "/ip route add dst-address=10.0.0.8/30 gateway=10.0.0.6"
+    },
+    {
+      "task": 8,
+      "variant": "specific",
+      "router": "R2",
+      "dst": "192.168.4.0/24",
+      "gateway": "10.0.0.6",
+      "command": "/ip route add dst-address=192.168.4.0/24 gateway=10.0.0.6"
+    },
+    {
+      "task": 8,
+      "variant": "specific",
+      "router": "R3",
+      "dst": "192.168.4.0/24",
+      "gateway": "10.0.0.10",
+      "command": "/ip route add dst-address=192.168.4.0/24 gateway=10.0.0.10"
+    },
+    {
+      "task": 8,
+      "variant": "specific",
+      "router": "R3",
+      "dst": "192.168.2.0/24",
+      "gateway": "10.0.0.5",
+      "command": "/ip route add dst-address=192.168.2.0/24 gateway=10.0.0.5"
+    },
+    {
+      "task": 8,
+      "variant": "specific",
+      "router": "R3",
+      "dst": "10.0.0.0/30",
+      "gateway": "10.0.0.5",
+      "command": "/ip route add dst-address=10.0.0.0/30 gateway=10.0.0.5"
+    },
+    {
+      "task": 8,
+      "variant": "specific",
+      "router": "R3",
+      "dst": "192.168.1.0/24",
+      "gateway": "10.0.0.5",
+      "command": "/ip route add dst-address=192.168.1.0/24 gateway=10.0.0.5"
+    },
+    {
+      "task": 8,
+      "variant": "specific",
+      "router": "R4",
+      "dst": "192.168.1.0/24",
+      "gateway": "10.0.0.9",
+      "command": "/ip route add dst-address=192.168.1.0/24 gateway=10.0.0.9"
+    },
+    {
+      "task": 8,
+      "variant": "specific",
+      "router": "R4",
+      "dst": "192.168.2.0/24",
+      "gateway": "10.0.0.9",
+      "command": "/ip route add dst-address=192.168.2.0/24 gateway=10.0.0.9"
+    },
+    {
+      "task": 8,
+      "variant": "specific",
+      "router": "R4",
+      "dst": "192.168.3.0/24",
+      "gateway": "10.0.0.9",
+      "command": "/ip route add dst-address=192.168.3.0/24 gateway=10.0.0.9"
+    },
+    {
+      "task": 8,
+      "variant": "specific",
+      "router": "R4",
+      "dst": "10.0.0.0/30",
+      "gateway": "10.0.0.9",
+      "command": "/ip route add dst-address=10.0.0.0/30 gateway=10.0.0.9"
+    },
+    {
+      "task": 8,
+      "variant": "specific",
+      "router": "R4",
+      "dst": "10.0.0.4/30",
+      "gateway": "10.0.0.9",
+      "command": "/ip route add dst-address=10.0.0.4/30 gateway=10.0.0.9"
+    },
+    {
+      "task": 9,
+      "variant": "main",
+      "router": "R1",
+      "dst": "10.0.0.4/30",
+      "gateway": "10.0.0.2",
+      "command": "/ip route add dst-address=10.0.0.4/30 gateway=10.0.0.2"
+    },
+    {
+      "task": 9,
+      "variant": "main",
+      "router": "R1",
+      "dst": "10.0.0.8/30",
+      "gateway": "10.0.0.2",
+      "command": "/ip route add dst-address=10.0.0.8/30 gateway=10.0.0.2"
+    },
+    {
+      "task": 9,
+      "variant": "main",
+      "router": "R1",
+      "dst": "192.168.2.0/24",
+      "gateway": "10.0.0.2",
+      "command": "/ip route add dst-address=192.168.2.0/24 gateway=10.0.0.2"
+    },
+    {
+      "task": 9,
+      "variant": "main",
+      "router": "R1",
+      "dst": "192.168.3.0/24",
+      "gateway": "10.0.0.2",
+      "command": "/ip route add dst-address=192.168.3.0/24 gateway=10.0.0.2"
+    },
+    {
+      "task": 9,
+      "variant": "main",
+      "router": "R1",
+      "dst": "192.168.4.0/24",
+      "gateway": "10.0.0.2",
+      "command": "/ip route add dst-address=192.168.4.0/24 gateway=10.0.0.2"
+    },
+    {
+      "task": 9,
+      "variant": "main",
+      "router": "R2",
+      "dst": "0.0.0.0/0",
+      "gateway": "10.0.0.1",
+      "command": "/ip route add dst-address=0.0.0.0/0 gateway=10.0.0.1"
+    },
+    {
+      "task": 9,
+      "variant": "main",
+      "router": "R2",
+      "dst": "192.168.3.0/24",
+      "gateway": "10.0.0.6",
+      "command": "/ip route add dst-address=192.168.3.0/24 gateway=10.0.0.6"
+    },
+    {
+      "task": 9,
+      "variant": "main",
+      "router": "R2",
+      "dst": "10.0.0.8/30",
+      "gateway": "10.0.0.6",
+      "command": "/ip route add dst-address=10.0.0.8/30 gateway=10.0.0.6"
+    },
+    {
+      "task": 9,
+      "variant": "main",
+      "router": "R2",
+      "dst": "192.168.4.0/24",
+      "gateway": "10.0.0.6",
+      "command": "/ip route add dst-address=192.168.4.0/24 gateway=10.0.0.6"
+    },
+    {
+      "task": 9,
+      "variant": "main",
+      "router": "R3",
+      "dst": "0.0.0.0/0",
+      "gateway": "10.0.0.5",
+      "command": "/ip route add dst-address=0.0.0.0/0 gateway=10.0.0.5"
+    },
+    {
+      "task": 9,
+      "variant": "main",
+      "router": "R3",
+      "dst": "192.168.4.0/24",
+      "gateway": "10.0.0.10",
+      "command": "/ip route add dst-address=192.168.4.0/24 gateway=10.0.0.10"
+    },
+    {
+      "task": 9,
+      "variant": "main",
+      "router": "R4",
+      "dst": "0.0.0.0/0",
+      "gateway": "10.0.0.9",
+      "command": "/ip route add dst-address=0.0.0.0/0 gateway=10.0.0.9"
+    },
+    {
+      "task": 10,
+      "variant": "main",
+      "router": "R1",
+      "dst": "192.168.2.0/24",
+      "gateway": "10.1.0.2",
+      "command": "/ip route add dst-address=192.168.2.0/24 gateway=10.1.0.2"
+    },
+    {
+      "task": 10,
+      "variant": "main",
+      "router": "R1",
+      "dst": "10.3.0.0/30",
+      "gateway": "10.1.0.2",
+      "command": "/ip route add dst-address=10.3.0.0/30 gateway=10.1.0.2"
+    },
+    {
+      "task": 10,
+      "variant": "main",
+      "router": "R1",
+      "dst": "192.168.3.0/24",
+      "gateway": "10.2.0.2",
+      "command": "/ip route add dst-address=192.168.3.0/24 gateway=10.2.0.2"
+    },
+    {
+      "task": 10,
+      "variant": "main",
+      "router": "R2",
+      "dst": "192.168.1.0/24",
+      "gateway": "10.1.0.1",
+      "command": "/ip route add dst-address=192.168.1.0/24 gateway=10.1.0.1"
+    },
+    {
+      "task": 10,
+      "variant": "main",
+      "router": "R2",
+      "dst": "10.2.0.0/30",
+      "gateway": "10.1.0.1",
+      "command": "/ip route add dst-address=10.2.0.0/30 gateway=10.1.0.1"
+    },
+    {
+      "task": 10,
+      "variant": "main",
+      "router": "R2",
+      "dst": "192.168.3.0/24",
+      "gateway": "10.3.0.2",
+      "command": "/ip route add dst-address=192.168.3.0/24 gateway=10.3.0.2"
+    },
+    {
+      "task": 10,
+      "variant": "main",
+      "router": "R3",
+      "dst": "192.168.1.0/24",
+      "gateway": "10.2.0.1",
+      "command": "/ip route add dst-address=192.168.1.0/24 gateway=10.2.0.1"
+    },
+    {
+      "task": 10,
+      "variant": "main",
+      "router": "R3",
+      "dst": "10.1.0.0/30",
+      "gateway": "10.2.0.1",
+      "command": "/ip route add dst-address=10.1.0.0/30 gateway=10.2.0.1"
+    },
+    {
+      "task": 10,
+      "variant": "main",
+      "router": "R3",
+      "dst": "192.168.2.0/24",
+      "gateway": "10.3.0.1",
+      "command": "/ip route add dst-address=192.168.2.0/24 gateway=10.3.0.1"
+    },
+    {
+      "task": 11,
+      "variant": "main",
+      "router": "R-GW",
+      "dst": "10.20.1.0/24",
+      "gateway": "10.10.1.2",
+      "command": "/ip route add dst-address=10.20.1.0/24 gateway=10.10.1.2"
+    },
+    {
+      "task": 11,
+      "variant": "main",
+      "router": "R-GW",
+      "dst": "10.20.2.0/24",
+      "gateway": "10.10.2.2",
+      "command": "/ip route add dst-address=10.20.2.0/24 gateway=10.10.2.2"
+    },
+    {
+      "task": 11,
+      "variant": "main",
+      "router": "R-GW",
+      "dst": "10.20.3.0/24",
+      "gateway": "10.10.3.2",
+      "command": "/ip route add dst-address=10.20.3.0/24 gateway=10.10.3.2"
+    },
+    {
+      "task": 11,
+      "variant": "main",
+      "router": "R-A",
+      "dst": "0.0.0.0/0",
+      "gateway": "10.10.1.1",
+      "command": "/ip route add dst-address=0.0.0.0/0 gateway=10.10.1.1"
+    },
+    {
+      "task": 11,
+      "variant": "main",
+      "router": "R-B",
+      "dst": "0.0.0.0/0",
+      "gateway": "10.10.2.1",
+      "command": "/ip route add dst-address=0.0.0.0/0 gateway=10.10.2.1"
+    },
+    {
+      "task": 11,
+      "variant": "main",
+      "router": "R-C",
+      "dst": "0.0.0.0/0",
+      "gateway": "10.10.3.1",
+      "command": "/ip route add dst-address=0.0.0.0/0 gateway=10.10.3.1"
+    },
+    {
+      "task": 12,
+      "variant": "main",
+      "router": "R-CORE",
+      "dst": "192.168.10.0/24",
+      "gateway": "10.0.1.2",
+      "command": "/ip route add dst-address=192.168.10.0/24 gateway=10.0.1.2"
+    },
+    {
+      "task": 12,
+      "variant": "main",
+      "router": "R-CORE",
+      "dst": "192.168.20.0/24",
+      "gateway": "10.0.2.2",
+      "command": "/ip route add dst-address=192.168.20.0/24 gateway=10.0.2.2"
+    },
+    {
+      "task": 12,
+      "variant": "main",
+      "router": "R-A",
+      "dst": "0.0.0.0/0",
+      "gateway": "10.0.1.1",
+      "command": "/ip route add dst-address=0.0.0.0/0 gateway=10.0.1.1"
+    },
+    {
+      "task": 12,
+      "variant": "main",
+      "router": "R-B",
+      "dst": "0.0.0.0/0",
+      "gateway": "10.0.2.1",
+      "command": "/ip route add dst-address=0.0.0.0/0 gateway=10.0.2.1"
+    },
+    {
+      "task": 13,
+      "variant": "main",
+      "router": "R1",
+      "dst": "10.0.0.0/22",
+      "gateway": "172.16.0.2",
+      "command": "/ip route add dst-address=10.0.0.0/22 gateway=172.16.0.2"
+    },
+    {
+      "task": 13,
+      "variant": "main",
+      "router": "R2",
+      "dst": "192.168.1.0/24",
+      "gateway": "172.16.0.1",
+      "command": "/ip route add dst-address=192.168.1.0/24 gateway=172.16.0.1"
+    },
+    {
+      "task": 14,
+      "variant": "main",
+      "router": "R-HQ",
+      "dst": "172.20.0.0/23",
+      "gateway": "10.1.0.2",
+      "command": "/ip route add dst-address=172.20.0.0/23 gateway=10.1.0.2"
+    },
+    {
+      "task": 14,
+      "variant": "main",
+      "router": "R-HQ",
+      "dst": "172.30.0.0/24",
+      "gateway": "10.2.0.2",
+      "command": "/ip route add dst-address=172.30.0.0/24 gateway=10.2.0.2"
+    },
+    {
+      "task": 14,
+      "variant": "main",
+      "router": "R-F1",
+      "dst": "0.0.0.0/0",
+      "gateway": "10.1.0.1",
+      "command": "/ip route add dst-address=0.0.0.0/0 gateway=10.1.0.1"
+    },
+    {
+      "task": 14,
+      "variant": "main",
+      "router": "R-F2",
+      "dst": "0.0.0.0/0",
+      "gateway": "10.2.0.1",
+      "command": "/ip route add dst-address=0.0.0.0/0 gateway=10.2.0.1"
+    },
+    {
+      "task": 15,
+      "variant": "main",
+      "router": "R1",
+      "dst": "0.0.0.0/0",
+      "gateway": "100.64.1.1",
+      "command": "/ip route add dst-address=0.0.0.0/0 gateway=100.64.1.1 distance=1"
+    },
+    {
+      "task": 15,
+      "variant": "main",
+      "router": "R1",
+      "dst": "0.0.0.0/0",
+      "gateway": "100.64.2.1",
+      "command": "/ip route add dst-address=0.0.0.0/0 gateway=100.64.2.1 distance=2"
+    },
+    {
+      "task": 16,
+      "variant": "main",
+      "router": "R-INET",
+      "dst": "172.16.0.0/22",
+      "gateway": "10.0.0.2",
+      "command": "/ip route add dst-address=172.16.0.0/22 gateway=10.0.0.2"
+    },
+    {
+      "task": 16,
+      "variant": "main",
+      "router": "R-INET",
+      "dst": "10.0.1.0/30",
+      "gateway": "10.0.0.2",
+      "command": "/ip route add dst-address=10.0.1.0/30 gateway=10.0.0.2"
+    },
+    {
+      "task": 16,
+      "variant": "main",
+      "router": "R-INET",
+      "dst": "10.0.2.0/30",
+      "gateway": "10.0.0.2",
+      "command": "/ip route add dst-address=10.0.2.0/30 gateway=10.0.0.2"
+    },
+    {
+      "task": 16,
+      "variant": "main",
+      "router": "R-INET",
+      "dst": "10.1.1.0/30",
+      "gateway": "10.0.0.2",
+      "command": "/ip route add dst-address=10.1.1.0/30 gateway=10.0.0.2"
+    },
+    {
+      "task": 16,
+      "variant": "main",
+      "router": "R-INET",
+      "dst": "10.1.2.0/30",
+      "gateway": "10.0.0.2",
+      "command": "/ip route add dst-address=10.1.2.0/30 gateway=10.0.0.2"
+    },
+    {
+      "task": 16,
+      "variant": "main",
+      "router": "R-INET",
+      "dst": "10.2.1.0/30",
+      "gateway": "10.0.0.2",
+      "command": "/ip route add dst-address=10.2.1.0/30 gateway=10.0.0.2"
+    },
+    {
+      "task": 16,
+      "variant": "main",
+      "router": "R-CORE",
+      "dst": "0.0.0.0/0",
+      "gateway": "10.0.0.1",
+      "command": "/ip route add dst-address=0.0.0.0/0 gateway=10.0.0.1"
+    },
+    {
+      "task": 16,
+      "variant": "main",
+      "router": "R-CORE",
+      "dst": "172.16.0.0/24",
+      "gateway": "10.0.1.2",
+      "command": "/ip route add dst-address=172.16.0.0/24 gateway=10.0.1.2"
+    },
+    {
+      "task": 16,
+      "variant": "main",
+      "router": "R-CORE",
+      "dst": "172.16.1.0/24",
+      "gateway": "10.0.1.2",
+      "command": "/ip route add dst-address=172.16.1.0/24 gateway=10.0.1.2"
+    },
+    {
+      "task": 16,
+      "variant": "main",
+      "router": "R-CORE",
+      "dst": "10.1.1.0/30",
+      "gateway": "10.0.1.2",
+      "command": "/ip route add dst-address=10.1.1.0/30 gateway=10.0.1.2"
+    },
+    {
+      "task": 16,
+      "variant": "main",
+      "router": "R-CORE",
+      "dst": "10.1.2.0/30",
+      "gateway": "10.0.1.2",
+      "command": "/ip route add dst-address=10.1.2.0/30 gateway=10.0.1.2"
+    },
+    {
+      "task": 16,
+      "variant": "main",
+      "router": "R-CORE",
+      "dst": "172.16.2.0/23",
+      "gateway": "10.0.2.2",
+      "command": "/ip route add dst-address=172.16.2.0/23 gateway=10.0.2.2"
+    },
+    {
+      "task": 16,
+      "variant": "main",
+      "router": "R-CORE",
+      "dst": "10.2.1.0/30",
+      "gateway": "10.0.2.2",
+      "command": "/ip route add dst-address=10.2.1.0/30 gateway=10.0.2.2"
+    },
+    {
+      "task": 16,
+      "variant": "main",
+      "router": "R-AGG1",
+      "dst": "0.0.0.0/0",
+      "gateway": "10.0.1.1",
+      "command": "/ip route add dst-address=0.0.0.0/0 gateway=10.0.1.1"
+    },
+    {
+      "task": 16,
+      "variant": "main",
+      "router": "R-AGG1",
+      "dst": "172.16.0.0/24",
+      "gateway": "10.1.1.2",
+      "command": "/ip route add dst-address=172.16.0.0/24 gateway=10.1.1.2"
+    },
+    {
+      "task": 16,
+      "variant": "main",
+      "router": "R-AGG1",
+      "dst": "172.16.1.0/24",
+      "gateway": "10.1.2.2",
+      "command": "/ip route add dst-address=172.16.1.0/24 gateway=10.1.2.2"
+    },
+    {
+      "task": 16,
+      "variant": "main",
+      "router": "R-AGG2",
+      "dst": "0.0.0.0/0",
+      "gateway": "10.0.2.1",
+      "command": "/ip route add dst-address=0.0.0.0/0 gateway=10.0.2.1"
+    },
+    {
+      "task": 16,
+      "variant": "main",
+      "router": "R-AGG2",
+      "dst": "172.16.2.0/23",
+      "gateway": "10.2.1.2",
+      "command": "/ip route add dst-address=172.16.2.0/23 gateway=10.2.1.2"
+    },
+    {
+      "task": 16,
+      "variant": "main",
+      "router": "R-ACC1",
+      "dst": "0.0.0.0/0",
+      "gateway": "10.1.1.1",
+      "command": "/ip route add dst-address=0.0.0.0/0 gateway=10.1.1.1"
+    },
+    {
+      "task": 16,
+      "variant": "main",
+      "router": "R-ACC2",
+      "dst": "0.0.0.0/0",
+      "gateway": "10.1.2.1",
+      "command": "/ip route add dst-address=0.0.0.0/0 gateway=10.1.2.1"
+    },
+    {
+      "task": 16,
+      "variant": "main",
+      "router": "R-ACC3",
+      "dst": "0.0.0.0/0",
+      "gateway": "10.2.1.1",
+      "command": "/ip route add dst-address=0.0.0.0/0 gateway=10.2.1.1"
+    }
+  ]
+}

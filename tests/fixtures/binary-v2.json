@@ -1,0 +1,411 @@
+{
+  "generatorVersion": 2,
+  "rows": [
+    {
+      "seed": 0,
+      "task": {
+        "ip": "10.57.40.184",
+        "prefix": 20,
+        "mask": "255.255.240.0",
+        "identity": {
+          "formatVersion": 1,
+          "exerciseId": "ip.binary",
+          "version": 2,
+          "generatorVersion": 2,
+          "seed": 0,
+          "ip": "10.57.40.184",
+          "prefix": 20
+        },
+        "instanceKey": "{\"formatVersion\":1,\"exerciseId\":\"ip.binary\",\"version\":2,\"generatorVersion\":2,\"seed\":0,\"ip\":\"10.57.40.184\",\"prefix\":20}"
+      },
+      "solution": {
+        "steps": [
+          {
+            "step": 0,
+            "octets": [
+              "00001010",
+              "00111001",
+              "00101000",
+              "10111000"
+            ]
+          },
+          {
+            "step": 1,
+            "octets": [
+              "11111111",
+              "11111111",
+              "11110000",
+              "00000000"
+            ]
+          },
+          {
+            "step": 2,
+            "octets": [
+              "00001010",
+              "00111001",
+              "00100000",
+              "00000000"
+            ]
+          },
+          {
+            "step": 3,
+            "octets": [
+              "00001010",
+              "00111001",
+              "00101111",
+              "11111111"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "seed": 1,
+      "task": {
+        "ip": "10.135.251.210",
+        "prefix": 26,
+        "mask": "255.255.255.192",
+        "identity": {
+          "formatVersion": 1,
+          "exerciseId": "ip.binary",
+          "version": 2,
+          "generatorVersion": 2,
+          "seed": 1,
+          "ip": "10.135.251.210",
+          "prefix": 26
+        },
+        "instanceKey": "{\"formatVersion\":1,\"exerciseId\":\"ip.binary\",\"version\":2,\"generatorVersion\":2,\"seed\":1,\"ip\":\"10.135.251.210\",\"prefix\":26}"
+      },
+      "solution": {
+        "steps": [
+          {
+            "step": 0,
+            "octets": [
+              "00001010",
+              "10000111",
+              "11111011",
+              "11010010"
+            ]
+          },
+          {
+            "step": 1,
+            "octets": [
+              "11111111",
+              "11111111",
+              "11111111",
+              "11000000"
+            ]
+          },
+          {
+            "step": 2,
+            "octets": [
+              "00001010",
+              "10000111",
+              "11111011",
+              "11000000"
+            ]
+          },
+          {
+            "step": 3,
+            "octets": [
+              "00001010",
+              "10000111",
+              "11111011",
+              "11111111"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "seed": 42,
+      "task": {
+        "ip": "10.218.171.67",
+        "prefix": 25,
+        "mask": "255.255.255.128",
+        "identity": {
+          "formatVersion": 1,
+          "exerciseId": "ip.binary",
+          "version": 2,
+          "generatorVersion": 2,
+          "seed": 42,
+          "ip": "10.218.171.67",
+          "prefix": 25
+        },
+        "instanceKey": "{\"formatVersion\":1,\"exerciseId\":\"ip.binary\",\"version\":2,\"generatorVersion\":2,\"seed\":42,\"ip\":\"10.218.171.67\",\"prefix\":25}"
+      },
+      "solution": {
+        "steps": [
+          {
+            "step": 0,
+            "octets": [
+              "00001010",
+              "11011010",
+              "10101011",
+              "01000011"
+            ]
+          },
+          {
+            "step": 1,
+            "octets": [
+              "11111111",
+              "11111111",
+              "11111111",
+              "10000000"
+            ]
+          },
+          {
+            "step": 2,
+            "octets": [
+              "00001010",
+              "11011010",
+              "10101011",
+              "00000000"
+            ]
+          },
+          {
+            "step": 3,
+            "octets": [
+              "00001010",
+              "11011010",
+              "10101011",
+              "01111111"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "seed": 4821,
+      "task": {
+        "ip": "10.195.69.100",
+        "prefix": 19,
+        "mask": "255.255.224.0",
+        "identity": {
+          "formatVersion": 1,
+          "exerciseId": "ip.binary",
+          "version": 2,
+          "generatorVersion": 2,
+          "seed": 4821,
+          "ip": "10.195.69.100",
+          "prefix": 19
+        },
+        "instanceKey": "{\"formatVersion\":1,\"exerciseId\":\"ip.binary\",\"version\":2,\"generatorVersion\":2,\"seed\":4821,\"ip\":\"10.195.69.100\",\"prefix\":19}"
+      },
+      "solution": {
+        "steps": [
+          {
+            "step": 0,
+            "octets": [
+              "00001010",
+              "11000011",
+              "01000101",
+              "01100100"
+            ]
+          },
+          {
+            "step": 1,
+            "octets": [
+              "11111111",
+              "11111111",
+              "11100000",
+              "00000000"
+            ]
+          },
+          {
+            "step": 2,
+            "octets": [
+              "00001010",
+              "11000011",
+              "01000000",
+              "00000000"
+            ]
+          },
+          {
+            "step": 3,
+            "octets": [
+              "00001010",
+              "11000011",
+              "01011111",
+              "11111111"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "seed": 4294967295,
+      "task": {
+        "ip": "10.183.241.220",
+        "prefix": 29,
+        "mask": "255.255.255.248",
+        "identity": {
+          "formatVersion": 1,
+          "exerciseId": "ip.binary",
+          "version": 2,
+          "generatorVersion": 2,
+          "seed": 4294967295,
+          "ip": "10.183.241.220",
+          "prefix": 29
+        },
+        "instanceKey": "{\"formatVersion\":1,\"exerciseId\":\"ip.binary\",\"version\":2,\"generatorVersion\":2,\"seed\":4294967295,\"ip\":\"10.183.241.220\",\"prefix\":29}"
+      },
+      "solution": {
+        "steps": [
+          {
+            "step": 0,
+            "octets": [
+              "00001010",
+              "10110111",
+              "11110001",
+              "11011100"
+            ]
+          },
+          {
+            "step": 1,
+            "octets": [
+              "11111111",
+              "11111111",
+              "11111111",
+              "11111000"
+            ]
+          },
+          {
+            "step": 2,
+            "octets": [
+              "00001010",
+              "10110111",
+              "11110001",
+              "11011000"
+            ]
+          },
+          {
+            "step": 3,
+            "octets": [
+              "00001010",
+              "10110111",
+              "11110001",
+              "11011111"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "seed": "step8",
+      "task": {
+        "ip": "192.168.157.137",
+        "prefix": 22,
+        "mask": "255.255.252.0",
+        "identity": {
+          "formatVersion": 1,
+          "exerciseId": "ip.binary",
+          "version": 2,
+          "generatorVersion": 2,
+          "seed": "step8",
+          "ip": "192.168.157.137",
+          "prefix": 22
+        },
+        "instanceKey": "{\"formatVersion\":1,\"exerciseId\":\"ip.binary\",\"version\":2,\"generatorVersion\":2,\"seed\":\"step8\",\"ip\":\"192.168.157.137\",\"prefix\":22}"
+      },
+      "solution": {
+        "steps": [
+          {
+            "step": 0,
+            "octets": [
+              "11000000",
+              "10101000",
+              "10011101",
+              "10001001"
+            ]
+          },
+          {
+            "step": 1,
+            "octets": [
+              "11111111",
+              "11111111",
+              "11111100",
+              "00000000"
+            ]
+          },
+          {
+            "step": 2,
+            "octets": [
+              "11000000",
+              "10101000",
+              "10011100",
+              "00000000"
+            ]
+          },
+          {
+            "step": 3,
+            "octets": [
+              "11000000",
+              "10101000",
+              "10011111",
+              "11111111"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "seed": "у бітах",
+      "task": {
+        "ip": "10.6.30.219",
+        "prefix": 22,
+        "mask": "255.255.252.0",
+        "identity": {
+          "formatVersion": 1,
+          "exerciseId": "ip.binary",
+          "version": 2,
+          "generatorVersion": 2,
+          "seed": "у бітах",
+          "ip": "10.6.30.219",
+          "prefix": 22
+        },
+        "instanceKey": "{\"formatVersion\":1,\"exerciseId\":\"ip.binary\",\"version\":2,\"generatorVersion\":2,\"seed\":\"у бітах\",\"ip\":\"10.6.30.219\",\"prefix\":22}"
+      },
+      "solution": {
+        "steps": [
+          {
+            "step": 0,
+            "octets": [
+              "00001010",
+              "00000110",
+              "00011110",
+              "11011011"
+            ]
+          },
+          {
+            "step": 1,
+            "octets": [
+              "11111111",
+              "11111111",
+              "11111100",
+              "00000000"
+            ]
+          },
+          {
+            "step": 2,
+            "octets": [
+              "00001010",
+              "00000110",
+              "00011100",
+              "00000000"
+            ]
+          },
+          {
+            "step": 3,
+            "octets": [
+              "00001010",
+              "00000110",
+              "00011111",
+              "11111111"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

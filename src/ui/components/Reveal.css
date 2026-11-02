@@ -1,0 +1,27 @@
+.ng-reveal {
+  padding: 12px 14px;
+  background: var(--ng-surf);
+  border: 1px solid var(--ng-stroke);
+  border-left: 4px solid var(--ng-cyan);
+  border-radius: var(--ng-radius);
+  color: var(--ng-text);
+  font-size: var(--ng-font-body);
+  line-height: 1.5;
+}
+
+.ng-reveal-heading {
+  margin-bottom: 6px;
+}
+
+.ng-reveal p {
+  margin: 0 0 6px;
+}
+
+.ng-reveal p:last-child {
+  margin-bottom: 0;
+}
+
+.ng-reveal-heading:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 3px;
+}

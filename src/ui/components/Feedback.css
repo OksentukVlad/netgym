@@ -1,0 +1,76 @@
+.ng-feedback {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 12px;
+  padding: 12px 14px;
+  background: var(--ng-surf);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  color: var(--ng-text);
+  font-size: var(--ng-font-body);
+  line-height: 1.45;
+}
+
+/* Empty: no box, but the live region stays in the accessibility tree so the
+   first message is announced. */
+.ng-feedback.is-empty {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  border: 0;
+}
+
+.ng-feedback.is-ok {
+  background: var(--ng-green-bg);
+  border-color: var(--ng-green);
+}
+
+/* «Ще ні» is amber, not red: a wrong try is part of learning. */
+.ng-feedback.is-no {
+  background: var(--ng-amber-bg);
+  border-color: var(--ng-amber);
+}
+
+.ng-feedback-badge {
+  flex: none;
+  font-family: var(--ng-mono);
+  font-weight: 700;
+}
+
+.is-ok > .ng-feedback-badge {
+  color: var(--ng-green);
+}
+
+.is-no > .ng-feedback-badge {
+  color: var(--ng-amber);
+}
+
+.ng-feedback-text {
+  flex: 1 1 20em;
+  min-width: 0;
+}
+
+.ng-feedback-text p {
+  margin: 0 0 6px;
+}
+
+.ng-feedback-text p:last-child {
+  margin-bottom: 0;
+}
+
+.ng-feedback-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+
+/* A repeated check: the words are out of the accessibility tree for a moment
+   (Feedback `stamp`), but keep their place so the bar doesn't jump. */
+.ng-feedback .is-clearing {
+  visibility: hidden;
+}

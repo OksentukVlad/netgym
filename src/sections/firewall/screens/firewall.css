@@ -1,0 +1,887 @@
+/* The firewall screen (FW-1 screen spec §2, v2 S4): plain classes on
+ * src/ui/tokens.css, in the routing screen's look. Existing tokens only;
+ * the pairs it draws are in tests/contrast.test.mjs.
+ *
+ * Layout (FirewallScreen.jsx sets data-mode from the screen's width).
+ * Round 4 (spec A2): the page is the one vertical scroller; no inner scroll
+ * box, no sticky footer.
+ *   desk, wide  ≥ 960   heading, task, dots and diagram (sticky, one screen
+ *                       high: --ng-fw-screen) | the work column (card, the
+ *                       chain, the rules, the help panel) at its natural
+ *                       height
+ *   narrow      < 960   one column: heading, task, dots, the work, then the
+ *                       diagram; nothing sticky
+ *
+ * Height budget at 1280 × 800 (S4): the work column holds the card, the
+ * chain, one chain's rows (44 px each) and the help panel. */
+
+.ng-fw {
+  position: relative;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "side" "work" "stage";
+  align-content: start;
+  gap: 6px 10px;
+  padding: 6px 12px;
+  background: var(--ng-bg);
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-body);
+  line-height: 1.35;
+  text-align: left;
+}
+
+.ng-fw *,
+.ng-fw *::before,
+.ng-fw *::after {
+  box-sizing: border-box;
+}
+
+.ng-fw[data-mode="desk"],
+.ng-fw[data-mode="wide"] {
+  min-height: 100%;
+  grid-template-columns: minmax(0, 1fr) minmax(420px, min(540px, 43%));
+  grid-template-areas: "side work";
+  align-items: start;
+}
+
+.ng-fw-side { grid-area: side; }
+.ng-fw-work { grid-area: work; }
+.ng-fw-stage { grid-area: stage; }
+
+.ng-fw-side {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* Two columns: the left column (and its diagram) stays in view while the
+   work column scrolls with the page; at least one screen high, the diagram
+   filling it. Taller (an open aside, a narrow window), it scrolls with the
+   page until its end is in view (--ng-fw-top, FirewallScreen.jsx). */
+.ng-fw[data-mode="desk"] .ng-fw-side,
+.ng-fw[data-mode="wide"] .ng-fw-side {
+  position: sticky;
+  top: var(--ng-fw-top, 6px);
+  min-height: max(420px, calc(var(--ng-fw-screen, 100vh) - 12px));
+}
+
+.ng-fw button:focus-visible,
+.ng-fw [tabindex]:focus-visible,
+.ng-fw-controls button:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}
+
+/* ── Shared parts ────────────────────────────────────────── */
+
+.ng-fw-btn,
+.ng-fw-icon {
+  min-height: var(--ng-target);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  background: var(--ng-input-bg);
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.ng-fw-btn { padding: 0 14px; }
+
+.ng-fw-icon {
+  min-width: var(--ng-target);
+  padding: 0 8px;
+  font-size: 18px;
+}
+
+.ng-fw-btn:hover,
+.ng-fw-icon:hover {
+  background: var(--ng-blue-bg);
+  border-color: var(--ng-blue);
+}
+
+.ng-fw-btn[aria-pressed="true"],
+.ng-fw-btn[aria-expanded="true"] {
+  background: var(--ng-blue-bg);
+  border-color: var(--ng-blue);
+}
+
+.ng-fw [aria-disabled="true"] {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.ng-fw-caption {
+  display: block;
+  margin: 0;
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  letter-spacing: 1px;
+  line-height: 1.1;
+  text-transform: uppercase;
+  color: var(--ng-muted);
+}
+
+/* ── Bar controls (in the top bar's slot, or in place without a bar) ── */
+
+.ng-fw-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.ng-fw-syntax,
+
+.ng-fw-syntax {
+  color: var(--ng-muted);
+  font-weight: 400;
+}
+
+.ng-fw-controls .ng-fw-icon {
+  font-size: var(--ng-font-body);
+  line-height: 1.35;
+}
+
+/* ── Heading, lesson, progress ───────────────────────────── */
+
+.ng-fw-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+
+.ng-fw-h1 {
+  margin: 0;
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  font-weight: 400;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ng-muted);
+}
+
+.ng-fw-h1:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}
+
+.ng-fw-variants .ng-segmented-options {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+/* The level and the rule set: compact, so they share a row where they can. */
+.ng-fw-variants .ng-segmented-option {
+  padding: 0 10px;
+}
+
+/* The exercise switch in the top bar («Передбач», «Порядок правил»):
+   slightly tighter options, so «Передбач»'s bar (syntax, score, ↺, theme)
+   stays one row down to 1000 px. */
+.ng-fw-exercises .ng-segmented-option {
+  padding: 0 10px;
+}
+
+.ng-fw-intro p {
+  margin: 0;
+  font-size: var(--ng-font-small);
+  line-height: 1.35;
+}
+
+.ng-fw-variant-text,
+.ng-fw-rule-sentence {
+  color: var(--ng-text);
+}
+
+/* Level 1's rule sentence (round 5): the task's second paragraph, the same size. */
+.ng-fw-intro .ng-fw-rule-sentence {
+  margin-top: 4px;
+}
+
+.ng-fw-lesson {
+  margin-top: 2px !important;
+  padding-left: 10px;
+  border-left: 3px solid var(--ng-cyan);
+  color: var(--ng-text);
+}
+
+.ng-fw-progress {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.ng-fw-progress-text {
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+}
+
+.ng-fw-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ng-fw-dot {
+  width: var(--ng-target);
+  height: var(--ng-target);
+  padding: 0;
+  border: 1px solid var(--ng-stroke);
+  border-radius: 50%;
+  background: var(--ng-input-bg);
+  color: var(--ng-muted);
+  font-family: var(--ng-mono);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ng-fw-dot:disabled {
+  cursor: default;
+}
+
+.ng-fw-dot.is-current {
+  border: 2px solid var(--ng-cyan);
+  color: var(--ng-cyan);
+}
+
+.ng-fw-dot.is-ok { color: var(--ng-green); }
+.ng-fw-dot.is-no { color: var(--ng-amber); }
+.ng-fw-dot.is-revealed { color: var(--ng-text); }
+
+.ng-fw-dot:not(:disabled):hover {
+  background: var(--ng-blue-bg);
+}
+
+/* ── Work panel: card, door, table, «Перевірити», feedback ── */
+
+.ng-fw-work,
+.ng-fw-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding: 6px;
+  background: var(--ng-panel);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius-l);
+}
+
+.ng-fw-work {
+  gap: 6px;
+}
+
+/* Two columns: the drawing fills the rest of the sticky column, never below
+   its tool row and its frame's floor. */
+.ng-fw[data-mode="desk"] .ng-fw-stage,
+.ng-fw[data-mode="wide"] .ng-fw-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.ng-fw-card {
+  padding: 2px 8px 3px;
+  background: var(--ng-surf);
+  border: 1px solid var(--ng-stroke);
+  border-radius: 10px;
+  font-size: var(--ng-font-small);
+  line-height: 1.25;
+}
+
+.ng-fw-card:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}
+
+.ng-fw-card-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 12px;
+  margin: 0;
+}
+
+.ng-fw-label {
+  color: var(--ng-muted);
+  font-size: var(--ng-font-caption);
+}
+
+.ng-fw-value,
+.ng-fw-mono {
+  font-family: var(--ng-mono);
+  font-weight: 700;
+}
+
+.ng-fw-value.is-small {
+  font-size: var(--ng-font-caption);
+}
+
+.ng-fw-rules {
+  display: flex;
+  flex-direction: column;
+}
+
+/* The door choice: its caption beside the two doors (S4's height budget). */
+.ng-fw-doors {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+}
+
+.ng-fw-door-options {
+  display: flex;
+  flex: 1 1 20em;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ng-fw-door-option {
+  flex: 1 1 9em;
+  min-height: 52px;
+  padding: 4px 10px;
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  background: var(--ng-input-bg);
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-small);
+  font-weight: 400;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.ng-fw-door-option b {
+  font-family: var(--ng-mono);
+}
+
+.ng-fw-door-option:hover {
+  border-color: var(--ng-blue);
+}
+
+.ng-fw-door-option[aria-checked="true"] {
+  background: var(--ng-button-bg);
+  border: 2px solid var(--ng-blue);
+  color: var(--ng-button-text);
+}
+
+/* After commitment, the door the filter took has the diagram's chosen
+   style, whichever the student picked (fix round 1). */
+.ng-fw-door-option.is-decided {
+  background: var(--ng-blue-bg);
+  border: 3px solid var(--ng-path);
+  color: var(--ng-text);
+}
+
+[aria-readonly="true"] > .ng-fw-door-option,
+[aria-readonly="true"] > .ng-fw-row {
+  cursor: default;
+}
+
+.ng-fw-decided {
+  font-weight: 400;
+}
+
+/* The table: one numbered list, one line per row, 44 px each. */
+.ng-fw-table {
+  display: flex;
+  flex-direction: column;
+  background: var(--ng-surf);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+}
+
+/* The rows' corners follow the table's (it doesn't clip: a state's meaning floats out of it). */
+.ng-fw-row:first-child { border-radius: var(--ng-radius) var(--ng-radius) 0 0; }
+.ng-fw-row:last-child { border-radius: 0 0 var(--ng-radius) var(--ng-radius); }
+
+.ng-fw-row {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0;
+  min-height: var(--ng-target);
+  margin: 0;
+  padding: 1px 8px;
+  border: 0;
+  border-left: 4px solid transparent;
+  background: transparent;
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-caption);
+  line-height: 1.2;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ng-fw-row + .ng-fw-row {
+  border-top: 1px solid var(--ng-stroke);
+}
+
+.ng-fw-row:hover {
+  background: var(--ng-blue-bg);
+}
+
+.ng-fw .ng-fw-row:focus-visible {
+  outline-offset: -3px;
+}
+
+/* The student's own choice: an outline (the only pre-commit difference). */
+.ng-fw-row.is-selected {
+  box-shadow: inset 0 0 0 2px var(--ng-blue);
+}
+
+/* Number · chain · action · conditions; the conditions wrap in their own
+   column (only rule 8's do, into two lines inside the 44 px). */
+.ng-fw-row-line {
+  display: grid;
+  grid-template-columns: 0.8em 4.3em auto minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0 6px;
+}
+
+.ng-fw-n {
+  width: auto;
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+  text-align: right;
+  color: var(--ng-text);
+}
+
+.ng-fw-chain {
+  font-family: var(--ng-mono);
+  color: var(--ng-muted);
+}
+
+.ng-fw-action {
+  min-width: 6.4em;
+  padding: 0 4px;
+  border: 1px solid var(--ng-line);
+  border-radius: 10px;
+  font-family: var(--ng-mono);
+  font-weight: 700;
+  text-align: center;
+}
+
+.ng-fw-conds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 8px;
+  min-width: 0;
+}
+
+/* A long condition wraps inside its column (round 5 repair: row 6's states at 1000 px). */
+.ng-fw-cond {
+  font-family: var(--ng-mono);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.ng-fw-cond + .ng-fw-cond::before {
+  content: "·";
+  margin-right: 8px;
+  color: var(--ng-muted);
+}
+
+.ng-fw-end-label {
+  grid-column: 3 / 5;
+  color: var(--ng-text);
+}
+
+.ng-fw-row.is-disabled .ng-fw-action,
+.ng-fw-row.is-disabled .ng-fw-conds {
+  text-decoration: line-through;
+  color: var(--ng-muted);
+}
+
+.ng-fw-off,
+.ng-fw-yours {
+  padding: 0 6px;
+  border: 1px dashed var(--ng-muted);
+  border-radius: 10px;
+  color: var(--ng-text);
+  font-size: var(--ng-font-caption);
+}
+
+.ng-fw-yours {
+  margin-right: 8px;
+  border: 2px solid var(--ng-blue);
+  font-weight: 400;
+}
+
+.ng-fw-off {
+  grid-column: 5;
+}
+
+.ng-fw-desc,
+.ng-fw-walk {
+  font-size: var(--ng-font-caption);
+}
+
+.ng-fw-desc {
+  color: var(--ng-muted);
+}
+
+/* A state's meaning, shown while its row or the card has keyboard focus
+   (aria-describedby points at a hidden copy). It floats over its
+   neighbours, so focus moving away never shifts what the pointer is about
+   to press, and the pointer passes through it. Under the card and the upper
+   rows; above the lower rows, clear of the sticky foot. */
+.ng-fw-card,
+.ng-fw-row {
+  position: relative;
+}
+
+.ng-fw-meaning {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: calc(100% + 2px);
+  z-index: 2;
+  margin: 0;
+  padding: 4px 8px;
+  background: var(--ng-surf);
+  border: 1px solid var(--ng-focus);
+  border-radius: var(--ng-radius);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-caption);
+  font-weight: 400;
+  line-height: 1.35;
+  text-align: left;
+  pointer-events: none;
+}
+
+.ng-fw-row.is-lower .ng-fw-meaning {
+  top: auto;
+  bottom: calc(100% + 2px);
+}
+
+/* The slow-path assumption, under the table once the FastTrack row is lit. */
+.ng-fw-note {
+  margin: 3px 0 0;
+  padding: 2px 8px;
+  border-left: 3px solid var(--ng-blue);
+  color: var(--ng-text);
+  font-size: var(--ng-font-caption);
+  line-height: 1.35;
+}
+
+.ng-fw-cmd {
+  display: block;
+  margin-top: 2px;
+  padding: 2px 6px;
+  background: var(--ng-code-bg);
+  border-radius: 4px;
+  color: var(--ng-code);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* The walk, row by row (§5): words carry it; colour only helps. */
+.ng-fw-walk { font-weight: 700; }
+.ng-fw-row.is-other-chain,
+.ng-fw-row.is-disabled.is-disabled { color: var(--ng-muted); }
+.ng-fw-row.is-other-chain .ng-fw-n { color: var(--ng-muted); }
+.ng-fw-row.is-mismatch,
+.ng-fw-row.is-unknown { background: var(--ng-amber-bg); border-left-color: var(--ng-amber); }
+.ng-fw-row.is-mismatch .ng-fw-walk,
+.ng-fw-row.is-unknown .ng-fw-walk { color: var(--ng-amber); }
+.ng-fw-row.is-match,
+.ng-fw-row.is-end { background: var(--ng-green-bg); border-left-color: var(--ng-green); }
+.ng-fw-row.is-match .ng-fw-walk,
+.ng-fw-row.is-end .ng-fw-walk { color: var(--ng-green); }
+.ng-fw-row.is-marked { background: var(--ng-blue-bg); border-left-color: var(--ng-blue); }
+.ng-fw-row.is-marked .ng-fw-walk { color: var(--ng-button-text); }
+.ng-fw-row.is-not-reached { color: var(--ng-muted); border-left-style: dashed; border-left-color: var(--ng-stroke); }
+.ng-fw-row.is-not-reached .ng-fw-n,
+.ng-fw-row.is-not-reached .ng-fw-end-label { color: var(--ng-muted); }
+.ng-fw-row.is-not-reached .ng-fw-walk { font-weight: 400; }
+
+/* The verdict's evidence lines (which chain and row decided, the round's end). */
+.ng-fw-after {
+  font-size: var(--ng-font-small);
+  line-height: 1.4;
+}
+
+.ng-fw-after p { margin: 0; }
+
+.ng-fw-round {
+  font-weight: 700;
+}
+
+/* The other chain, folded into one grey line (round 4, spec F1). */
+.ng-fw-folded {
+  margin: 3px 0 0;
+  padding: 4px 8px;
+  border: 1px dashed var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  color: var(--ng-muted);
+  font-size: var(--ng-font-caption);
+  line-height: 1.35;
+}
+
+/* Level 1's committed marks (round 5): one line under the pair, not inside the buttons. */
+.ng-fw-marks {
+  flex: 1 1 100%;
+  margin: 2px 0 0;
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  color: var(--ng-text);
+}
+
+/* A rule's purpose (round 5, R2): the second line under its row, always shown. */
+.ng-fw-row .ng-fw-purpose {
+  padding-left: calc(0.8em + 6px);
+}
+
+/* Level 1's card: two lines, each a line of its own. */
+.ng-fw-card.is-short {
+  padding: 4px 10px;
+}
+
+/* A reply packet (level 2): a given, under its card. */
+.ng-fw-reply {
+  margin: 0;
+  padding: 2px 8px;
+  border-left: 3px solid var(--ng-cyan);
+  font-size: var(--ng-font-small);
+}
+
+/* A revealed card: a quiet «показано» chip (never a solve's look) and «Моя відповідь». */
+.ng-fw-shown {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.ng-fw-shown-chip {
+  padding: 0 8px;
+  border: 1px dashed var(--ng-muted);
+  border-radius: 10px;
+  color: var(--ng-muted);
+  font-size: var(--ng-font-caption);
+}
+
+/* «Команда RouterOS» («⋯»). */
+.ng-fw-script {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 6px 8px;
+  background: var(--ng-code-bg);
+  border-radius: var(--ng-radius);
+  color: var(--ng-code);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ng-fw-more-host:empty { display: none; }
+
+/* ── Stage: diagram, walk controls, hints ────────────────── */
+
+.ng-fw-dg {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--ng-svg-bg);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+}
+
+/* The diagram fills the sticky column, never below its tool row and its frame's floor. */
+.ng-fw[data-mode="desk"] .ng-fw-dg,
+.ng-fw[data-mode="wide"] .ng-fw-dg {
+  flex: 1 1 auto;
+}
+
+.ng-fw-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  box-sizing: border-box;
+  /* Round 4 A3: the zoom bar's row height is reserved, so its appearance moves nothing. */
+  min-height: calc(var(--ng-target) + 6px);
+  padding: 6px 6px 0;
+}
+
+.ng-fw-zoom {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.ng-fw-view {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Round 5: the floor is the compact drawing at 12 px text (252 units + the
+   frame's padding), so at 1000 × 700 level 2's first view (its lesson open)
+   still shows R1's addresses without scrolling. */
+.ng-fw[data-mode="desk"] .ng-fw-view,
+.ng-fw[data-mode="wide"] .ng-fw-view {
+  flex: 1 1 0;
+  min-height: 270px;
+}
+
+.ng-fw[data-mode="narrow"] .ng-fw-view.has-overlay {
+  min-height: min(70vh, 560px);
+}
+
+.ng-fw-frame {
+  display: flex;
+  padding: 8px; /* FirewallDiagram FRAME_PAD */
+  overflow: hidden;
+  border-radius: var(--ng-radius);
+}
+
+.ng-fw[data-mode="desk"] .ng-fw-frame,
+.ng-fw[data-mode="wide"] .ng-fw-frame {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.ng-fw[data-mode="narrow"] .ng-fw-frame {
+  height: 340px;
+}
+
+.ng-fw-frame.is-pan {
+  overflow: auto;
+}
+
+.ng-fw-frame.is-covered {
+  visibility: hidden;
+}
+
+.ng-fw .ng-fw-frame:focus-visible {
+  outline-offset: -3px;
+}
+
+.ng-fw-svg {
+  display: block;
+  flex: none;
+  margin: auto;
+}
+
+.ng-fw-svg text { font-family: var(--ng-mono); }
+.ng-fw-svg .ng-fw-sans { font-family: var(--ng-sans); }
+
+.ng-fw-link { stroke: var(--ng-link); stroke-width: 1.5; }
+.ng-fw-router { fill: var(--ng-surf); stroke: var(--ng-router-0); stroke-width: 2; }
+.ng-fw-router-name { fill: var(--ng-router-0); }
+.ng-fw-lane { stroke: var(--ng-muted); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.ng-fw-lane.is-dim { stroke: var(--ng-stroke); }
+.ng-fw-core-mark { fill: var(--ng-input-bg); stroke: var(--ng-router-0); stroke-width: 2; }
+.ng-fw-core-dot { fill: var(--ng-router-0); }
+.ng-fw-core-text { fill: var(--ng-text); }
+.ng-fw-core.is-reached .ng-fw-core-mark { stroke: var(--ng-green); stroke-width: 3; }
+
+.ng-fw-door-box { fill: var(--ng-input-bg); stroke: var(--ng-muted); stroke-width: 1.5; }
+.ng-fw-door-name,
+.ng-fw-door-words { fill: var(--ng-text); }
+.ng-fw-door.is-chosen .ng-fw-door-box { fill: var(--ng-blue-bg); stroke: var(--ng-path); stroke-width: 3; }
+.ng-fw-door.is-dim .ng-fw-door-box { stroke: var(--ng-stroke); }
+.ng-fw-door.is-dim .ng-fw-door-name,
+.ng-fw-door.is-dim .ng-fw-door-words { fill: var(--ng-muted); }
+
+.ng-fw-box { fill: var(--ng-net-fill); stroke: var(--ng-muted); stroke-width: 1.5; }
+.ng-fw-box-name { fill: var(--ng-text); }
+.ng-fw-box-ip { fill: var(--ng-text); }
+.ng-fw-place.is-given .ng-fw-box { stroke: var(--ng-cyan); stroke-width: 3; }
+.ng-fw-place.is-given .ng-fw-box-name { fill: var(--ng-cyan); }
+
+.ng-fw-port-mark { fill: var(--ng-router-0); }
+.ng-fw-port-name { fill: var(--ng-text); }
+.ng-fw-addresses-title { fill: var(--ng-text); }
+.ng-fw-address { fill: var(--ng-text); }
+.ng-fw-port.is-given .ng-fw-port-mark { fill: var(--ng-cyan); }
+.ng-fw-port.is-given .ng-fw-port-name { fill: var(--ng-cyan); }
+.ng-fw-chip-box { fill: var(--ng-blue-bg); stroke: var(--ng-cyan); stroke-width: 1.5; }
+.ng-fw-chip-text { fill: var(--ng-text); }
+.ng-fw-nat { fill: var(--ng-text); }
+
+.ng-fw-path-line { fill: none; stroke: var(--ng-path); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+.ng-fw-envelope { transition: transform 300ms linear; }
+.ng-fw-envelope-box { fill: var(--ng-path); stroke: var(--ng-svg-bg); stroke-width: 1; }
+.ng-fw-envelope-flap { stroke: var(--ng-svg-bg); stroke-width: 1.4; }
+.ng-fw-waiting { fill: none; stroke: var(--ng-path); stroke-width: 2; animation: ng-fw-pulse 0.9s ease-in-out infinite; }
+.ng-fw-stop-dot { fill: var(--ng-amber); }
+.ng-fw-stop-text { fill: var(--ng-svg-bg); }
+.ng-fw-place.is-arrived .ng-fw-box { stroke: var(--ng-green); stroke-width: 3; }
+
+@keyframes ng-fw-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ng-fw-envelope { transition: none; }
+  .ng-fw-waiting { animation: none; }
+}
+
+.ng-fw-illustration {
+  margin: 0;
+  padding: 2px 8px;
+  border-left: 3px solid var(--ng-green);
+  color: var(--ng-text);
+  font-size: var(--ng-font-caption);
+}
+
+.ng-fw-walkbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.ng-fw-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ng-fw-step-text {
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+}
+
+.ng-fw-rules-list {
+  margin: 0 0 8px;
+  padding: 0 0 0 1.2em;
+  font-size: var(--ng-font-small);
+  line-height: 1.45;
+}
+
+.ng-fw-rules-list li + li {
+  margin-top: 4px;
+}
+
+/* A narrow window (about 1000 px): the level and the rule set keep to fewer rows. */
+@media (max-width: 1100px) {
+  .ng-fw-head .ng-segmented-option { padding: 0 8px; font-size: var(--ng-font-caption); }
+}

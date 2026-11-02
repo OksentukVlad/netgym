@@ -1,0 +1,705 @@
+/* «Налаштування з нуля» (DR-1–DR-3, round 4): plain classes on
+ * src/ui/tokens.css. Existing tokens only; the pairs it draws are in
+ * tests/contrast.test.mjs. The deck's rows are ReorderList's
+ * (src/ui/components/ReorderList.css); the help panel is HelpPanel's.
+ *
+ * Layout (SetupScreen.jsx sets data-layout from the screen's width):
+ *   desk    ≥ 1200   heading, picker, task and profile across the top; then
+ *                    the board (deck, recall lines, script) on the left and
+ *                    the help panel with the asides on the right
+ *   narrow  < 1200   one column: the panel before a long board (after a
+ *                    short one), the asides last
+ * The help panel sits in the work grid as HelpPanel's host (a portal next to
+ * the board); anchored after a flagged row it lives inside the deck's list.
+ * Nothing is sticky and nothing scrolls on its own: the screen area
+ * (.ng-screen) is the one scroll (spec A2). */
+
+.ng-su {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 12px 12px;
+  background: var(--ng-bg);
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-body);
+  line-height: 1.35;
+  text-align: left;
+}
+
+.ng-su *,
+.ng-su *::before,
+.ng-su *::after {
+  box-sizing: border-box;
+}
+
+.ng-su button:focus-visible,
+.ng-su input:focus-visible,
+.ng-su summary:focus-visible,
+.ng-su [tabindex]:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}
+
+/* ── Heading, picker, task, profile ──────────────────────── */
+
+.ng-su-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+}
+
+.ng-su-h1 {
+  flex-basis: 100%;
+  margin: 0;
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  font-weight: 400;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ng-muted);
+}
+
+.ng-su-h1:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 3px;
+}
+
+/* «⋯» at the end of the header controls (spec A4). */
+.ng-su-more-menu { margin-left: auto; }
+
+.ng-su-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ng-su-intro p { margin: 0; }
+
+.ng-su-task {
+  font-size: var(--ng-font-body);
+  line-height: 1.35;
+}
+
+/* The mode help (round 5, repair v1): one «?» at the end of the Cisco
+   action line, a 44 px target that keeps the line's height, and its popover
+   under the line, from its start, over the deck (nothing moves). */
+.ng-su-action { position: relative; }
+
+.ng-su-modes-q {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--ng-target);
+  min-height: var(--ng-target);
+  margin: -11px -6px -11px -4px;
+  padding: 0;
+  vertical-align: middle;
+  background: transparent;
+  border: 0;
+  border-radius: var(--ng-radius);
+  color: var(--ng-muted);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ng-su-modes-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--ng-stroke);
+  border-radius: 50%;
+}
+
+.ng-su-modes-q:hover .ng-su-modes-dot,
+.ng-su-modes-q[aria-expanded="true"] .ng-su-modes-dot {
+  border-color: var(--ng-cyan);
+  color: var(--ng-cyan);
+}
+
+.ng-su-modes-pop {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 2px);
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: min(100%, 360px);
+  padding: 10px 12px;
+  background: var(--ng-panel);
+  border: 1px solid var(--ng-line);
+  border-radius: var(--ng-radius);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.35);
+  color: var(--ng-text);
+}
+
+.ng-su-modes-pop[hidden] { display: none; }
+.ng-su-modes-pop:focus-visible { outline: var(--ng-focus-width) solid var(--ng-focus); outline-offset: 2px; }
+.ng-su-modes-pop .ng-su-modes-words { font-size: var(--ng-font-small); }
+
+.ng-su-modes-full {
+  align-self: flex-start;
+  min-height: var(--ng-target);
+  margin: -6px 0 -10px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: var(--ng-button-text);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-small);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* The device and the givens (one context block, spec S3), a size smaller. */
+.ng-su-profile {
+  max-width: 120ch;
+  color: var(--ng-muted);
+  font-size: var(--ng-font-caption);
+  line-height: 1.4;
+}
+
+.ng-su-caption {
+  margin: 0;
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  font-weight: 400;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ng-muted);
+}
+
+.ng-su-profile .ng-su-caption { letter-spacing: 1px; }
+
+/* The light theme's pale chosen option was too weak (as VLAN's device
+   switcher was): the chosen deck takes the dark blue there. */
+[data-theme="light"] .ng-su-decks .ng-segmented-option[aria-checked="true"] {
+  background: var(--ng-button-text);
+  border-color: var(--ng-button-text);
+  color: var(--ng-panel);
+}
+
+[data-theme="light"] .ng-su-decks .ng-segmented-option[aria-checked="true"] .ng-done { color: inherit; }
+
+/* ── The work area: board | panel and asides ─────────────── */
+
+.ng-su-work {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 8px 18px;
+}
+
+.ng-su-work > .ng-help-host { margin: 0; }
+
+.ng-su[data-layout="desk"] .ng-su-work {
+  grid-template-columns: minmax(0, 1fr) clamp(300px, 27%, 380px);
+  grid-template-rows: auto 1fr;
+}
+
+.ng-su[data-layout="desk"] .ng-su-board { grid-column: 1; grid-row: 1 / span 2; }
+.ng-su[data-layout="desk"] .ng-su-work > .ng-help-host { grid-column: 2; grid-row: 1; }
+.ng-su[data-layout="desk"] .ng-su-side { grid-column: 2; grid-row: 2; }
+
+.ng-su-board {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* Anchored after a flagged row: the panel inside the deck's list, framed so
+   it reads as a note on that row. */
+.ng-su .ng-reorder > .ng-help-host {
+  margin: 2px 0 6px;
+  padding: 8px 10px;
+  border-left: 3px solid var(--ng-stroke);
+  list-style: none;
+}
+
+.ng-su-side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.ng-su-side:empty { display: none; }
+
+/* ── The deck's rows ─────────────────────────────────────── */
+
+/* One line per card where the command allows: a long command wraps inside
+   its own cell, the prompt group keeps its place on the right; the purpose
+   and the Winbox path are the lines under them. */
+.ng-su-row {
+  display: grid;
+  grid-template-columns: minmax(8em, 1fr) auto;
+  align-items: center;
+  gap: 1px 8px;
+  min-width: 0;
+}
+
+/* The purpose (and DR-3's Winbox path) run under the whole row, the prompt
+   group too, so a purpose stays one line (round 5, R2). */
+.ng-su-row > .ng-su-purpose,
+.ng-su-row > .ng-su-path { grid-column: 1 / -1; }
+
+.ng-su-first {
+  grid-column: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  min-width: 0;
+}
+
+.ng-su-cmd {
+  min-width: 0;
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: break-word;
+}
+
+/* DR-3's login check: a step in words, not a command. */
+.ng-su-step {
+  min-width: 0;
+  color: var(--ng-text);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.ng-su-hand { font-weight: 400; }
+
+.ng-reorder-item:has(.ng-su-row.is-step) {
+  background: var(--ng-surf);
+  border-left-style: dashed;
+}
+
+/* The card's purpose (R2, the shared Purpose: normal text colour) on its
+   second line; DR-3's Winbox path a third, muted line. */
+.ng-su-purpose { margin-top: -2px; overflow-wrap: break-word; }
+
+.ng-su-path {
+  color: var(--ng-muted);
+  font-size: var(--ng-font-caption);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+/* After a failed check: amber edge and «• Ще ні» in words (never colour alone).
+   An outline, painted above the row's ↑ ↓, so their edges never break it. */
+.ng-reorder-item.is-marked {
+  border-left-color: var(--ng-amber);
+  outline: 1px solid var(--ng-amber);
+  outline-offset: -1px;
+}
+
+.ng-su-mark {
+  flex: none;
+  color: var(--ng-amber);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* The prompts: one quiet group (one frame, the options plain text), the
+   chosen one filled; «режим?» before the group until one is chosen. The
+   group keeps its place (right-aligned), so choosing never moves it. */
+.ng-su-choice {
+  grid-column: 2;
+  grid-row: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.ng-su-empty {
+  color: var(--ng-muted);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  font-style: italic;
+}
+
+.ng-su-prompts .ng-segmented-options {
+  gap: 0;
+  padding: 1px;
+  background: transparent;
+  border: 1px solid var(--ng-stroke);
+}
+
+.ng-su-prompts .ng-segmented-option {
+  min-width: 28px;
+  min-height: 32px;
+  padding: 0 4px;
+  background: transparent;
+  border: 0;
+  color: var(--ng-muted);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+}
+
+.ng-su-prompts .ng-segmented-option:hover { color: var(--ng-text); }
+
+.ng-su-prompts .ng-segmented-option[aria-checked="true"] {
+  background: var(--ng-blue-bg);
+  color: var(--ng-text);
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px var(--ng-blue);
+}
+
+[data-theme="light"] .ng-su-prompts .ng-segmented-option[aria-checked="true"] {
+  background: var(--ng-button-text);
+  color: var(--ng-panel);
+  box-shadow: none;
+}
+
+/* A mode finding: the group's frame amber (aria-invalid on it). */
+.ng-su-prompts .ng-segmented-options[aria-invalid="true"] { border-color: var(--ng-amber); }
+
+/* Read-only (the learner's own order after a reveal): the chosen prompt as text. */
+.ng-su-chosen {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  color: var(--ng-muted);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+}
+
+/* ── After the cards: the script on the board ─────────────── */
+
+.ng-su-result {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ng-su-result-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.ng-su-own-toggle {
+  min-height: var(--ng-target);
+  padding: 0 12px;
+  background: var(--ng-input-bg);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-small);
+  cursor: pointer;
+}
+
+.ng-su-own-toggle[aria-pressed="true"] {
+  background: var(--ng-blue-bg);
+  border-color: var(--ng-blue);
+}
+
+.ng-su-scripts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ng-su-note {
+  margin: 0;
+  color: var(--ng-text);
+  font-size: var(--ng-font-caption);
+  line-height: 1.4;
+}
+
+.ng-su-part {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* The lines, one row per line, on the deck's surface (the theme's own
+   colours: a dimmed line stays readable in both themes); the gutter
+   (prompt), tags, paths and notes are not part of the text a selection
+   copies. */
+.ng-su-script {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 10px;
+  background: var(--ng-surf);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  line-height: 1.5;
+}
+
+.ng-su-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: 12px;
+  min-width: 0;
+}
+
+.ng-su-script.is-prompted .ng-su-line { grid-template-columns: 14ch minmax(0, 1fr) auto; }
+
+.ng-su-gutter,
+.ng-su-line-tag,
+.ng-su-line-path,
+.ng-su-line-note {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.ng-su-gutter {
+  color: var(--ng-muted);
+  font-size: var(--ng-font-caption);
+  white-space: nowrap;
+}
+
+.ng-su-text {
+  grid-column: -3;
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ng-su-line-tag {
+  grid-column: -2;
+  color: var(--ng-muted);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-caption);
+  font-style: italic;
+  white-space: nowrap;
+}
+
+.ng-su-line-path,
+.ng-su-line-note {
+  grid-column: -3 / -1;
+  margin-bottom: 2px;
+  color: var(--ng-muted);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-caption);
+  line-height: 1.3;
+}
+
+.ng-su-line.is-transition .ng-su-text,
+.ng-su-line.is-learned .ng-su-text { color: var(--ng-muted); }
+
+.ng-su-line.is-masked .ng-su-text { color: var(--ng-amber); font-weight: 700; }
+
+/* RouterOS's pause between the two parts. */
+.ng-su-line.is-pause .ng-su-text {
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-style: italic;
+}
+
+.ng-su-part-label { letter-spacing: 1px; }
+
+/* The learner's own order after a reveal. */
+.ng-su-own {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ng-su-own-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 2px 10px;
+  background: var(--ng-surf);
+  border-left: 3px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+}
+
+.ng-su-own-item > .ng-su-row { flex: 1 1 auto; }
+
+.ng-su-own-n {
+  flex: none;
+  min-width: 2ch;
+  color: var(--ng-muted);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+}
+
+/* ── Recall lines ────────────────────────────────────────── */
+
+.ng-su-recall {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ng-su-recall-line {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  background: var(--ng-surf);
+  border-left: 3px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+}
+
+.ng-su-recall-line.is-right { border-left-color: var(--ng-green); }
+.ng-su-recall-line.is-no { border-left-color: var(--ng-amber); }
+
+.ng-su-recall-desc {
+  font-size: var(--ng-font-small);
+  line-height: 1.35;
+}
+
+.ng-su-recall-n {
+  color: var(--ng-muted);
+  font-family: var(--ng-mono);
+}
+
+.ng-su-recall-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ng-su-recall-prompt {
+  flex: none;
+  min-width: 14ch;
+  color: var(--ng-muted);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+}
+
+.ng-su-recall-ok {
+  flex: none;
+  color: var(--ng-green);
+  font-weight: 700;
+}
+
+/* The field takes the line's whole width: a long command is never clipped. */
+.ng-su-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: var(--ng-target);
+  padding: 0 8px;
+  background: var(--ng-input-bg);
+  border: 1px solid var(--ng-line);
+  border-radius: var(--ng-radius);
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+}
+
+.ng-su-field::placeholder { color: var(--ng-muted); font-family: var(--ng-sans); }
+.ng-su-field[aria-invalid="true"] { border-color: var(--ng-amber); }
+.ng-su-field[readonly] { background: var(--ng-surf); }
+
+.ng-su-verdict {
+  font-size: var(--ng-font-small);
+  line-height: 1.4;
+}
+
+.ng-su-verdict:empty { display: none; }
+.ng-su-verdict p { margin: 0; }
+.ng-su-yes { color: var(--ng-green); }
+.ng-su-named { color: var(--ng-text); }
+
+.ng-su-echo code {
+  font-family: var(--ng-mono);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+/* The wrong part: an amber underline on a tint (and named in words below it). */
+.ng-su-bad {
+  background: var(--ng-amber-bg);
+  color: var(--ng-text);
+  text-decoration: underline 3px var(--ng-amber);
+  text-underline-offset: 3px;
+}
+
+/* ── The success explanation (in the panel) ───────────────── */
+
+.ng-su-why {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ng-su-tips {
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: var(--ng-font-small);
+  line-height: 1.4;
+}
+
+.ng-su-tips li + li { margin-top: 4px; }
+
+.ng-su-more > summary {
+  width: fit-content;
+  min-height: 28px;
+  color: var(--ng-muted);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  cursor: pointer;
+}
+
+.ng-su-more > .ng-su-tips { margin-top: 6px; }
+
+/* ── Asides: the CLI example, how to arrange ──────────────── */
+
+.ng-su-aside .ng-aside-body p + p { margin-top: 4px; }
+
+.ng-su-modes {
+  margin: 4px 0 6px;
+  padding: 4px 8px;
+  background: var(--ng-code-bg);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  color: var(--ng-code);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ng-su-modes-words {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  font-size: var(--ng-font-caption);
+}
+
+.ng-su-modes-words div { margin: 0; }
+.ng-su-modes-words dt { display: inline; color: var(--ng-text); font-family: var(--ng-mono); font-weight: 700; }
+.ng-su-modes-words dt::after { content: " — "; font-family: var(--ng-sans); font-weight: 400; }
+.ng-su-modes-words dd { display: inline; margin: 0; }

@@ -1,0 +1,16 @@
+/* The purpose line (R2): normal text colour, sans, 14 px (never below 12),
+   one line (PURPOSE_MAX); inline after a bare term (the screen gives the
+   separator), or a second line under a term with chips. */
+.ng-purpose {
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-caption);
+  font-weight: 400;
+  line-height: 1.3;
+  color: var(--ng-text);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.ng-purpose.is-stacked {
+  display: block;
+}

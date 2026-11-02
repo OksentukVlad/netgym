@@ -1,0 +1,7 @@
+/* DoneMark: a small green ✓ after the label it belongs to. */
+.ng-done {
+  margin-left: 6px;
+  color: var(--ng-green);
+  font-family: var(--ng-mono);
+  font-weight: 700;
+}

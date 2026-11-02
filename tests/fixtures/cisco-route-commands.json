@@ -1,0 +1,845 @@
+{
+  "source": "Cisco v2 routeCommand at df9d2a6; extra variants use the same frozen renderer",
+  "rows": [
+    {
+      "task": "routing.task-01",
+      "variant": "main",
+      "router": "R1",
+      "routeId": "R1.route1",
+      "command": "ip route 192.168.2.0 255.255.255.0 10.0.0.2"
+    },
+    {
+      "task": "routing.task-01",
+      "variant": "main",
+      "router": "R2",
+      "routeId": "R2.route1",
+      "command": "ip route 192.168.1.0 255.255.255.0 10.0.0.1"
+    },
+    {
+      "task": "routing.task-02",
+      "variant": "main",
+      "router": "R1",
+      "routeId": "R1.route1",
+      "command": "ip route 10.10.0.0 255.255.255.0 172.16.0.2"
+    },
+    {
+      "task": "routing.task-02",
+      "variant": "main",
+      "router": "R2",
+      "routeId": "R2.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 172.16.0.1"
+    },
+    {
+      "task": "routing.task-03",
+      "variant": "explicit-routes",
+      "router": "R1",
+      "routeId": "R1.route1",
+      "command": "ip route 10.3.0.0 255.255.255.0 192.168.0.2"
+    },
+    {
+      "task": "routing.task-03",
+      "variant": "explicit-routes",
+      "router": "R1",
+      "routeId": "R1.route2",
+      "command": "ip route 10.4.0.0 255.255.255.0 192.168.0.2"
+    },
+    {
+      "task": "routing.task-03",
+      "variant": "explicit-routes",
+      "router": "R2",
+      "routeId": "R2.route1",
+      "command": "ip route 10.1.0.0 255.255.255.0 192.168.0.1"
+    },
+    {
+      "task": "routing.task-03",
+      "variant": "explicit-routes",
+      "router": "R2",
+      "routeId": "R2.route2",
+      "command": "ip route 10.2.0.0 255.255.255.0 192.168.0.1"
+    },
+    {
+      "task": "routing.task-03",
+      "variant": "defaults",
+      "router": "R1",
+      "routeId": "R1.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 192.168.0.2"
+    },
+    {
+      "task": "routing.task-03",
+      "variant": "defaults",
+      "router": "R2",
+      "routeId": "R2.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 192.168.0.1"
+    },
+    {
+      "task": "routing.task-04",
+      "variant": "main",
+      "router": "R1",
+      "routeId": "R1.route1",
+      "command": "ip route 192.168.2.0 255.255.255.0 10.0.0.2"
+    },
+    {
+      "task": "routing.task-04",
+      "variant": "main",
+      "router": "R1",
+      "routeId": "R1.route2",
+      "command": "ip route 10.0.0.4 255.255.255.252 10.0.0.2"
+    },
+    {
+      "task": "routing.task-04",
+      "variant": "main",
+      "router": "R1",
+      "routeId": "R1.route3",
+      "command": "ip route 192.168.3.0 255.255.255.0 10.0.0.2"
+    },
+    {
+      "task": "routing.task-04",
+      "variant": "main",
+      "router": "R2",
+      "routeId": "R2.route1",
+      "command": "ip route 192.168.1.0 255.255.255.0 10.0.0.1"
+    },
+    {
+      "task": "routing.task-04",
+      "variant": "main",
+      "router": "R2",
+      "routeId": "R2.route2",
+      "command": "ip route 192.168.3.0 255.255.255.0 10.0.0.6"
+    },
+    {
+      "task": "routing.task-04",
+      "variant": "main",
+      "router": "R3",
+      "routeId": "R3.route1",
+      "command": "ip route 192.168.1.0 255.255.255.0 10.0.0.5"
+    },
+    {
+      "task": "routing.task-04",
+      "variant": "main",
+      "router": "R3",
+      "routeId": "R3.route2",
+      "command": "ip route 192.168.2.0 255.255.255.0 10.0.0.5"
+    },
+    {
+      "task": "routing.task-04",
+      "variant": "main",
+      "router": "R3",
+      "routeId": "R3.route3",
+      "command": "ip route 10.0.0.0 255.255.255.252 10.0.0.5"
+    },
+    {
+      "task": "routing.task-05",
+      "variant": "main",
+      "router": "R1",
+      "routeId": "R1.route1",
+      "command": "ip route 10.1.1.4 255.255.255.252 10.1.1.2"
+    },
+    {
+      "task": "routing.task-05",
+      "variant": "main",
+      "router": "R1",
+      "routeId": "R1.route2",
+      "command": "ip route 192.168.20.0 255.255.255.0 10.1.1.2"
+    },
+    {
+      "task": "routing.task-05",
+      "variant": "main",
+      "router": "R1",
+      "routeId": "R1.route3",
+      "command": "ip route 172.20.0.0 255.255.255.0 10.1.1.2"
+    },
+    {
+      "task": "routing.task-05",
+      "variant": "main",
+      "router": "R2",
+      "routeId": "R2.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 10.1.1.1"
+    },
+    {
+      "task": "routing.task-05",
+      "variant": "main",
+      "router": "R2",
+      "routeId": "R2.route2",
+      "command": "ip route 172.20.0.0 255.255.255.0 10.1.1.6"
+    },
+    {
+      "task": "routing.task-05",
+      "variant": "main",
+      "router": "R3",
+      "routeId": "R3.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 10.1.1.5"
+    },
+    {
+      "task": "routing.task-06",
+      "variant": "main",
+      "router": "R1",
+      "routeId": "R1.route1",
+      "command": "ip route 10.10.0.0 255.255.254.0 172.16.0.2"
+    },
+    {
+      "task": "routing.task-06",
+      "variant": "main",
+      "router": "R2",
+      "routeId": "R2.route1",
+      "command": "ip route 192.168.1.0 255.255.255.0 172.16.0.1"
+    },
+    {
+      "task": "routing.task-07",
+      "variant": "main",
+      "router": "R-HUB",
+      "routeId": "R-HUB.route1",
+      "command": "ip route 172.16.1.0 255.255.255.0 10.0.1.2"
+    },
+    {
+      "task": "routing.task-07",
+      "variant": "main",
+      "router": "R-HUB",
+      "routeId": "R-HUB.route2",
+      "command": "ip route 172.16.2.0 255.255.255.0 10.0.2.2"
+    },
+    {
+      "task": "routing.task-07",
+      "variant": "main",
+      "router": "R-HUB",
+      "routeId": "R-HUB.route3",
+      "command": "ip route 172.16.3.0 255.255.255.0 10.0.3.2"
+    },
+    {
+      "task": "routing.task-07",
+      "variant": "main",
+      "router": "R1",
+      "routeId": "R1.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 10.0.1.1"
+    },
+    {
+      "task": "routing.task-07",
+      "variant": "main",
+      "router": "R2",
+      "routeId": "R2.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 10.0.2.1"
+    },
+    {
+      "task": "routing.task-07",
+      "variant": "main",
+      "router": "R3",
+      "routeId": "R3.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 10.0.3.1"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "specific",
+      "router": "R1",
+      "routeId": "R1.route1",
+      "command": "ip route 192.168.2.0 255.255.255.0 10.0.0.2"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "specific",
+      "router": "R1",
+      "routeId": "R1.route2",
+      "command": "ip route 10.0.0.4 255.255.255.252 10.0.0.2"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "specific",
+      "router": "R1",
+      "routeId": "R1.route3",
+      "command": "ip route 192.168.3.0 255.255.255.0 10.0.0.2"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "specific",
+      "router": "R1",
+      "routeId": "R1.route4",
+      "command": "ip route 10.0.0.8 255.255.255.252 10.0.0.2"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "specific",
+      "router": "R1",
+      "routeId": "R1.route5",
+      "command": "ip route 192.168.4.0 255.255.255.0 10.0.0.2"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "specific",
+      "router": "R2",
+      "routeId": "R2.route1",
+      "command": "ip route 192.168.1.0 255.255.255.0 10.0.0.1"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "specific",
+      "router": "R2",
+      "routeId": "R2.route2",
+      "command": "ip route 192.168.3.0 255.255.255.0 10.0.0.6"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "specific",
+      "router": "R2",
+      "routeId": "R2.route3",
+      "command": "ip route 10.0.0.8 255.255.255.252 10.0.0.6"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "specific",
+      "router": "R2",
+      "routeId": "R2.route4",
+      "command": "ip route 192.168.4.0 255.255.255.0 10.0.0.6"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "specific",
+      "router": "R3",
+      "routeId": "R3.route1",
+      "command": "ip route 192.168.4.0 255.255.255.0 10.0.0.10"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "specific",
+      "router": "R3",
+      "routeId": "R3.route2",
+      "command": "ip route 192.168.2.0 255.255.255.0 10.0.0.5"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "specific",
+      "router": "R3",
+      "routeId": "R3.route3",
+      "command": "ip route 10.0.0.0 255.255.255.252 10.0.0.5"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "specific",
+      "router": "R3",
+      "routeId": "R3.route4",
+      "command": "ip route 192.168.1.0 255.255.255.0 10.0.0.5"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "specific",
+      "router": "R4",
+      "routeId": "R4.route1",
+      "command": "ip route 192.168.1.0 255.255.255.0 10.0.0.9"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "specific",
+      "router": "R4",
+      "routeId": "R4.route2",
+      "command": "ip route 192.168.2.0 255.255.255.0 10.0.0.9"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "specific",
+      "router": "R4",
+      "routeId": "R4.route3",
+      "command": "ip route 192.168.3.0 255.255.255.0 10.0.0.9"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "specific",
+      "router": "R4",
+      "routeId": "R4.route4",
+      "command": "ip route 10.0.0.0 255.255.255.252 10.0.0.9"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "specific",
+      "router": "R4",
+      "routeId": "R4.route5",
+      "command": "ip route 10.0.0.4 255.255.255.252 10.0.0.9"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "stub-defaults",
+      "router": "R1",
+      "routeId": "R1.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 10.0.0.2"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "stub-defaults",
+      "router": "R2",
+      "routeId": "R2.route1",
+      "command": "ip route 192.168.1.0 255.255.255.0 10.0.0.1"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "stub-defaults",
+      "router": "R2",
+      "routeId": "R2.route2",
+      "command": "ip route 192.168.3.0 255.255.255.0 10.0.0.6"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "stub-defaults",
+      "router": "R2",
+      "routeId": "R2.route3",
+      "command": "ip route 10.0.0.8 255.255.255.252 10.0.0.6"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "stub-defaults",
+      "router": "R2",
+      "routeId": "R2.route4",
+      "command": "ip route 192.168.4.0 255.255.255.0 10.0.0.6"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "stub-defaults",
+      "router": "R3",
+      "routeId": "R3.route1",
+      "command": "ip route 192.168.4.0 255.255.255.0 10.0.0.10"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "stub-defaults",
+      "router": "R3",
+      "routeId": "R3.route2",
+      "command": "ip route 192.168.2.0 255.255.255.0 10.0.0.5"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "stub-defaults",
+      "router": "R3",
+      "routeId": "R3.route3",
+      "command": "ip route 10.0.0.0 255.255.255.252 10.0.0.5"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "stub-defaults",
+      "router": "R3",
+      "routeId": "R3.route4",
+      "command": "ip route 192.168.1.0 255.255.255.0 10.0.0.5"
+    },
+    {
+      "task": "routing.task-08",
+      "variant": "stub-defaults",
+      "router": "R4",
+      "routeId": "R4.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 10.0.0.9"
+    },
+    {
+      "task": "routing.task-09",
+      "variant": "main",
+      "router": "R1",
+      "routeId": "R1.route1",
+      "command": "ip route 10.0.0.4 255.255.255.252 10.0.0.2"
+    },
+    {
+      "task": "routing.task-09",
+      "variant": "main",
+      "router": "R1",
+      "routeId": "R1.route2",
+      "command": "ip route 10.0.0.8 255.255.255.252 10.0.0.2"
+    },
+    {
+      "task": "routing.task-09",
+      "variant": "main",
+      "router": "R1",
+      "routeId": "R1.route3",
+      "command": "ip route 192.168.2.0 255.255.255.0 10.0.0.2"
+    },
+    {
+      "task": "routing.task-09",
+      "variant": "main",
+      "router": "R1",
+      "routeId": "R1.route4",
+      "command": "ip route 192.168.3.0 255.255.255.0 10.0.0.2"
+    },
+    {
+      "task": "routing.task-09",
+      "variant": "main",
+      "router": "R1",
+      "routeId": "R1.route5",
+      "command": "ip route 192.168.4.0 255.255.255.0 10.0.0.2"
+    },
+    {
+      "task": "routing.task-09",
+      "variant": "main",
+      "router": "R2",
+      "routeId": "R2.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 10.0.0.1"
+    },
+    {
+      "task": "routing.task-09",
+      "variant": "main",
+      "router": "R2",
+      "routeId": "R2.route2",
+      "command": "ip route 192.168.3.0 255.255.255.0 10.0.0.6"
+    },
+    {
+      "task": "routing.task-09",
+      "variant": "main",
+      "router": "R2",
+      "routeId": "R2.route3",
+      "command": "ip route 10.0.0.8 255.255.255.252 10.0.0.6"
+    },
+    {
+      "task": "routing.task-09",
+      "variant": "main",
+      "router": "R2",
+      "routeId": "R2.route4",
+      "command": "ip route 192.168.4.0 255.255.255.0 10.0.0.6"
+    },
+    {
+      "task": "routing.task-09",
+      "variant": "main",
+      "router": "R3",
+      "routeId": "R3.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 10.0.0.5"
+    },
+    {
+      "task": "routing.task-09",
+      "variant": "main",
+      "router": "R3",
+      "routeId": "R3.route2",
+      "command": "ip route 192.168.4.0 255.255.255.0 10.0.0.10"
+    },
+    {
+      "task": "routing.task-09",
+      "variant": "main",
+      "router": "R4",
+      "routeId": "R4.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 10.0.0.9"
+    },
+    {
+      "task": "routing.task-10",
+      "variant": "main",
+      "router": "R1",
+      "routeId": "R1.route1",
+      "command": "ip route 192.168.2.0 255.255.255.0 10.1.0.2"
+    },
+    {
+      "task": "routing.task-10",
+      "variant": "main",
+      "router": "R1",
+      "routeId": "R1.route2",
+      "command": "ip route 10.3.0.0 255.255.255.252 10.1.0.2"
+    },
+    {
+      "task": "routing.task-10",
+      "variant": "main",
+      "router": "R1",
+      "routeId": "R1.route3",
+      "command": "ip route 192.168.3.0 255.255.255.0 10.2.0.2"
+    },
+    {
+      "task": "routing.task-10",
+      "variant": "main",
+      "router": "R2",
+      "routeId": "R2.route1",
+      "command": "ip route 192.168.1.0 255.255.255.0 10.1.0.1"
+    },
+    {
+      "task": "routing.task-10",
+      "variant": "main",
+      "router": "R2",
+      "routeId": "R2.route2",
+      "command": "ip route 10.2.0.0 255.255.255.252 10.1.0.1"
+    },
+    {
+      "task": "routing.task-10",
+      "variant": "main",
+      "router": "R2",
+      "routeId": "R2.route3",
+      "command": "ip route 192.168.3.0 255.255.255.0 10.3.0.2"
+    },
+    {
+      "task": "routing.task-10",
+      "variant": "main",
+      "router": "R3",
+      "routeId": "R3.route1",
+      "command": "ip route 192.168.1.0 255.255.255.0 10.2.0.1"
+    },
+    {
+      "task": "routing.task-10",
+      "variant": "main",
+      "router": "R3",
+      "routeId": "R3.route2",
+      "command": "ip route 10.1.0.0 255.255.255.252 10.2.0.1"
+    },
+    {
+      "task": "routing.task-10",
+      "variant": "main",
+      "router": "R3",
+      "routeId": "R3.route3",
+      "command": "ip route 192.168.2.0 255.255.255.0 10.3.0.1"
+    },
+    {
+      "task": "routing.task-11",
+      "variant": "main",
+      "router": "R-GW",
+      "routeId": "R-GW.route1",
+      "command": "ip route 10.20.1.0 255.255.255.0 10.10.1.2"
+    },
+    {
+      "task": "routing.task-11",
+      "variant": "main",
+      "router": "R-GW",
+      "routeId": "R-GW.route2",
+      "command": "ip route 10.20.2.0 255.255.255.0 10.10.2.2"
+    },
+    {
+      "task": "routing.task-11",
+      "variant": "main",
+      "router": "R-GW",
+      "routeId": "R-GW.route3",
+      "command": "ip route 10.20.3.0 255.255.255.0 10.10.3.2"
+    },
+    {
+      "task": "routing.task-11",
+      "variant": "main",
+      "router": "R-A",
+      "routeId": "R-A.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 10.10.1.1"
+    },
+    {
+      "task": "routing.task-11",
+      "variant": "main",
+      "router": "R-B",
+      "routeId": "R-B.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 10.10.2.1"
+    },
+    {
+      "task": "routing.task-11",
+      "variant": "main",
+      "router": "R-C",
+      "routeId": "R-C.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 10.10.3.1"
+    },
+    {
+      "task": "routing.task-12",
+      "variant": "main",
+      "router": "R-CORE",
+      "routeId": "R-CORE.route1",
+      "command": "ip route 192.168.10.0 255.255.255.0 10.0.1.2"
+    },
+    {
+      "task": "routing.task-12",
+      "variant": "main",
+      "router": "R-CORE",
+      "routeId": "R-CORE.route2",
+      "command": "ip route 192.168.20.0 255.255.255.0 10.0.2.2"
+    },
+    {
+      "task": "routing.task-12",
+      "variant": "main",
+      "router": "R-A",
+      "routeId": "R-A.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 10.0.1.1"
+    },
+    {
+      "task": "routing.task-12",
+      "variant": "main",
+      "router": "R-B",
+      "routeId": "R-B.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 10.0.2.1"
+    },
+    {
+      "task": "routing.task-13",
+      "variant": "main",
+      "router": "R1",
+      "routeId": "R1.route1",
+      "command": "ip route 10.0.0.0 255.255.252.0 172.16.0.2"
+    },
+    {
+      "task": "routing.task-13",
+      "variant": "main",
+      "router": "R2",
+      "routeId": "R2.route1",
+      "command": "ip route 192.168.1.0 255.255.255.0 172.16.0.1"
+    },
+    {
+      "task": "routing.task-14",
+      "variant": "main",
+      "router": "R-HQ",
+      "routeId": "R-HQ.route1",
+      "command": "ip route 172.20.0.0 255.255.254.0 10.1.0.2"
+    },
+    {
+      "task": "routing.task-14",
+      "variant": "main",
+      "router": "R-HQ",
+      "routeId": "R-HQ.route2",
+      "command": "ip route 172.30.0.0 255.255.255.0 10.2.0.2"
+    },
+    {
+      "task": "routing.task-14",
+      "variant": "main",
+      "router": "R-F1",
+      "routeId": "R-F1.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 10.1.0.1"
+    },
+    {
+      "task": "routing.task-14",
+      "variant": "main",
+      "router": "R-F2",
+      "routeId": "R-F2.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 10.2.0.1"
+    },
+    {
+      "task": "routing.task-15",
+      "variant": "main",
+      "router": "R1",
+      "routeId": "R1.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 100.64.1.1 1"
+    },
+    {
+      "task": "routing.task-15",
+      "variant": "main",
+      "router": "R1",
+      "routeId": "R1.route2",
+      "command": "ip route 0.0.0.0 0.0.0.0 100.64.2.1 2"
+    },
+    {
+      "task": "routing.task-16",
+      "variant": "main",
+      "router": "R-INET",
+      "routeId": "R-INET.route1",
+      "command": "ip route 172.16.0.0 255.255.252.0 10.0.0.2"
+    },
+    {
+      "task": "routing.task-16",
+      "variant": "main",
+      "router": "R-INET",
+      "routeId": "R-INET.route2",
+      "command": "ip route 10.0.1.0 255.255.255.252 10.0.0.2"
+    },
+    {
+      "task": "routing.task-16",
+      "variant": "main",
+      "router": "R-INET",
+      "routeId": "R-INET.route3",
+      "command": "ip route 10.0.2.0 255.255.255.252 10.0.0.2"
+    },
+    {
+      "task": "routing.task-16",
+      "variant": "main",
+      "router": "R-INET",
+      "routeId": "R-INET.route4",
+      "command": "ip route 10.1.1.0 255.255.255.252 10.0.0.2"
+    },
+    {
+      "task": "routing.task-16",
+      "variant": "main",
+      "router": "R-INET",
+      "routeId": "R-INET.route5",
+      "command": "ip route 10.1.2.0 255.255.255.252 10.0.0.2"
+    },
+    {
+      "task": "routing.task-16",
+      "variant": "main",
+      "router": "R-INET",
+      "routeId": "R-INET.route6",
+      "command": "ip route 10.2.1.0 255.255.255.252 10.0.0.2"
+    },
+    {
+      "task": "routing.task-16",
+      "variant": "main",
+      "router": "R-CORE",
+      "routeId": "R-CORE.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 10.0.0.1"
+    },
+    {
+      "task": "routing.task-16",
+      "variant": "main",
+      "router": "R-CORE",
+      "routeId": "R-CORE.route2",
+      "command": "ip route 172.16.0.0 255.255.255.0 10.0.1.2"
+    },
+    {
+      "task": "routing.task-16",
+      "variant": "main",
+      "router": "R-CORE",
+      "routeId": "R-CORE.route3",
+      "command": "ip route 172.16.1.0 255.255.255.0 10.0.1.2"
+    },
+    {
+      "task": "routing.task-16",
+      "variant": "main",
+      "router": "R-CORE",
+      "routeId": "R-CORE.route4",
+      "command": "ip route 10.1.1.0 255.255.255.252 10.0.1.2"
+    },
+    {
+      "task": "routing.task-16",
+      "variant": "main",
+      "router": "R-CORE",
+      "routeId": "R-CORE.route5",
+      "command": "ip route 10.1.2.0 255.255.255.252 10.0.1.2"
+    },
+    {
+      "task": "routing.task-16",
+      "variant": "main",
+      "router": "R-CORE",
+      "routeId": "R-CORE.route6",
+      "command": "ip route 172.16.2.0 255.255.254.0 10.0.2.2"
+    },
+    {
+      "task": "routing.task-16",
+      "variant": "main",
+      "router": "R-CORE",
+      "routeId": "R-CORE.route7",
+      "command": "ip route 10.2.1.0 255.255.255.252 10.0.2.2"
+    },
+    {
+      "task": "routing.task-16",
+      "variant": "main",
+      "router": "R-AGG1",
+      "routeId": "R-AGG1.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 10.0.1.1"
+    },
+    {
+      "task": "routing.task-16",
+      "variant": "main",
+      "router": "R-AGG1",
+      "routeId": "R-AGG1.route2",
+      "command": "ip route 172.16.0.0 255.255.255.0 10.1.1.2"
+    },
+    {
+      "task": "routing.task-16",
+      "variant": "main",
+      "router": "R-AGG1",
+      "routeId": "R-AGG1.route3",
+      "command": "ip route 172.16.1.0 255.255.255.0 10.1.2.2"
+    },
+    {
+      "task": "routing.task-16",
+      "variant": "main",
+      "router": "R-AGG2",
+      "routeId": "R-AGG2.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 10.0.2.1"
+    },
+    {
+      "task": "routing.task-16",
+      "variant": "main",
+      "router": "R-AGG2",
+      "routeId": "R-AGG2.route2",
+      "command": "ip route 172.16.2.0 255.255.254.0 10.2.1.2"
+    },
+    {
+      "task": "routing.task-16",
+      "variant": "main",
+      "router": "R-ACC1",
+      "routeId": "R-ACC1.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 10.1.1.1"
+    },
+    {
+      "task": "routing.task-16",
+      "variant": "main",
+      "router": "R-ACC2",
+      "routeId": "R-ACC2.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 10.1.2.1"
+    },
+    {
+      "task": "routing.task-16",
+      "variant": "main",
+      "router": "R-ACC3",
+      "routeId": "R-ACC3.route1",
+      "command": "ip route 0.0.0.0 0.0.0.0 10.2.1.1"
+    }
+  ]
+}

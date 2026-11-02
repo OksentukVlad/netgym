@@ -1,0 +1,12 @@
+/* The action line (R1): plain body text, normal weight, at the size of the
+   text around it; one sentence above the first control. */
+.ng-action-line {
+  margin: 0;
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-small);
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ng-text);
+}

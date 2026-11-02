@@ -1,0 +1,68 @@
+.ng-te-button {
+  box-sizing: border-box;
+  min-height: var(--ng-target);
+  padding: 0 14px;
+  background: var(--ng-input-bg);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ng-te-button:hover {
+  background: var(--ng-blue-bg);
+  border-color: var(--ng-blue);
+}
+
+.ng-te-button[aria-expanded="true"] {
+  background: var(--ng-blue-bg);
+  border-color: var(--ng-blue);
+}
+
+.ng-te-button:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}
+
+/* Round 4 (A3): «Текстом» as a small text link; still a 44 px target. */
+.ng-te-button.is-link {
+  padding: 0 6px;
+  background: transparent;
+  border-color: transparent;
+  color: var(--ng-muted);
+  font-family: var(--ng-sans);
+  font-weight: 400;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ng-te-button.is-link:hover,
+.ng-te-button.is-link[aria-expanded="true"] {
+  background: transparent;
+  border-color: transparent;
+  color: var(--ng-text);
+}
+
+/* The panel is an Overlay (Overlay.css); these are its contents. */
+.ng-te-section + .ng-te-section {
+  margin-top: 8px;
+}
+
+.ng-te-heading {
+  margin: 0 0 2px;
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+  color: var(--ng-muted);
+}
+
+.ng-te-list {
+  margin: 0;
+  padding: 0 0 0 1.2em;
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  line-height: 1.45;
+}

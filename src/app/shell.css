@@ -1,0 +1,203 @@
+/* NetGym shell: start screen and top bar. Imported only by Shell.jsx, after
+ * src/ui/tokens.css, whose variables (colours, type, targets) it uses.
+ *
+ * Inherited properties (font, colour, line height, alignment) are set on the
+ * shell's own parts (.ng-bar, .ng-home) and by each screen, never on
+ * .ng-shell. The bar is always dark; the start screen follows the theme. */
+
+.ng-shell {
+  /* One screen high: the bar or start screen, then a scrolling area. */
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Scrolling areas ─────────────────────────────────────── */
+
+.ng-screen {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.ng-screen[hidden] {
+  display: none;
+}
+
+/* A new screen fills the area below the bar. */
+.ng-screen > * {
+  min-height: 100%;
+}
+
+/* ── Shared parts ────────────────────────────────────────── */
+
+/* The back button is the generic Button (src/ui/components/Button.css);
+   the top bar is src/app/Bar.jsx with src/app/bar.css. */
+.ng-card:focus-visible,
+.ng-home-title:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 3px;
+}
+
+/* ── Start screen ────────────────────────────────────────── */
+
+.ng-home {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background: var(--ng-bg);
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-size: 18px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+/* The header and the content share one centred column. */
+.ng-home-column {
+  box-sizing: border-box;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.ng-home-header {
+  padding: 12px 0;
+  background: var(--ng-header);
+  border-bottom: 1px solid var(--ng-stroke);
+}
+
+/* The title, and the theme switch (Bar.jsx) at the right. */
+.ng-home-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.ng-home-title {
+  margin: 2px 0 0;
+  font-size: 26px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--ng-title);
+}
+
+.ng-home-main {
+  padding-top: 24px;
+  padding-bottom: 24px;
+}
+
+.ng-home-caption {
+  margin-bottom: 12px;
+  color: var(--ng-muted);
+}
+
+/* Round 4 (A7): seven cards fit without scrolling at 1280 × 800 and
+   1000 × 700 (three per row; each card's height is capped by its content). */
+.ng-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ng-card {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+  height: 100%;
+  min-height: 44px;
+  padding: 16px 44px 16px 18px;
+  background: var(--ng-panel);
+  border: 1px solid var(--ng-stroke);
+  border-radius: 12px;
+  color: var(--ng-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ng-card:hover {
+  background: var(--ng-blue-bg);
+  border-color: var(--ng-blue);
+}
+
+.ng-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+
+.ng-card-title {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--ng-title);
+}
+
+/* «Почни тут»: a chip beside the first card's title. */
+.ng-card-start {
+  padding: 1px 10px;
+  background: var(--ng-green-bg);
+  border: 1px solid var(--ng-green);
+  border-radius: 10px;
+  color: var(--ng-green);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ng-card-blurb {
+  color: var(--ng-muted);
+  font-size: var(--ng-font-small);
+  line-height: 1.4;
+}
+
+/* The whole card is the button; the arrow only marks it, in the corner. */
+.ng-card-arrow {
+  position: absolute;
+  right: 16px;
+  bottom: 12px;
+  color: var(--ng-button-text);
+  font-family: var(--ng-mono);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.ng-card:hover .ng-card-arrow {
+  color: var(--ng-cyan);
+}
+
+/* The web build only (Shell.jsx): a quiet note above the cards and the
+   notices link below them. */
+.ng-home-note {
+  margin: 0 0 16px;
+  color: var(--ng-muted);
+  font-size: var(--ng-font-small);
+  line-height: 1.4;
+}
+
+.ng-home-footer {
+  padding-bottom: 20px;
+  font-size: var(--ng-font-small);
+}
+
+.ng-home-footer a {
+  color: var(--ng-muted);
+}
+
+.ng-home-footer a:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 3px;
+}

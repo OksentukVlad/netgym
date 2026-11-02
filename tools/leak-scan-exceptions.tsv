@@ -1,0 +1,16 @@
+# Reviewed exceptions to tools/leak-scan.mjs: path<TAB>rule<TAB>the whole line, trimmed.
+# Each entry must match a finding (stale entries fail the scan). `pages/` is the built site.
+# - Nunito's required copyright notice names its project contact address; the OFL
+#   asks for the notice to be kept, so it ships with the font and in the notices.
+# - Test wordlists: negative tests asserting that screens never show these words.
+THIRD_PARTY_NOTICES.md	email	Copyright 2016 The Nunito Project Authors (contact@sansoxygen.com),
+shell/frontend/src/assets/fonts/OFL.txt	email	Copyright 2016 The Nunito Project Authors (contact@sansoxygen.com),
+tests/firewall-order.test.mjs	assessment	assert.doesNotMatch(text, /вище|нижче|перед правилом|останн|factory|заводськ|іспит|квит|клас/iu);
+tests/firewall-screen.test.mjs	course	assert.doesNotMatch(html, /іспит|екзамен|квит|білет|ВОС|exam|ticket/i);
+tests/firewall-screen.test.mjs	assessment	assert.doesNotMatch(html, /іспит|екзамен|квит|білет|ВОС|exam|ticket/i);
+tests/setup-screens.test.mjs	assessment	const CALM = /рахун|(?<!\p{L})бал[іиа]|серія|іспит|екзамен|квиток|(?<!\p{L})клас|(?<!\p{L})урок|оцінк|✅|🎉|🏆/iu;
+tests/vlan-screens.test.mjs	assessment	assert.doesNotMatch(JSON.stringify(ui), /рахун|бал[іиа]|серія|іспит|екзамен|квиток|клас|урок|✅|🎉/i);
+tests/vlan2-screens.test.mjs	assessment	for (const words of [routeUi, routeNotes, routeText]) assert.doesNotMatch(JSON.stringify(words), /рахун|бал[іиа]|серія|іспит|екзамен|квиток|клас|урок|✅|🎉/i);
+pages/OFL.txt	email	Copyright 2016 The Nunito Project Authors (contact@sansoxygen.com),
+pages/THIRD_PARTY_NOTICES.md	email	Copyright 2016 The Nunito Project Authors (contact@sansoxygen.com),
+pages/third-party-notices.html	email	Copyright 2016 The Nunito Project Authors (contact@sansoxygen.com),

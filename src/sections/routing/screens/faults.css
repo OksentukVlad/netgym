@@ -1,0 +1,416 @@
+/* «Знайди несправність» (RF-1, FaultsView.jsx) on routing.css's classes,
+ * existing tokens only.
+ *
+ * Layout (data-mode from the screen's width, as the task screen):
+ *   desk, wide   the heading row (the levels, the exercise switch at its
+ *                end), then the task, its conditions and the diagram | the
+ *                work panel (round 5): the
+ *                pings, the routes, the help, and «Перевірити» with the
+ *                feedback at its foot. Each column scrolls on its own; the
+ *                page doesn't;
+ *   short        ≤ 760 px high: the columns grow with their content and the
+ *                screen area is the one scroll; the button and the feedback
+ *                come right after the routes, the help after them;
+ *   narrow       < 960: one column (routing.css), the page scrolls; the
+ *                button after the routes as well. */
+
+/* ── The exercise switch: the address row's end, in both exercises ─── */
+
+.ng-rt-exercises-box {
+  margin-left: auto;
+}
+
+/* ── Heading row, task line, conditions ──────────────────── */
+
+/* «Готую задачу…» while a new instance builds, beside the levels. */
+.ng-rf-busy {
+  margin: 0;
+  font-size: var(--ng-font-small);
+  color: var(--ng-muted);
+}
+
+.ng-rf-req {
+  margin: 0;
+  padding: 2px 10px;
+  border-left: 3px solid var(--ng-cyan);
+  font-size: var(--ng-font-small);
+  line-height: 1.35;
+  color: var(--ng-text);
+}
+
+/* ── Columns: at 1280 px a little narrower for the work than the task
+   screen's, so a three-router chain's diagram fits whole (12 px text); at
+   1000 px at least half, so a Cisco route stays on one line ─── */
+
+.ng-rt[data-mode="desk"] .ng-rf-cols,
+.ng-rt[data-mode="wide"] .ng-rf-cols {
+  grid-template-columns: minmax(0, 1fr) minmax(min(488px, 50%), min(560px, 43%));
+}
+
+/* Positioned: a panel that scrolls must be the containing block of what it
+   holds, so visually hidden text (a route's «#n», the field names after the
+   first route, the empty feedback) scrolls and clips with it. Otherwise it
+   escapes to .ng-rt and grows the screen area's scroll (vlan.css has the same
+   rule, for the same reason). */
+.ng-rf-stage,
+.ng-rf-work {
+  position: relative;
+}
+
+/* The diagram takes the stage's height; its caption keeps its own (a long
+   path caption wraps the legend under it). */
+.ng-rf-stage > .ng-rt-stage-head {
+  flex: none;
+}
+
+/* The work panel, in the order of the work (round 4): the routes, the
+   cause question, the help panel, the pings. Nothing in it shrinks. */
+.ng-rf-work > * {
+  flex: none;
+}
+
+/* ── The pings: a snapshot, failing open, working folded ─── */
+
+.ng-rf-pings {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ng-rf-pings-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.ng-rf-pings-caption {
+  letter-spacing: 1px;
+}
+
+.ng-rf-note {
+  margin: 0;
+  font-size: var(--ng-font-small);
+  line-height: 1.35;
+  color: var(--ng-muted);
+}
+
+.ng-rf-pinglist[hidden] {
+  display: none;
+}
+
+/* ✓ and ✕ at the line's end, where the eye compares them. */
+.ng-rf-ping .ng-rt-checkline-state {
+  margin-left: auto;
+  font-size: var(--ng-font-body);
+}
+
+/* The drawn ping: a bar at its start and its walk under it, not only a border. */
+.ng-rf-ping.is-shown > .ng-rt-checkline-body {
+  padding-left: 16px;
+  box-shadow: inset 6px 0 0 var(--ng-cyan);
+}
+
+.ng-rf-walk {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 4px 0 2px 16px;
+  font-size: var(--ng-font-small);
+  line-height: 1.35;
+}
+
+.ng-rf-fold {
+  align-self: flex-start;
+  font-family: var(--ng-sans);
+  font-weight: 400;
+  color: var(--ng-text);
+}
+
+.ng-rf-fold[aria-expanded="true"] {
+  background: var(--ng-blue-bg);
+  border-color: var(--ng-blue);
+}
+
+/* ── The help panel ── */
+
+/* The panel's folded hints read at the work panel's size. */
+.ng-rf-help .ng-hints-list {
+  font-size: var(--ng-font-small);
+}
+
+.ng-rf-reveal {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: var(--ng-font-small);
+  line-height: 1.4;
+}
+
+.ng-rf-reveal p {
+  margin: 0;
+}
+
+.ng-rf-change {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+
+.ng-rf-change-row {
+  display: grid;
+  grid-template-columns: 4.5em minmax(0, 1fr);
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 8px;
+  border-left: 3px solid var(--ng-stroke);
+  border-radius: 6px;
+}
+
+.ng-rf-change-row dt {
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--ng-muted);
+}
+
+.ng-rf-change-row dd {
+  margin: 0;
+}
+
+.ng-rf-change-row code {
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  overflow-wrap: anywhere;
+}
+
+.ng-rf-change-row.is-was {
+  background: var(--ng-amber-bg);
+  border-left-color: var(--ng-amber);
+}
+
+.ng-rf-change-row.is-now {
+  background: var(--ng-green-bg);
+  border-left-color: var(--ng-green);
+}
+
+/* ── The routes: one router, in its colour ──────────────── */
+
+.ng-rf-work {
+  gap: 12px;
+}
+
+.ng-rf-rows {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 8px;
+  border-left: 3px solid var(--ng-rc);
+}
+
+.ng-rf-rows-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+}
+
+.ng-rf-rows-caption {
+  font-weight: 700;
+  color: var(--ng-rc);
+}
+
+.ng-rf-aside {
+  margin: 0;
+  font-size: var(--ng-font-caption);
+  line-height: 1.3;
+  color: var(--ng-muted);
+}
+
+/* One line per route, as a table: its fields and «✕»; the field names once,
+   over the first route. «#n» is for screen readers only here (the delete
+   button says it too). Each field keeps its label for screen readers. The
+   fields wrap to two lines where the panel is narrow. */
+.ng-rf-rowlist {
+  gap: 4px;
+}
+
+.ng-rf-rowlist .ng-rt-free-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0 6px;
+  padding: 3px;
+}
+
+.ng-rf-rowlist .ng-rt-free-head {
+  display: contents;
+}
+
+.ng-rf-rowlist .ng-rt-row-head {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.ng-rf-rowlist .ng-rt-fields {
+  grid-column: 1;
+  grid-row: 1;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 4px 6px;
+}
+
+.ng-rf-rowlist .ng-rt-fields-routeros .ng-rt-f-dst,
+.ng-rf-rowlist .ng-rt-fields-routeros:not(.has-dist) .ng-rt-f-gw {
+  grid-column: auto;
+}
+
+.ng-rf-rowlist .ng-rt-delete {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.ng-rf-rowlist .ng-rt-convert-note,
+.ng-rf-rowlist .ng-rt-form-mark {
+  grid-column: 1 / -1;
+}
+
+/* 15 px: a /30 mask (15 characters) fits a field at 1280 px. In a
+   narrower panel (1000 px), 13 px keeps a Cisco route on one line. */
+.ng-rf-rowlist .ng-rt-input {
+  padding: 0 5px;
+  font-size: 15px;
+}
+
+@container (max-width: 500px) {
+  .ng-rf-rowlist .ng-rt-fields {
+    grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  }
+
+  .ng-rf-rowlist .ng-rt-input {
+    padding: 0 4px;
+    font-size: 13px;
+  }
+}
+
+.ng-rf-rowlist > li + li .ng-rt-field > label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ── Round 4 (spec R2): the panel under the table; no sticky foot ── */
+
+.ng-rf-table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+
+/* The learner's edits against the original table: «було», «новий рядок», «видалено». */
+.ng-rf-diff {
+  margin: 0;
+  color: var(--ng-muted);
+  font-size: var(--ng-font-small);
+  line-height: 1.35;
+}
+
+.ng-rf-rowlist .ng-rf-diff {
+  grid-column: 1 / -1;
+}
+
+.ng-rf-diff code {
+  font-family: var(--ng-mono);
+  overflow-wrap: anywhere;
+}
+
+.ng-rf-diff-tag {
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.ng-rf-diff.is-removed code {
+  text-decoration: line-through;
+}
+
+.ng-rf-original {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ng-rf-causes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 4px 6px 6px;
+  background: var(--ng-surf);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+}
+
+.ng-rf-cause-q {
+  padding: 0 4px;
+  font-size: var(--ng-font-body);
+  font-weight: 700;
+}
+
+.ng-rf-cause {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--ng-target);
+  padding: 4px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--ng-radius);
+  font-size: var(--ng-font-small);
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+.ng-rf-cause:hover {
+  background: var(--ng-blue-bg);
+}
+
+/* The chosen cause: a bar and a filled line, not only the radio's dot. */
+.ng-rf-cause.is-chosen {
+  padding-left: 14px;
+  background: var(--ng-blue-bg);
+  border-color: var(--ng-blue);
+  box-shadow: inset 6px 0 0 var(--ng-blue);
+  font-weight: 700;
+}
+
+.ng-rf-radio {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--ng-blue);
+}
+
+.ng-rf-radio:disabled,
+.ng-rf-radio:disabled + span {
+  cursor: default;
+}
+
+/* Solved: the rows are read-only, and look it (no field to type into). */
+.ng-rf-rowlist .ng-rt-input[readonly] {
+  background: transparent;
+  border-style: dashed;
+  cursor: default;
+}

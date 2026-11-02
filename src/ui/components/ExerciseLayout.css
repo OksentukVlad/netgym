@@ -1,0 +1,139 @@
+/* Layout follows the width of the content area, not the window, so it adapts
+   to desktop zoom and to the shell around it. */
+.ng-exercise {
+  container-type: inline-size;
+  box-sizing: border-box;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--ng-bg);
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-body);
+  line-height: 1.5;
+  text-align: left;
+}
+
+.ng-exercise *,
+.ng-exercise *::before,
+.ng-exercise *::after {
+  box-sizing: border-box;
+}
+
+.ng-exercise-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding: 14px 24px;
+  background: var(--ng-header);
+  border-bottom: 1px solid var(--ng-stroke);
+}
+
+.ng-exercise-titles {
+  min-width: 0;
+}
+
+.ng-exercise-heading {
+  margin: 2px 0 0;
+  font-size: var(--ng-font-title);
+  line-height: 1.25;
+  color: var(--ng-title);
+}
+
+.ng-exercise-heading:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 3px;
+}
+
+.ng-exercise-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.ng-exercise-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 20px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* Two columns from 960 px of content: the stage beside the work panel
+   (at least 420 px wide). */
+@container (min-width: 960px) {
+  .ng-exercise-body {
+    grid-template-columns: minmax(0, 1fr) minmax(420px, 1fr);
+  }
+
+  /* A wide stage (the IP screens' bit rows and results): 3 : 2. */
+  [data-wide="stage"] .ng-exercise-body {
+    grid-template-columns: minmax(0, 3fr) minmax(420px, 2fr);
+  }
+
+  /* The work area first in the DOM (a tool's inputs, data-first="work"):
+     in two columns the stage still goes on the left. */
+  [data-first="work"] .ng-exercise-stage {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  [data-first="work"] .ng-exercise-work {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+
+.ng-exercise-stage,
+.ng-exercise-work {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+  padding: 20px;
+  background: var(--ng-panel);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius-l);
+}
+
+.ng-exercise-stage p,
+.ng-exercise-question p {
+  margin: 0;
+}
+
+.ng-exercise-question {
+  font-weight: 700;
+}
+
+.ng-exercise-answer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ng-exercise-tools {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.ng-exercise-help {
+  min-width: 0;
+}
+
+/* Round 5 (R1): the action line sits right above the first control: the
+   pair is one item of the work area, with a small gap of its own. */
+.ng-exercise-act {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}

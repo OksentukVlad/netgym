@@ -1,0 +1,210 @@
+/* Command examples (CommandBlock.jsx): both syntaxes side by side when the
+   container is wide enough, one under the other otherwise. */
+.ng-commands {
+  container-type: inline-size;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ng-commands-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* The folded heading: a disclosure in the caption's look. */
+.ng-commands-toggle {
+  min-height: var(--ng-target);
+  padding: 0 14px;
+  background: var(--ng-input-bg);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+  cursor: pointer;
+}
+
+.ng-commands-toggle:hover {
+  background: var(--ng-blue-bg);
+  border-color: var(--ng-blue);
+}
+
+.ng-commands-toggle:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 3px;
+}
+
+/* Why copying is off (inputs empty or malformed): plain words, amber. */
+.ng-commands-off {
+  margin: 0;
+  padding: 8px 12px;
+  background: var(--ng-amber-bg);
+  border: 1px solid var(--ng-amber);
+  border-radius: var(--ng-radius);
+  color: var(--ng-text);
+  font-size: var(--ng-font-small);
+}
+
+.ng-commands-copy[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ng-commands-blocks {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+@container (min-width: 560px) {
+  .ng-commands-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* The folded heading: a disclosure in the caption's look. */
+.ng-commands-toggle {
+  min-height: var(--ng-target);
+  padding: 0 14px;
+  background: var(--ng-input-bg);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+  cursor: pointer;
+}
+
+.ng-commands-toggle:hover {
+  background: var(--ng-blue-bg);
+  border-color: var(--ng-blue);
+}
+
+.ng-commands-toggle:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 3px;
+}
+
+/* Why copying is off (inputs empty or malformed): plain words, amber. */
+.ng-commands-off {
+  margin: 0;
+  padding: 8px 12px;
+  background: var(--ng-amber-bg);
+  border: 1px solid var(--ng-amber);
+  border-radius: var(--ng-radius);
+  color: var(--ng-text);
+  font-size: var(--ng-font-small);
+}
+
+.ng-commands-copy[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ng-commands-blocks {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+}
+
+.ng-commands-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ng-commands-vendor {
+  margin: 0;
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+}
+
+.ng-commands-pre {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 10px 12px;
+  overflow-x: auto;
+  background: var(--ng-code-bg);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  color: var(--ng-code);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* One command per line; a long one wraps with its continuation indented, so
+   it never reads as two commands. */
+.ng-commands-line {
+  display: block;
+  padding-left: 3ch;
+  text-indent: -3ch;
+}
+
+.ng-commands-copy {
+  box-sizing: border-box;
+  min-height: var(--ng-target);
+  padding: 0 14px;
+  background: var(--ng-input-bg);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ng-commands-copy:hover {
+  background: var(--ng-blue-bg);
+  border-color: var(--ng-blue);
+}
+
+.ng-commands-copy:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 3px;
+}
+
+/* «Не вдалося скопіювати…»: amber, as «Ще ні»; out of sight while empty, but
+   still in the accessibility tree, so it is announced when it appears. */
+.ng-commands-failed {
+  margin: 0;
+  color: var(--ng-amber);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+}
+
+.ng-commands-failed:empty {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  border: 0;
+}
+
+.ng-commands-note {
+  margin: 0;
+  color: var(--ng-muted);
+  font-size: var(--ng-font-small);
+}

@@ -1,0 +1,35 @@
+/* A fact link (R3): the value in its own weight (mono bold, as the card's
+   values), underlined as a link, a button underneath; no box, so the card's
+   line keeps its height. */
+.ng-fact-link {
+  display: inline;
+  min-height: 0;
+  margin: 0;
+  padding: 0 2px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ng-cyan);
+  font: inherit;
+  font-family: var(--ng-mono);
+  font-weight: 700;
+  line-height: inherit;
+  text-decoration: underline dotted;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.ng-fact-link:hover {
+  text-decoration-style: solid;
+}
+
+.ng-fact-link.is-active {
+  background: var(--ng-blue-bg);
+  text-decoration-style: solid;
+}
+
+.ng-fact-link:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}

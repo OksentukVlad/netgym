@@ -1,0 +1,150 @@
+/* The calculator (CalculatorScreen.jsx): the result on the stage, the
+   inputs and command examples on the work side. */
+.ng-calc-result {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* «Показано останній правильний запис…» while a field is invalid. A polite
+   live region: when empty it stays in the accessibility tree, out of sight. */
+.ng-calc-stale:empty {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  border: 0;
+}
+
+.ng-calc-stale {
+  margin: 0;
+  padding: 8px 12px;
+  background: var(--ng-amber-bg);
+  border: 1px solid var(--ng-amber);
+  border-radius: var(--ng-radius);
+  color: var(--ng-text);
+  font-size: var(--ng-font-small);
+}
+
+.ng-calc-block {
+  margin: 0;
+  color: var(--ng-title);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-title);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.ng-calc-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+/* Label and value on one line where they fit; the value wraps below otherwise. */
+.ng-calc-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 12px;
+}
+
+.ng-calc-row dt {
+  flex: 0 0 12em;
+  color: var(--ng-muted);
+  font-size: var(--ng-font-small);
+}
+
+.ng-calc-row dd {
+  flex: 1 1 14em;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+}
+
+/* The device range: two addresses that may wrap at the dash. */
+.ng-calc-row.is-range dd {
+  display: block;
+}
+
+.ng-calc-value {
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-body);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ng-calc-note,
+.ng-calc-line {
+  margin: 0;
+  color: var(--ng-muted);
+  font-size: var(--ng-font-small);
+}
+
+.ng-calc-line {
+  color: var(--ng-text);
+}
+
+/* «У бітах»: a disclosure, closed by default. */
+.ng-calc-bits {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.ng-calc-disclosure {
+  align-self: flex-start;
+  min-height: var(--ng-target);
+  padding: 0 14px;
+  background: var(--ng-input-bg);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ng-calc-disclosure:hover {
+  background: var(--ng-blue-bg);
+  border-color: var(--ng-blue);
+}
+
+.ng-calc-disclosure:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 3px;
+}
+
+/* Round 4 (spec R3): the inputs first. In two columns they go on the left
+   (the work area: the fields, «Потренуватися → Маска», the folded command
+   example), the result on the right. */
+@container (min-width: 960px) {
+  .ng-exercise[data-first="work"] .ng-exercise-body {
+    grid-template-columns: minmax(420px, 2fr) minmax(0, 3fr);
+  }
+
+  .ng-exercise[data-first="work"] .ng-exercise-work {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .ng-exercise[data-first="work"] .ng-exercise-stage {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+
+/* «(без адреси мережі та широкомовної)» after the count: plain, it wraps. */
+.ng-calc-count-what {
+  color: var(--ng-text);
+  font-size: var(--ng-font-small);
+}

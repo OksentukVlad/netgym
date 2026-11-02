@@ -1,0 +1,63 @@
+/* Vlad's address ruler (AddressRuler.jsx), in the NetGym tokens: the strip and
+   ticks in the text colour, the block shaded blue, the address in amber. */
+.ng-ruler {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+.ng-ruler-svg {
+  display: block;
+  width: 100%;
+  max-width: 440px;
+  height: auto;
+  font-family: var(--ng-sans);
+  font-size: 14px;
+}
+
+.ng-ruler-svg text {
+  fill: var(--ng-text);
+  font-weight: 600;
+}
+
+.ng-ruler-strip {
+  fill: none;
+  stroke: var(--ng-text);
+  stroke-width: 2;
+}
+
+.ng-ruler-block {
+  fill: var(--ng-blue);
+  opacity: 0.35;
+}
+
+.ng-ruler-tick {
+  stroke: var(--ng-muted);
+  stroke-width: 1.5;
+}
+
+.ng-ruler-tick.is-major {
+  stroke: var(--ng-text);
+  stroke-width: 2;
+}
+
+.ng-ruler-marker {
+  fill: var(--ng-amber);
+}
+
+.ng-ruler-svg .ng-ruler-value {
+  fill: var(--ng-amber);
+  font-size: 16px;
+}
+
+.ng-ruler-svg .ng-ruler-edge {
+  fill: var(--ng-blue);
+}
+
+/* The text equivalent: what the picture shows, in one or two lines. */
+.ng-ruler-text {
+  margin: 0;
+  color: var(--ng-muted);
+  font-size: var(--ng-font-small);
+}

@@ -1,0 +1,290 @@
+/* «Упорядкуй правила» (FW-2, OrderView.jsx): plain classes on
+ * src/ui/tokens.css over the firewall screen's own (firewall.css: the root
+ * .ng-fw, the heading, the action chip and conditions, the packet card, the
+ * diagram). Existing tokens only; the pairs it draws are in
+ * tests/contrast.test.mjs. The list's rows are ReorderList's
+ * (src/ui/components/ReorderList.css); this file lays out their content.
+ * The check row, the verdict, the hints and the reveal are HelpPanel's
+ * (src/ui/components/HelpPanel.css), placed next to the list.
+ *
+ * Layout (OrderView.jsx sets data-layout from the screen's width; the root
+ * keeps FW-1's data-mode rules off by not using data-mode). Round 4 (spec
+ * A2): the page is the one vertical scroller; no inner scroll box.
+ *   two  ≥ 1160   heading, task and diagram (sticky, one screen high:
+ *                 --ng-fwo-screen) | the list and its panel at their
+ *                 natural height. The diagram's column is at least 690 px,
+ *                 so its text stays at 12 px.
+ *   one  < 1160   one column in the same order, the diagram last; nothing
+ *                 sticky. */
+
+.ng-fw.ng-fwo {
+  grid-template-areas: "side" "work" "stage";
+}
+
+.ng-fwo-side { grid-area: side; }
+.ng-fwo-work { grid-area: work; }
+.ng-fwo-stage { grid-area: stage; }
+
+.ng-fwo-side {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ng-fwo[data-layout="two"] {
+  min-height: 100%;
+  grid-template-columns: minmax(690px, 1fr) minmax(420px, 556px);
+  grid-template-areas: "side work";
+  align-items: start;
+}
+
+/* Two columns: the left column stays in view while the list scrolls with the page. */
+.ng-fwo[data-layout="two"] .ng-fwo-side {
+  position: sticky;
+  top: 6px;
+  height: calc(var(--ng-fwo-screen, 100vh) - 12px);
+  min-height: 420px;
+}
+
+/* ── The task ────────────────────────────────────────────── */
+
+.ng-fwo-task {
+  font-weight: 700;
+}
+
+.ng-fwo-goal {
+  margin-top: 2px;
+  padding-left: 10px;
+  border-left: 3px solid var(--ng-cyan);
+}
+
+/* ── The list ────────────────────────────────────────────── */
+
+.ng-fwo-work {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 6px;
+  background: var(--ng-panel);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius-l);
+}
+
+.ng-fwo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ng-fwo-policy {
+  margin: 0;
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  font-weight: 400;
+  letter-spacing: 1px;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--ng-muted);
+}
+
+.ng-fwo-policy:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}
+
+/* A row's content: chain, action and conditions on the first line (the
+   conditions wrap under them where the column is narrow), the description
+   (or, with the walk open, this packet's outcome) on the next. */
+.ng-fwo-rule {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  padding: 1px 0;
+  font-size: var(--ng-font-caption);
+  line-height: 1.25;
+}
+
+.ng-fwo-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  min-width: 0;
+}
+
+/* The chain, prominent: a pill in words and colour, on its own background
+   so it reads the same on a walk's tinted row. */
+.ng-fwo-chain {
+  display: inline-block;
+  min-width: 5.4em;
+  padding: 0 6px;
+  background: var(--ng-surf);
+  border: 1px solid currentColor;
+  border-radius: 10px;
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.ng-fwo-chain.is-input { color: var(--ng-cyan); }
+.ng-fwo-chain.is-forward { color: var(--ng-purple); }
+
+.ng-fwo .ng-fw-action {
+  background: var(--ng-surf);
+  line-height: 1.35;
+}
+
+.ng-fwo-desc {
+  color: var(--ng-text);
+}
+
+/* «• Ще ні»: in words on its own amber tint (never colour alone), after
+   the description it is about. */
+.ng-fwo-mark {
+  display: inline-block;
+  padding: 0 6px;
+  background: var(--ng-amber-bg);
+  border-radius: 10px;
+  color: var(--ng-amber);
+  font-family: var(--ng-mono);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* The chains grouped inside the one editable list (spec F2): an edge in the
+   chain pill's colour on each row, and a gap with a rule where the chain
+   changes. The left edge stays the row's state (marked, walk, focus). */
+.ng-fwo .ng-reorder-item.is-chain-input { border-right: 4px solid var(--ng-cyan); }
+.ng-fwo .ng-reorder-item.is-chain-forward { border-right: 4px solid var(--ng-purple); }
+.ng-fwo .ng-reorder-item.is-chain-change {
+  margin-top: 8px;
+  box-shadow: 0 -5px 0 -3px var(--ng-muted);
+}
+
+.ng-fwo .ng-reorder-item.is-marked {
+  border-left-color: var(--ng-amber);
+  box-shadow: inset 0 0 0 1px var(--ng-amber);
+}
+
+/* The row being worked on: a tint and a blue edge, besides the control's
+   own focus ring (grabbed rows keep ReorderList's dashed outline too). */
+.ng-fwo .ng-reorder-item:not(.is-walk):focus-within {
+  background: var(--ng-blue-bg);
+  border-left-color: var(--ng-blue);
+}
+
+/* The walk on the learner's rows (FW-1's states and words). */
+.ng-fwo-out { font-weight: 700; }
+.ng-fwo .is-walk-other-chain .ng-fwo-out,
+.ng-fwo .is-walk-not-reached .ng-fwo-out { color: var(--ng-muted); font-weight: 400; }
+.ng-fwo .ng-reorder-item.is-walk-mismatch,
+.ng-fwo .ng-reorder-item.is-walk-unknown { background: var(--ng-amber-bg); border-left-color: var(--ng-amber); }
+.ng-fwo .is-walk-mismatch .ng-fwo-out,
+.ng-fwo .is-walk-unknown .ng-fwo-out { color: var(--ng-amber); }
+.ng-fwo .ng-reorder-item.is-walk-match { background: var(--ng-green-bg); border-left-color: var(--ng-green); }
+.ng-fwo .is-walk-match .ng-fwo-out { color: var(--ng-green); }
+.ng-fwo .ng-reorder-item.is-walk-marked { background: var(--ng-blue-bg); border-left-color: var(--ng-blue); }
+.ng-fwo .is-walk-marked .ng-fwo-out { color: var(--ng-button-text); }
+.ng-fwo .ng-reorder-item.is-walk-not-reached { border-left-style: dashed; }
+/* A row that decided and is marked keeps both: the green tint, the amber edge. */
+.ng-fwo .ng-reorder-item.is-walk.is-marked { box-shadow: inset 0 0 0 1px var(--ng-amber); }
+
+.ng-fwo-end {
+  margin: 0;
+  padding: 2px 8px;
+  background: var(--ng-green-bg);
+  border-left: 4px solid var(--ng-green);
+  border-radius: var(--ng-radius);
+  color: var(--ng-green);
+  font-size: var(--ng-font-caption);
+  font-weight: 700;
+}
+
+/* ── The verdict's evidence and the result (in HelpPanel) ── */
+
+.ng-fwo-finding {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.ng-fwo-finding .ng-fw-card {
+  margin: 0;
+}
+
+.ng-fwo-fate {
+  margin: 0;
+  font-family: var(--ng-mono);
+  font-weight: 700;
+}
+
+.ng-fwo-walk[aria-expanded="true"] {
+  background: var(--ng-blue-bg);
+  border-color: var(--ng-blue);
+}
+
+.ng-fwo-result {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.ng-fwo-result .ng-fw-caption {
+  margin: 4px 0 0;
+  font-weight: 400;
+}
+
+.ng-fwo-tips {
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: var(--ng-font-small);
+  line-height: 1.4;
+}
+
+.ng-fwo-tips li + li { margin-top: 4px; }
+
+
+/* The reference order (a separate list: the learner's stays as it is). */
+.ng-fwo-answer {
+  margin: 0;
+  padding-left: 1.8em;
+  font-size: var(--ng-font-caption);
+  line-height: 1.35;
+}
+
+.ng-fwo-answer li + li { margin-top: 3px; }
+
+.ng-fwo-answer .ng-fw-action {
+  display: inline-block;
+}
+
+/* ── The diagram ─────────────────────────────────────────── */
+
+.ng-fwo-stage {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Two columns: the drawing fills the rest of the sticky column, never below
+   its tool row and its frame's floor. */
+.ng-fwo[data-layout="two"] .ng-fwo-stage { flex: 1 1 auto; min-height: 0; }
+.ng-fwo[data-layout="two"] .ng-fw-dg { flex: 1 1 auto; }
+.ng-fwo[data-layout="two"] .ng-fw-view { flex: 1 1 0; min-height: 220px; }
+.ng-fwo[data-layout="two"] .ng-fw-frame { flex: 1 1 0; min-height: 0; }
+
+/* One column: a frame tall enough for the drawing at its 12 px text, and no
+   taller (it would follow the drawing's width). */
+.ng-fwo[data-layout="one"] .ng-fw-frame { height: 340px; }
+.ng-fwo[data-layout="one"] .ng-fw-view.has-overlay { min-height: min(70vh, 560px); }
+
+/* A marked row where the chain changes keeps both: the divider and the amber outline. */
+.ng-fwo .ng-reorder-item.is-chain-change.is-marked { box-shadow: 0 -5px 0 -3px var(--ng-muted), inset 0 0 0 1px var(--ng-amber); }

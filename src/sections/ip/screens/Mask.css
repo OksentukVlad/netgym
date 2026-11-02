@@ -1,0 +1,48 @@
+/* «Маска і блок адрес» (MaskScreen.jsx), round 4: the fields' box (the
+   evidence the panel's verdict and hints are about), and the «показано»
+   chip under a revealed task's ruler. */
+.ng-mask-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+.ng-mask-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.ng-mask-shown {
+  margin: -8px 0 0;
+}
+
+/* Round 4 2b (spec R4): the fields, then the quiet card-wide «Обрати з
+   варіантів» / «Ввести самому» link under them. */
+.ng-mask-answer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+/* In two columns the work side is a little wider than the task, so the
+   check row («Перевірити», «Підказка n з N», «Далі →») stays on one line. */
+@container (min-width: 960px) {
+  .ng-exercise:has(.ng-mask-answer) .ng-exercise-body {
+    grid-template-columns: minmax(0, 4fr) minmax(460px, 5fr);
+  }
+}
+
+.ng-mask-answer .ng-mask-fields {
+  align-self: stretch;
+}
+
+/* The level switch: the skill in words, a quiet ✓ once solved. */
+.ng-mask-levels .ng-segmented-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}

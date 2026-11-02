@@ -1,0 +1,10 @@
+.tools/
+dist/
+shell/build/bin/
+shell/app_title.go
+shell/frontend/node_modules/
+shell/frontend/dist/
+shell/frontend/wailsjs/
+shell/frontend/package.json.md5
+.test-bundles/
+.shots/

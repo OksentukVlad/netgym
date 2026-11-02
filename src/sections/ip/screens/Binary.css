@@ -1,0 +1,110 @@
+/* The binary walk (BinaryScreen.jsx). */
+
+/* Round 4 (spec R5): one column, so the current row's 32 bits sit on one
+   line under «Твої рядки» where the screen is wide. */
+.ng-exercise:has(.ng-bin-walk) .ng-exercise-body {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ng-bin-task {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 16px;
+}
+
+.ng-bin-goal {
+  color: var(--ng-muted);
+  font-weight: 400;
+}
+
+.ng-bin-now {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ng-bin-result {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* The level switch: the skill in words, a quiet ✓ once solved. */
+.ng-bin-levels .ng-segmented-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ng-bin-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* The four steps: done ✓, the current one marked. */
+.ng-bin-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-weight: 400;
+  font-size: var(--ng-font-small);
+  color: var(--ng-muted);
+}
+
+.ng-bin-steps li {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.ng-bin-step-mark {
+  font-family: var(--ng-mono);
+  font-weight: 700;
+}
+
+.ng-bin-steps li.is-done {
+  color: var(--ng-green);
+}
+
+.ng-bin-steps li.is-current {
+  color: var(--ng-text);
+  font-weight: 700;
+}
+
+.ng-bin-question {
+  margin: 0 !important;
+  font-weight: 700;
+}
+
+/* How to enter the row (polish-2 V4): a plain line, not a tip box. */
+.ng-bin-help {
+  margin: 0 !important;
+  color: var(--ng-muted);
+  font-size: var(--ng-font-small);
+  font-weight: 400;
+}
+
+/* «Ввести текстом» / «Перемикачами»: a small link-like toggle (as AddressField's). */
+.ng-bin-mode {
+  align-self: flex-start;
+  min-height: var(--ng-target);
+  padding: 0 4px;
+  background: none;
+  border: none;
+  color: var(--ng-cyan);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-caption);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.ng-bin-mode:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}

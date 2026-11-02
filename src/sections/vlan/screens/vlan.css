@@ -1,0 +1,1527 @@
+/* The VLAN section (VLAN-1 spec §4): plain classes on src/ui/tokens.css, in
+ * the firewall screen's look. Existing tokens only; the pairs it draws are
+ * in tests/contrast.test.mjs.
+ *
+ * Layout (VlanScreen.jsx sets data-mode from the screen's width). Round 4
+ * (spec A2): the page is the one vertical scroller; no inner scroll box, no
+ * sticky footer, no clipped verdict.
+ *   desk, wide  ≥ 960   heading, intro and diagram (sticky, one screen high:
+ *                       --ng-vl-screen) | the work column at its natural
+ *                       height: the choices or the form, the help panel
+ *                       right after it, then the walk in words
+ *   narrow      < 960   one column, the diagram first (as in routing), then
+ *                       the work; nothing sticky */
+
+.ng-vl {
+  position: relative;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "side" "work";
+  align-content: start;
+  gap: 6px 10px;
+  padding: 6px 12px;
+  background: var(--ng-bg);
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-body);
+  line-height: 1.35;
+  text-align: left;
+}
+
+.ng-vl *,
+.ng-vl *::before,
+.ng-vl *::after {
+  box-sizing: border-box;
+}
+
+.ng-vl[data-mode="desk"],
+.ng-vl[data-mode="wide"] {
+  min-height: 100%;
+  grid-template-columns: minmax(0, 1fr) minmax(420px, min(540px, 43%));
+  grid-template-areas: "side work";
+  align-items: start;
+}
+
+.ng-vl-side { grid-area: side; }
+.ng-vl-work { grid-area: work; }
+
+.ng-vl-side {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* Two columns: the left column (and its diagram) stays in view while the
+   work column scrolls with the page; at least one screen high, the diagram
+   filling it. Taller (an open aside, a narrow window), it scrolls with the
+   page until its end is in view (--ng-vl-top, VlanScreen.jsx). */
+.ng-vl[data-mode="desk"] .ng-vl-side,
+.ng-vl[data-mode="wide"] .ng-vl-side {
+  position: sticky;
+  top: var(--ng-vl-top, 6px);
+  min-height: max(420px, calc(var(--ng-vl-screen, 100vh) - 12px));
+}
+
+.ng-vl button:focus-visible,
+.ng-vl input:focus-visible,
+.ng-vl [tabindex]:focus-visible,
+.ng-vl-controls button:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}
+
+/* ── Shared parts ────────────────────────────────────────── */
+
+.ng-vl-btn,
+.ng-vl-icon {
+  min-height: var(--ng-target);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  background: var(--ng-input-bg);
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.ng-vl-btn { padding: 0 14px; }
+
+.ng-vl-icon {
+  min-width: var(--ng-target);
+  padding: 0 8px;
+  font-size: 18px;
+}
+
+.ng-vl-btn:hover,
+.ng-vl-icon:hover {
+  background: var(--ng-blue-bg);
+  border-color: var(--ng-blue);
+}
+
+.ng-vl-btn[aria-pressed="true"],
+.ng-vl-btn[aria-expanded="true"] {
+  background: var(--ng-blue-bg);
+  border-color: var(--ng-blue);
+}
+
+.ng-vl [aria-disabled="true"] {
+  cursor: default;
+}
+
+.ng-vl-caption {
+  display: block;
+  margin: 0;
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  font-weight: 400;
+  letter-spacing: 1px;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--ng-muted);
+}
+
+.ng-vl-mono { font-family: var(--ng-mono); }
+
+.ng-vl-muted {
+  margin: 0;
+  color: var(--ng-muted);
+  font-size: var(--ng-font-small);
+}
+
+.ng-vl-note {
+  margin: 0;
+  color: var(--ng-muted);
+  font-size: var(--ng-font-caption);
+  line-height: 1.4;
+}
+
+/* ── Bar controls ────────────────────────────────────────── */
+
+.ng-vl-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.ng-vl-controls .ng-vl-icon {
+  font-size: var(--ng-font-body);
+  line-height: 1.35;
+}
+
+/* ── Heading, intro ──────────────────────────────────────── */
+
+.ng-vl-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+
+.ng-vl-h1 {
+  margin: 0;
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  font-weight: 400;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ng-muted);
+}
+
+.ng-vl-variants .ng-segmented-option,
+.ng-vl-exercises .ng-segmented-option {
+  padding: 0 10px;
+}
+
+.ng-vl-variants .ng-segmented-options,
+.ng-vl-exercises .ng-segmented-options {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.ng-vl-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.ng-vl-intro p {
+  margin: 0;
+  font-size: var(--ng-font-small);
+}
+
+.ng-vl-intro-list {
+  margin: 0;
+  padding: 2px 0 2px 2em;
+  border-left: 3px solid var(--ng-cyan);
+  font-size: var(--ng-font-small);
+  line-height: 1.4;
+}
+
+.ng-vl-lesson {
+  padding-left: 10px;
+  border-left: 3px solid var(--ng-cyan);
+}
+
+/* An edited answer's last check: still shown, said to be the previous one. */
+.ng-vl-previous {
+  margin: 0;
+  padding: 2px 8px;
+  border-left: 3px dashed var(--ng-amber);
+  color: var(--ng-text);
+  font-size: var(--ng-font-caption);
+  font-weight: 700;
+}
+
+.ng-vl-abstraction {
+  margin: 0 0 2px;
+  padding-left: 8px;
+  border-left: 3px solid var(--ng-blue);
+  color: var(--ng-text);
+  font-size: var(--ng-font-caption);
+  line-height: 1.4;
+}
+
+/* ── Work panel ──────────────────────────────────────────── */
+
+/* Positioned: a panel that scrolls is the containing block of what it holds,
+   so absolutely placed content (a visually hidden label, an empty live line)
+   scrolls and clips with the panel. Otherwise it escapes to .ng-vl and grows
+   the screen area's scroll: the app then shifts up and leaves an empty band
+   (seen after maximizing the window). */
+.ng-vl-work,
+.ng-vl-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 6px;
+  background: var(--ng-panel);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius-l);
+}
+
+/* Two columns: the stage fills the rest of the sticky column. */
+.ng-vl[data-mode="desk"] .ng-vl-stage,
+.ng-vl[data-mode="wide"] .ng-vl-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.ng-vl-progress {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.ng-vl-progress-text {
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+}
+
+.ng-vl-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ng-vl-dot {
+  width: var(--ng-target);
+  height: var(--ng-target);
+  padding: 0;
+  border: 1px solid var(--ng-stroke);
+  border-radius: 50%;
+  background: var(--ng-input-bg);
+  color: var(--ng-muted);
+  font-family: var(--ng-mono);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ng-vl-dot:disabled { cursor: default; }
+.ng-vl-dot.is-current { border: 2px solid var(--ng-cyan); color: var(--ng-cyan); }
+.ng-vl-dot.is-ok { color: var(--ng-green); }
+.ng-vl-dot.is-no { color: var(--ng-amber); }
+.ng-vl-dot:not(:disabled):hover { background: var(--ng-blue-bg); }
+
+.ng-vl-question {
+  margin: 0;
+  font-size: var(--ng-font-body);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.ng-vl-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ng-vl-choice {
+  min-height: var(--ng-target);
+  padding: 2px 10px;
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  background: var(--ng-input-bg);
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-small);
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.ng-vl-choice .ng-vl-mono { font-size: var(--ng-font-caption); }
+
+.ng-vl-choice:hover { border-color: var(--ng-blue); }
+
+/* A PC chip is a checkbox (round 4, spec F3): an empty box before a choice,
+   ☑ and a thick edge once tapped (never colour alone). The round's sender
+   keeps its place, not a choice; «Нікому» is last. */
+button.ng-vl-choice::before {
+  content: "☐ " / "";
+}
+
+.ng-vl-choice[aria-pressed="true"] {
+  background: var(--ng-button-bg);
+  border: 2px solid var(--ng-blue);
+  color: var(--ng-button-text);
+}
+
+.ng-vl-choice[aria-pressed="true"]::before {
+  content: "☑ " / "";
+}
+
+.ng-vl-choice.is-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-style: dashed;
+  background: transparent;
+  cursor: default;
+}
+
+.ng-vl-choices.is-locked .ng-vl-choice:hover { border-color: var(--ng-stroke); }
+.ng-vl-choices.is-locked .ng-vl-choice[aria-pressed="true"]:hover { border-color: var(--ng-blue); }
+
+/* Round 5 (spec 5b-1 §4 v2): the port evidence under the question, one
+   compact row per configured port, grouped by switch; the switch cell says
+   what its configuration adds for every row (the VLANs created on a Cisco
+   switch, MikroTik filtering off). Ports are fact links. */
+.ng-vl-evidence {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--ng-sans);
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.ng-vl-evidence th,
+.ng-vl-evidence td {
+  padding: 1px 6px;
+  text-align: left;
+  vertical-align: baseline;
+}
+
+.ng-vl-evidence thead th {
+  padding-bottom: 2px;
+  color: var(--ng-muted);
+  font-size: 12px;
+  font-weight: 400;
+  border-bottom: 1px solid var(--ng-stroke);
+}
+
+.ng-vl-evidence tbody + tbody { border-top: 1px solid var(--ng-stroke); }
+
+.ng-vl-ev-switch {
+  vertical-align: top !important;
+  padding-top: 2px !important;
+  font-weight: 400;
+}
+
+.ng-vl-ev-name {
+  display: block;
+  font-family: var(--ng-mono);
+  font-weight: 700;
+}
+
+.ng-vl-ev-note {
+  display: block;
+  max-width: 9em;
+  color: var(--ng-text);
+  font-size: 12px;
+}
+
+.ng-vl-ev-note.is-off { color: var(--ng-amber); font-weight: 700; }
+.ng-vl-ev-host.is-trunk,
+.ng-vl-ev-sender { color: var(--ng-muted); }
+/* One line per port: the value cell keeps its words together (sans, so «транк: 50, 100 · з тегом» fits). */
+.ng-vl-ev-value { white-space: nowrap; }
+
+/* The help panel's evidence lines (who received the frame, the round's end, tips). */
+.ng-vl-said {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--ng-font-small);
+  line-height: 1.4;
+}
+
+.ng-vl-said p { margin: 0; }
+
+.ng-vl-done { font-weight: 700; }
+
+.ng-vl-tips-head { font-weight: 700; }
+
+.ng-vl-tips {
+  margin: 0;
+  padding-left: 1.2em;
+}
+
+/* ── The given configuration ─────────────────────────────── */
+
+.ng-vl-given {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ng-vl-given-head,
+.ng-vl-form-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.ng-vl-switch-one {
+  font-family: var(--ng-mono);
+  font-weight: 700;
+}
+
+.ng-vl-show-commands { align-self: flex-start; }
+
+.ng-vl-winbox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ng-vl-filtering {
+  margin: 0;
+  padding: 2px 8px;
+  border-left: 3px solid var(--ng-green);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+}
+
+.ng-vl-filtering.is-off { border-left: 3px dashed var(--ng-amber); }
+
+.ng-vl-table,
+.ng-vl-form-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--ng-surf);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  font-size: var(--ng-font-small);
+}
+
+.ng-vl-table caption.ng-vl-caption,
+.ng-vl-form-table caption.ng-vl-caption {
+  display: table-caption;
+  padding: 2px 0;
+  text-align: left;
+}
+
+.ng-vl-table th,
+.ng-vl-table td,
+.ng-vl-form-table th,
+.ng-vl-form-table td {
+  padding: 3px 8px;
+  border-top: 1px solid var(--ng-stroke);
+  text-align: left;
+  vertical-align: middle;
+  font-family: var(--ng-mono);
+}
+
+.ng-vl-table thead th,
+.ng-vl-form-table thead th {
+  border-top: 0;
+  color: var(--ng-muted);
+  font-size: var(--ng-font-caption);
+  font-weight: 400;
+}
+
+.ng-vl-table tbody th,
+.ng-vl-port { font-weight: 700; }
+
+.ng-vl-ft { font-size: var(--ng-font-caption); }
+
+.ng-vl-cmds {
+  display: block;
+}
+
+.ng-vl-cmds > .ng-vl-commands { margin-top: 4px; }
+
+.ng-vl-commands {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ng-vl-pre {
+  width: 100%;
+  margin: 0;
+  padding: 6px 10px;
+  overflow-x: auto;
+  background: var(--ng-code-bg);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  color: var(--ng-code);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* One command per line; a long one wraps with its continuation indented. */
+.ng-vl-cmd-line {
+  display: block;
+  padding-left: 3ch;
+  text-indent: -3ch;
+}
+
+.ng-vl-copy-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.ng-vl-copy-failed {
+  margin: 0;
+  color: var(--ng-amber);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+}
+
+.ng-vl-copy-failed:empty {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  border: 0;
+}
+
+/* ── Forms («Налаштуй порти») ────────────────────────────── */
+
+.ng-vl-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ng-vl-form-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.ng-vl-label {
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+}
+
+.ng-vl-input {
+  min-height: var(--ng-target);
+  padding: 0 8px;
+  background: var(--ng-input-bg);
+  border: 1px solid var(--ng-line);
+  border-radius: var(--ng-radius);
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-body);
+}
+
+.ng-vl-input::placeholder { color: var(--ng-muted); }
+.ng-vl-input.is-vid { width: 4.2em; }
+.ng-vl-input.is-list { width: 8em; max-width: 100%; }
+.ng-vl-form-table td .ng-vl-input.is-list { width: 100%; min-width: 4.2em; max-width: 9em; }
+
+.ng-vl-input.is-invalid {
+  border: 2px solid var(--ng-amber);
+}
+
+.ng-vl-form-table .ng-segmented-options { padding: 1px; }
+.ng-vl-form-table .ng-segmented-option { padding: 0 8px; }
+/* A port's mode stays one row in the 420 px column («не задано» included). */
+.ng-vl-form-table .ng-vl-modes .ng-segmented-option { padding: 0 6px; font-size: var(--ng-font-caption); }
+/* Frame types wrap under each other where the panel is narrow (960 px), never clipped. */
+.ng-vl-form-table .ng-segmented-options { flex-wrap: wrap; }
+.ng-vl-form-table .ng-vl-modes .ng-segmented-options { flex-wrap: nowrap; }
+
+/* Round 5 (spec 5b-1 §4 v2): a mode option in two lines, the Ukrainian word
+   over the term (the term at caption size, mono), in today's group width. */
+.ng-vl-mode {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+}
+.ng-vl-mode-word { font-family: var(--ng-sans); font-size: var(--ng-font-caption); font-weight: 700; }
+.ng-vl-mode-term { font-family: var(--ng-mono); font-size: 12px; font-weight: 400; }
+
+/* «VLAN цього порту» keeps to two lines even before a mode gives the column a field. */
+.ng-vl-form-table thead th:last-child { min-width: 6.5em; }
+@media (min-width: 1100px) { .ng-vl-form-table thead th:last-child { white-space: nowrap; } }
+
+/* «VLAN, які створити»: what the list is for, one line under it. */
+.ng-vl-form-what {
+  flex-basis: 100%;
+  margin: -2px 0 0;
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-caption);
+}
+
+.ng-vl-legend-line {
+  margin: 0;
+  color: var(--ng-muted);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  line-height: 1.4;
+}
+
+tr.is-marked > th,
+.ng-vl-form-line.is-marked .ng-vl-label { color: var(--ng-amber); }
+
+.ng-vl-mark-row td { border-top: 0; padding-top: 0; }
+
+.ng-vl-mark {
+  margin: 0;
+  padding: 2px 8px;
+  border-left: 3px solid var(--ng-amber);
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-caption);
+  line-height: 1.35;
+}
+
+.ng-vl-vlans {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.ng-vl-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ng-vl-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--ng-surf);
+  border: 1px solid var(--ng-stroke);
+  border-left: 4px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+}
+
+.ng-vl-row.is-marked { border-left-color: var(--ng-amber); }
+
+.ng-vl-row-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.ng-vl-remove { margin-left: auto; }
+
+.ng-vl-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.ng-vl-chips-label {
+  min-width: 6.5em;
+  color: var(--ng-muted);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+}
+
+.ng-vl-chip {
+  min-height: var(--ng-target);
+  padding: 0 10px;
+  background: var(--ng-input-bg);
+  border: 1px dashed var(--ng-line);
+  border-radius: var(--ng-radius);
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  cursor: pointer;
+}
+
+.ng-vl-chip:hover { border-color: var(--ng-blue); }
+
+.ng-vl-chip[aria-pressed="true"] {
+  background: var(--ng-button-bg);
+  border: 2px solid var(--ng-blue);
+  color: var(--ng-button-text);
+  font-weight: 700;
+}
+
+.ng-vl-chip[aria-pressed="true"]::before { content: "✓ "; }
+
+.ng-vl-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--ng-target);
+  font-family: var(--ng-mono);
+  font-weight: 700;
+}
+
+.ng-vl-filter.is-marked { color: var(--ng-amber); }
+
+.ng-vl-checkbox {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--ng-cyan);
+}
+
+/* ── Stage: diagram, walk, legend, help ──────────────────── */
+
+.ng-vl-dg {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--ng-svg-bg);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+}
+
+.ng-vl[data-mode="desk"] .ng-vl-dg,
+.ng-vl[data-mode="wide"] .ng-vl-dg {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.ng-vl-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  box-sizing: border-box;
+  /* Round 4 A3: the zoom bar's row height is reserved, so its appearance moves nothing. */
+  min-height: calc(var(--ng-target) + 6px);
+  padding: 6px 6px 0;
+}
+
+.ng-vl-zoom {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.ng-vl-zoom [aria-disabled="true"] { opacity: 0.55; }
+
+.ng-vl-view {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.ng-vl[data-mode="desk"] .ng-vl-view,
+.ng-vl[data-mode="wide"] .ng-vl-view {
+  flex: 1 1 0;
+  min-height: max(260px, min(var(--ng-vl-natural, 260px), 60vh));
+}
+
+.ng-vl[data-mode="narrow"] .ng-vl-view.has-overlay {
+  min-height: min(70vh, 560px);
+}
+
+.ng-vl-frame {
+  display: flex;
+  padding: 8px; /* VlanDiagram FRAME_PAD */
+  overflow: hidden;
+  border-radius: var(--ng-radius);
+}
+
+.ng-vl[data-mode="desk"] .ng-vl-frame,
+.ng-vl[data-mode="wide"] .ng-vl-frame {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.ng-vl[data-mode="narrow"] .ng-vl-frame { height: min(var(--ng-vl-natural, 340px), 70vh); min-height: 240px; }
+.ng-vl-frame.is-pan { overflow: auto; }
+.ng-vl-frame.is-covered { visibility: hidden; }
+.ng-vl .ng-vl-frame:focus-visible { outline-offset: -3px; }
+
+.ng-vl-svg {
+  display: block;
+  flex: none;
+  margin: auto;
+}
+
+.ng-vl-svg text { font-family: var(--ng-mono); }
+.ng-vl-svg .ng-vl-sans { font-family: var(--ng-sans); }
+
+.ng-vl-link { stroke: var(--ng-line); stroke-width: 1.5; }
+.ng-vl-link.is-trunk { stroke: var(--ng-link); stroke-width: 3; }
+.ng-vl-path { stroke: var(--ng-path); stroke-width: 4; stroke-linecap: round; }
+.ng-vl-port-mark { fill: var(--ng-router-0); }
+.ng-vl-port-name { fill: var(--ng-text); }
+
+.ng-vl-switch-box { fill: var(--ng-surf); stroke: var(--ng-router-0); stroke-width: 2; }
+.ng-vl-switch-name { fill: var(--ng-router-0); }
+/* The device whose form (or given configuration) is open: a tinted box, a
+   blue outline and its tag in words. Selection is a fill; keyboard focus is
+   the cyan ring on the tabs, so the two never look alike. */
+.ng-vl-switch.is-active .ng-vl-switch-box { fill: var(--ng-blue-bg); stroke: var(--ng-blue); stroke-width: 4; }
+.ng-vl-active-tag { fill: var(--ng-text); }
+
+/* The device switcher above the form: its choice filled as strongly as the
+   bar's Cisco/MikroTik switch. The bar is always dark; in the light theme
+   the pale chosen option was too weak, so it takes the dark blue there. */
+[data-theme="light"] .ng-vl-switches .ng-segmented-option[aria-checked="true"] {
+  background: var(--ng-button-text);
+  border-color: var(--ng-button-text);
+  color: var(--ng-panel);
+}
+.ng-vl-switch.is-pickable,
+.ng-vl-host.is-pickable { cursor: pointer; }
+
+.ng-vl-host-box { fill: var(--ng-net-fill); stroke: var(--ng-muted); stroke-width: 1.5; }
+.ng-vl-host-name,
+.ng-vl-host-ip { fill: var(--ng-text); }
+.ng-vl-host-third { fill: var(--ng-text); }
+.ng-vl-host-third.is-goal { fill: var(--ng-cyan); }
+.ng-vl-host.is-source .ng-vl-host-box,
+.ng-vl-host.is-source.is-source .ng-vl-host-box { stroke: var(--ng-cyan); stroke-width: 3; }
+.ng-vl-status { fill: var(--ng-text); }
+.ng-vl-status.is-source { fill: var(--ng-cyan); }
+.ng-vl-status.is-received { fill: var(--ng-green); }
+.ng-vl-status.is-tagged,
+.ng-vl-status.is-leaked { fill: var(--ng-amber); }
+/* A PC the frame must not reach, but did: amber, dashed, with its words. */
+.ng-vl-host.is-leaked .ng-vl-host-box { stroke: var(--ng-amber); stroke-width: 3; stroke-dasharray: 6 3; }
+.ng-vl-host.is-received .ng-vl-host-box { stroke: var(--ng-green); stroke-width: 3; }
+.ng-vl-host.is-picked .ng-vl-host-box { fill: var(--ng-blue-bg); }
+.ng-vl-host.is-picked:not(.has-domain):not(.is-received) .ng-vl-host-box { stroke: var(--ng-blue); stroke-width: 2.5; }
+
+.ng-vl-plate { fill: var(--ng-svg-bg); stroke: var(--ng-path); stroke-width: 1; }
+.ng-vl-tag-text { fill: var(--ng-text); }
+.ng-vl-tag.is-tagged .ng-vl-plate { stroke-width: 2; }
+
+.ng-vl-drop-dot { fill: var(--ng-amber); }
+.ng-vl-drop-text { fill: var(--ng-svg-bg); }
+.ng-vl-drop.is-quiet .ng-vl-drop-dot { fill: var(--ng-svg-bg); stroke: var(--ng-amber); stroke-width: 1.5; }
+.ng-vl-drop.is-quiet .ng-vl-drop-text { fill: var(--ng-amber); }
+
+/* Broadcast domains: the router palette, with a numbered badge and the legend. */
+.ng-vl-d0 { --ng-vl-domain: var(--ng-router-0); }
+.ng-vl-d1 { --ng-vl-domain: var(--ng-router-1); }
+.ng-vl-d2 { --ng-vl-domain: var(--ng-router-2); }
+.ng-vl-d3 { --ng-vl-domain: var(--ng-router-3); }
+.ng-vl-d4 { --ng-vl-domain: var(--ng-router-4); }
+.ng-vl-d5 { --ng-vl-domain: var(--ng-router-5); }
+.ng-vl-d6 { --ng-vl-domain: var(--ng-router-6); }
+.ng-vl-d7 { --ng-vl-domain: var(--ng-router-7); }
+.ng-vl-host.has-domain .ng-vl-host-box { stroke: var(--ng-vl-domain); stroke-width: 3; }
+.ng-vl-badge-dot { fill: var(--ng-vl-domain); }
+.ng-vl-badge-text { fill: var(--ng-svg-bg); }
+
+.ng-vl-walk-text,
+.ng-vl-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ng-vl-steps,
+.ng-vl-legend-list {
+  margin: 0;
+  padding: 0 0 0 1.6em;
+  font-size: var(--ng-font-small);
+  line-height: 1.4;
+}
+
+.ng-vl-legend-list {
+  padding: 0;
+  list-style: none;
+}
+
+.ng-vl-legend-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--ng-mono);
+}
+
+.ng-vl-swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--ng-vl-domain);
+  color: var(--ng-svg-bg);
+  font-size: var(--ng-font-caption);
+  font-weight: 700;
+}
+
+
+.ng-vl-reference {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── «Між VLAN» (VLAN-2) ─────────────────────────────────── */
+
+.ng-vl-device-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Givens the forms show but don't let the student edit. */
+.ng-vl-given-value {
+  font-family: var(--ng-mono);
+  font-weight: 700;
+}
+
+.ng-vl-fixed {
+  color: var(--ng-muted);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+}
+
+.ng-vl-given-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0;
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+}
+
+.ng-vl-row.is-fixed { border-left-style: dashed; }
+
+.ng-vl-input.is-address { width: 100%; min-width: 11em; max-width: 19.5em; }
+.ng-vl-input.is-ip { width: 9.5em; max-width: 100%; }
+.ng-vl-input.is-name { width: 7.5em; max-width: 100%; }
+
+/* «Між VLAN»'s rows on one line where the panel is wide enough: each label
+   stays with its field (a pair), the pairs wrap, ✕ at the end. A Cisco
+   subinterface reads as its commands (interface …, encapsulation dot1Q …,
+   ip address …). */
+.ng-vl-row.ng-vl-line {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.ng-vl-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* A pair's label never shrinks under its field (nor its words overlap). */
+.ng-vl-pair > .ng-vl-label,
+.ng-vl-pair > .ng-vl-chips-label { flex: none; min-width: 0; }
+.ng-vl-pair .ng-vl-label { font-size: var(--ng-font-caption); }
+.ng-vl-pair > .ng-vl-muted { flex: 1 1 12em; min-width: 0; }
+.ng-vl-line .ng-vl-remove { margin-left: auto; }
+.ng-vl-line > .ng-vl-mark { flex-basis: 100%; }
+.ng-vl-line .ng-vl-input { font-size: var(--ng-font-small); }
+.ng-vl-line .ng-vl-input.is-name { width: 5.5em; }
+.ng-vl-line .ng-vl-input.is-vid { width: 3.8em; }
+.ng-vl-line .ng-segmented-option { padding: 0 8px; }
+.ng-vl-pair.is-address { flex: 1 1 14em; }
+.ng-vl-pair.is-address .ng-vl-input { flex: 1 1 auto; width: auto; min-width: 9em; }
+
+.ng-vl-on .ng-segmented-options,
+.ng-vl-states .ng-segmented-options { flex-wrap: wrap; }
+
+.ng-vl-chip.is-cpu { font-style: italic; }
+
+.ng-vl-mgmt {
+  padding-top: 6px;
+  border-top: 1px solid var(--ng-stroke);
+}
+
+.ng-vl-mgmt .ng-vl-label { min-width: 9.5em; }
+
+.ng-vl-walk-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 10px;
+}
+
+.ng-vl-directions .ng-segmented-options { padding: 0; }
+
+/* The probe's ends in the walk's caption keep their case. */
+.ng-vl-probe {
+  color: var(--ng-text);
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* The diagram: a router box, interface lines, the PCs' gateway line. */
+.ng-vl-iface-text { fill: var(--ng-text); }
+.ng-vl-iface.is-address .ng-vl-iface-text,
+.ng-vl-iface.is-gateway .ng-vl-iface-text { fill: var(--ng-muted); }
+.ng-vl-iface.is-off .ng-vl-iface-text { fill: var(--ng-amber); }
+.ng-vl-iface-mark { fill: var(--ng-text); }
+.ng-vl-iface.is-source .ng-vl-iface-mark,
+.ng-vl-iface.is-hop .ng-vl-iface-mark,
+.ng-vl-iface.is-source .ng-vl-iface-text,
+.ng-vl-iface.is-hop .ng-vl-iface-text { fill: var(--ng-cyan); }
+.ng-vl-iface.is-received .ng-vl-iface-mark,
+.ng-vl-iface.is-received .ng-vl-iface-text { fill: var(--ng-green); }
+.ng-vl-iface.is-dropped .ng-vl-iface-mark,
+.ng-vl-iface.is-dropped .ng-vl-iface-text,
+.ng-vl-iface.is-leaked .ng-vl-iface-mark,
+.ng-vl-iface.is-leaked .ng-vl-iface-text { fill: var(--ng-amber); }
+.ng-vl-switch.is-dropped .ng-vl-switch-box { stroke: var(--ng-amber); stroke-width: 3; stroke-dasharray: 6 3; }
+.ng-vl-host-fourth { fill: var(--ng-text); }
+
+/* Fix round: task 3's givens, Cisco's task-4 line, the walk's sub-headings. */
+.ng-vl-givens {
+  padding-left: 10px;
+  border-left: 3px solid var(--ng-blue);
+}
+
+.ng-vl-walk-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ng-vl-subhead {
+  margin: 4px 0 0;
+  padding-left: 8px;
+  border-left: 3px solid var(--ng-path);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.ng-vl-walk-group.is-hop .ng-vl-subhead { border-left-style: double; }
+
+.ng-vl-outcome {
+  margin: 4px 0 0;
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+}
+
+/* ── Walks in motion (VLAN-anim spec v2) ─────────────────── */
+
+/* A frame on its way: the firewall's envelope size, the path's colour; a
+   routed packet's new Ethernet frame is cyan (Y3); a success lap's frame
+   takes its domain's colour (Y9). Its wire form is on the plate beside it. */
+.ng-vl-token { pointer-events: none; }
+.ng-vl-token-box { fill: var(--ng-path); stroke: var(--ng-svg-bg); stroke-width: 1; }
+.ng-vl-token-flap { stroke: var(--ng-svg-bg); stroke-width: 1.4; }
+.ng-vl-token.is-new-frame .ng-vl-token-box { fill: var(--ng-cyan); }
+.ng-vl-token.has-tone .ng-vl-token-box { fill: var(--ng-vl-domain); }
+.ng-vl-token.is-back .ng-vl-token-box { stroke: var(--ng-text); stroke-dasharray: 3 2; }
+
+/* «VLAN N» inside a bridge that classified the frame, while it leaves. */
+.ng-vl-chip-plate { fill: var(--ng-svg-bg); stroke: var(--ng-cyan); stroke-width: 1.5; }
+.ng-vl-chip-text { fill: var(--ng-text); }
+
+/* A router's hop under way: the same IP packet, a new Ethernet frame. Laid
+   over the frame's top left (.ng-vl-view is positioned), so the diagram
+   never reflows mid-walk; narrow, in the corner left of the router (the
+   column's top box), so it doesn't cover the router it speaks of. */
+.ng-vl-motion-caption {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 1;
+  max-width: min(14em, calc(42% - 12px));
+  margin: 0;
+  padding: 4px 8px;
+  background: var(--ng-svg-bg);
+  border: 1px solid var(--ng-stroke);
+  border-left: 3px solid var(--ng-cyan);
+  border-radius: var(--ng-radius);
+  color: var(--ng-text);
+  font-size: var(--ng-font-caption);
+  font-weight: 700;
+  line-height: 1.3;
+  pointer-events: none;
+}
+
+/* ── «Знайди несправність» (VLAN-3) ──────────────────────── */
+
+.ng-vf-level {
+  margin: 0;
+  font-size: var(--ng-font-small);
+}
+
+/* A Cisco trunk's native VLAN, beside its allowed list (level 3). */
+.ng-vl-native { margin-top: 4px; }
+.ng-vl-native .ng-vl-input.is-vid { width: 4.2em; }
+
+/* «Перевірки»: a compact button per check, several to a line; one row per VLAN. */
+.ng-vf-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ng-vf-grid-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+}
+
+.ng-vf-state {
+  font-size: var(--ng-font-caption);
+  color: var(--ng-muted);
+}
+
+/* How many fail, of how many: in view whatever is folded, beside the heading. */
+.ng-vf-summary {
+  margin: 0 0 0 auto;
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+}
+
+.ng-vf-part { display: flex; flex-direction: column; gap: 4px; }
+
+/* The passing checks, folded: every one still a button once open. */
+.ng-vf-passing {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ng-vf-passing > summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--ng-target);
+  padding: 0 8px;
+  border: 1px solid var(--ng-stroke);
+  border-left: 3px solid var(--ng-green);
+  border-radius: var(--ng-radius);
+  background: var(--ng-surf);
+  font-size: var(--ng-font-small);
+  cursor: pointer;
+}
+
+.ng-vf-passing[open] > summary { margin-bottom: 4px; }
+.ng-vf-passing > summary:hover { border-color: var(--ng-blue); }
+.ng-vf-passing > summary:focus-visible { outline: var(--ng-focus-width) solid var(--ng-focus); outline-offset: 2px; }
+
+/* The form changed since this grid: said in words, the edge as for a previous check. */
+.ng-vf-state.is-stale {
+  padding-left: 6px;
+  border-left: 3px dashed var(--ng-amber);
+  color: var(--ng-text);
+}
+
+.ng-vf-sub {
+  margin: 2px 0 0;
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+}
+
+.ng-vf-rows {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ng-vf-rows.is-wide { grid-template-columns: minmax(0, 1fr); }
+
+.ng-vf-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 6px;
+  width: 100%;
+  min-height: var(--ng-target);
+  padding: 2px 6px;
+  background: var(--ng-surf);
+  border: 1px solid var(--ng-stroke);
+  border-left: 3px solid var(--ng-green);
+  border-radius: var(--ng-radius);
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  line-height: 1.25;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ng-vf-row.is-no { border-left-color: var(--ng-amber); }
+.ng-vf-row:hover { border-color: var(--ng-blue); }
+
+/* The row whose walk is on the diagram: a thick edge and the tint, not colour alone (aria-pressed). */
+.ng-vf-row[aria-pressed="true"] {
+  background: var(--ng-blue-bg);
+  border: 2px solid var(--ng-blue);
+  border-left-width: 5px;
+}
+
+.ng-vf-what { flex: 1 1 auto; min-width: 0; font-weight: 700; }
+.ng-vf-rows.is-wide .ng-vf-what { font-family: var(--ng-sans); }
+/* Expected │ observed: a pair kept together at the row's right. */
+.ng-vf-result { display: inline-flex; gap: 3px; margin-left: auto; white-space: nowrap; }
+.ng-vf-observed { font-weight: 700; }
+.ng-vf-row.is-ok .ng-vf-observed { color: var(--ng-green); }
+.ng-vf-row.is-no .ng-vf-observed { color: var(--ng-amber); }
+.ng-vf-detail {
+  flex-basis: 100%;
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-caption);
+}
+
+.ng-vf-invalid {
+  margin: 0;
+  padding-left: 8px;
+  border-left: 3px solid var(--ng-amber);
+  font-size: var(--ng-font-small);
+}
+
+/* «Причина»: one compact line per option (two where it wraps), the whole line a target. */
+.ng-vf-causes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  margin: 0;
+  padding: 4px 0 0;
+  border: 0;
+  border-top: 1px solid var(--ng-stroke);
+}
+
+.ng-vf-causes legend { padding: 0; float: left; width: 100%; margin-bottom: 2px; }
+.ng-vf-causes > .ng-vl-muted { clear: both; }
+
+.ng-vf-cause {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--ng-target);
+  padding: 2px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--ng-radius);
+  font-size: var(--ng-font-small);
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+.ng-vf-cause:hover { border-color: var(--ng-stroke); }
+
+.ng-vf-cause.is-chosen {
+  background: var(--ng-blue-bg);
+  border: 2px solid var(--ng-blue);
+}
+
+.ng-vf-radio {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--ng-blue);
+}
+
+.ng-vf-work .ng-vl-form-head {
+  padding-top: 4px;
+  border-top: 1px solid var(--ng-stroke);
+}
+
+
+/* The reveal: the cause, the change, the commands that go and come, the grid before and after. */
+.ng-vf-reveal {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ng-vf-reveal > p { margin: 0; font-size: var(--ng-font-small); }
+
+.ng-vf-diff .ng-vl-pre { margin: 2px 0 0; }
+.ng-vf-diff .ng-vl-cmd-line.is-head { font-weight: 700; }
+.ng-vf-diff.is-was { padding-left: 8px; border-left: 3px dashed var(--ng-amber); }
+.ng-vf-diff.is-now { padding-left: 8px; border-left: 3px solid var(--ng-green); }
+
+.ng-vf-passing > summary::before { content: "▸"; margin-right: 6px; }
+.ng-vf-passing[open] > summary::before { content: "▾"; }
+
+/* ── Round 4 (spec F6): the stages, the repair's given lines, «показано» ── */
+
+.ng-vf-stepper ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ng-vf-step {
+  min-height: var(--ng-target);
+  padding: 0 12px;
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  background: var(--ng-input-bg);
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ng-vf-step:hover { border-color: var(--ng-blue); }
+.ng-vf-step.is-current { background: var(--ng-blue-bg); border: 2px solid var(--ng-blue); }
+.ng-vf-step[aria-disabled="true"] { opacity: 0.55; cursor: default; }
+.ng-vf-step[aria-disabled="true"]:hover { border-color: var(--ng-stroke); }
+
+.ng-vf-step-n {
+  display: inline-block;
+  min-width: 1.4em;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: var(--ng-surf);
+  text-align: center;
+}
+
+.ng-vf-repair {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ng-vf-original {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* A given line the repair changed: struck, and said in words for screen readers. */
+.ng-vl-cmd-line.is-changed {
+  color: var(--ng-muted);
+  text-decoration: line-through;
+}
+
+.ng-vf-shown {
+  margin: 0;
+}
+
+.ng-vf-shown-chip {
+  padding: 0 8px;
+  border: 1px dashed var(--ng-muted);
+  border-radius: 10px;
+  color: var(--ng-muted);
+  font-size: var(--ng-font-caption);
+}
+
+/* The live commands: one line while a verdict is open; the summary opens them. */
+.ng-vl-cmds > summary {
+  width: fit-content;
+  min-height: 28px;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+
+.ng-vl-cmds > summary:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}
+
+.ng-vl-cmds-head .ng-vl-caption { display: inline; }
+
+.ng-vl-more-host:empty { display: none; }
+
+/* With a failing check's verdict: where its walk is (the diagram, and in words under the panel). */
+.ng-vl-walk-pointer {
+  margin: 0;
+  padding-left: 8px;
+  border-left: 3px solid var(--ng-path);
+  font-size: var(--ng-font-small);
+}
+
+/* The prediction (spec F3): the PCs' addresses are secondary; the VLAN decides. */
+.ng-vl-svg.is-quiet-ip .ng-vl-host-ip { fill: var(--ng-muted); }
+
+/* A port's mode keeps to one line («не задано» included). */
+.ng-vl-form-table .ng-vl-modes .ng-segmented-option { white-space: nowrap; }
+
+/* A narrow window (about 1000 px): the heading's switches keep to fewer rows.
+   Round 5: the four exercises keep to one row there; the section's name is
+   in the top bar already, so «VLAN» stays for screen readers only. */
+@media (max-width: 1100px) {
+  .ng-vl-head .ng-segmented-option { padding: 0 8px; font-size: var(--ng-font-caption); }
+  .ng-vl[data-mode="desk"] .ng-vl-exercises .ng-segmented-option,
+  .ng-vl[data-mode="desk"] .ng-vl-variants .ng-segmented-option { padding: 0 6px; min-height: 36px; }
+  /* The tasks (or the fault's level line) wrap inside their own box; «⋯» stays beside them, not on a row of its own. */
+  .ng-vl[data-mode="desk"] .ng-vl-head .ng-vl-variants,
+  .ng-vl[data-mode="desk"] .ng-vl-head .ng-vf-level { flex: 1 1 0; min-width: 0; }
+  .ng-vl[data-mode="desk"] .ng-vf-level { font-size: var(--ng-font-caption); }
+  .ng-vl[data-mode="desk"] .ng-vl-h1 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 1100px) {
+  .ng-vf-step { padding: 0 8px; font-size: var(--ng-font-caption); }
+}
+
+/* A line under a row the help panel's message is about (an edit since the
+   check, the port a hint names): the panel's evidence, the panel may sit
+   right after it (round 4 repair). */
+.ng-vl-row-note {
+  margin: 0;
+  padding: 2px 8px;
+  border-left: 3px solid var(--ng-blue);
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-caption);
+  line-height: 1.35;
+}
+
+/* A port's PC beside its name («fa0/3 — PC1»), quieter than the port. */
+.ng-vl-port-pc {
+  color: var(--ng-muted);
+  font-weight: 400;
+}
+
+/* «Ремонт»: a walk's first steps, folded (the last few stay open beside the form). */
+/* «Ремонт» on a short window: the walk folded to its heading, one press opens it. */
+.ng-vf-walk-open {
+  min-height: 32px;
+  padding: 2px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  letter-spacing: 1px;
+  text-align: left;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.ng-vf-walk-open:focus-visible { outline: var(--ng-focus-width) solid var(--ng-focus); outline-offset: 2px; }
+
+.ng-vf-early > summary {
+  width: fit-content;
+  min-height: 28px;
+  padding: 2px 4px;
+  color: var(--ng-muted);
+  font-size: var(--ng-font-small);
+  cursor: pointer;
+}
+
+.ng-vf-early > summary:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}
+
+/* A narrow window (about 1000 px): frame types as compact as the modes, so a
+   MikroTik port row stays one line high where it fits (a hint's port note
+   then sits in view under it). */
+@media (max-width: 1100px) {
+  .ng-vl-form-table .ng-vl-frames .ng-segmented-options { gap: 2px; }
+  .ng-vl-form-table .ng-vl-frames .ng-segmented-option { padding: 0 4px; font-size: var(--ng-font-caption); }
+  .ng-vl-form-table .ng-vl-input.is-vid { width: 3.6em; }
+  .ng-vl-form-table th, .ng-vl-form-table td { padding: 3px 5px; }
+  .ng-vl-form-table thead th { font-size: 12px; }
+}

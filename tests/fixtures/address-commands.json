@@ -1,0 +1,8 @@
+{
+  "rows": [
+    { "address": { "ip": "192.168.1.1", "prefix": 24 }, "ciscoLabel": "GigabitEthernet0/0", "routerosLabel": "bridge", "cisco": "interface GigabitEthernet0/0\n ip address 192.168.1.1 255.255.255.0\n no shutdown", "routeros": "/ip address add address=192.168.1.1/24 interface=bridge" },
+    { "address": { "ip": "10.0.0.1", "prefix": 30 }, "ciscoLabel": "GigabitEthernet0/1", "routerosLabel": "ether1", "cisco": "interface GigabitEthernet0/1\n ip address 10.0.0.1 255.255.255.252\n no shutdown", "routeros": "/ip address add address=10.0.0.1/30 interface=ether1" },
+    { "address": { "ip": "10.0.0.0", "prefix": 31 }, "ciscoLabel": "GigabitEthernet0/1", "routerosLabel": "ether1", "cisco": "interface GigabitEthernet0/1\n ip address 10.0.0.0 255.255.255.254\n no shutdown", "routeros": "/ip address add address=10.0.0.0/31 interface=ether1" },
+    { "address": { "ip": "10.0.0.1", "prefix": 32 }, "ciscoLabel": "Loopback0", "routerosLabel": "lo", "cisco": "interface Loopback0\n ip address 10.0.0.1 255.255.255.255", "routeros": null }
+  ]
+}

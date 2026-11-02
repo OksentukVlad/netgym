@@ -1,0 +1,18 @@
+/* The diagram highlight (R3): an outline around a label, never a fill over
+   it; it pulses twice, then stays. Reduced motion: a static outline. */
+.ng-hl-mark {
+  fill: none;
+  stroke: var(--ng-amber);
+  stroke-width: 2.5;
+  pointer-events: none;
+  animation: ng-hl-pulse 0.8s ease-in-out 2;
+}
+
+@keyframes ng-hl-pulse {
+  0%, 100% { stroke-opacity: 1; }
+  50% { stroke-opacity: 0.35; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ng-hl-mark { animation: none; }
+}

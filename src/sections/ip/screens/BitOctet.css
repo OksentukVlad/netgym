@@ -1,0 +1,187 @@
+/* The walk's answer row (BitOctet.jsx): the four octets on one line where
+   the screen is wide (round 4 spec R5: all 32 bits, the steps and the help
+   panel fit at 1280×800), two by two below that, one under the other in a
+   narrow window; eight cells each under their weights. A cell is 0 or 1
+   (polish-2 P1): a 0 is quieter (normal weight on the field colour, a solid
+   border) but reads as a value; a 1 is filled. A given octet (level 1) is
+   muted and can't be pressed. */
+.ng-bitrow {
+  display: grid;
+  grid-template-columns: minmax(0, 22rem);
+  gap: 12px 16px;
+}
+
+@container (min-width: 640px) {
+  .ng-bitrow { grid-template-columns: repeat(2, minmax(0, 22rem)); }
+}
+
+@container (min-width: 1100px) {
+  .ng-bitrow { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+.ng-bitoctet,
+.ng-bittext {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ng-bitoctet-caption {
+  margin: 0;
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+}
+
+.ng-bitoctet-weights,
+.ng-bitoctet-cells {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.ng-bitoctet-weights span {
+  color: var(--ng-muted);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-caption);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.ng-bit {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding: 0;
+  background: var(--ng-input-bg);
+  border: 1px solid var(--ng-line);
+  border-radius: 6px;
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-body);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ng-bit.is-zero {
+  color: var(--ng-text);
+  font-weight: 400;
+}
+
+.ng-bit.is-one {
+  background: var(--ng-button-bg);
+  border-color: var(--ng-blue);
+  color: var(--ng-button-text);
+}
+
+.ng-bit:hover {
+  border-color: var(--ng-blue);
+}
+
+.ng-bit:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+  position: relative;
+  z-index: 1;
+}
+
+.ng-bit[aria-disabled="true"] {
+  cursor: default;
+}
+
+/* A given octet (level 1): read, not edited. Round 5 (spec 5b-1 §2): no
+   input border, a muted fill; octet 4 keeps the input look. */
+.ng-bitoctet.is-given .ng-bit,
+.ng-bittext.is-given .ng-bittext-input {
+  background: var(--ng-surf);
+  border-color: transparent;
+  color: var(--ng-muted);
+}
+
+.ng-bitoctet.is-given .ng-bit:hover {
+  border-color: transparent;
+}
+
+.ng-bitoctet.is-given .ng-bitoctet-caption,
+.ng-bittext.is-given .ng-bitoctet-caption {
+  color: var(--ng-muted);
+  font-weight: 400;
+}
+
+/* Level 1: the given octets in one band under one caption, the open octet
+   beside it (or under it in a narrow window). */
+.ng-bitrow.has-band {
+  align-items: end;
+}
+
+@container (min-width: 640px) {
+  .ng-bitrow.has-band { grid-template-columns: minmax(0, 1fr) minmax(0, 22rem); }
+}
+
+.ng-bitband {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ng-bitband-caption {
+  margin: 0;
+  color: var(--ng-muted);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+}
+
+.ng-bitband-octets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* The prefix line (after the mask step): before the first device bit. */
+.ng-bit.is-line,
+.ng-bitoctet-weights .is-line {
+  box-shadow: -3px 0 0 var(--ng-cyan);
+}
+
+/* A marked octet: amber, as «Ще ні». */
+.ng-bitoctet.is-wrong .ng-bit,
+.ng-bittext.is-wrong .ng-bittext-input {
+  border-color: var(--ng-amber);
+}
+
+.ng-bitoctet-msg {
+  margin: 0;
+  color: var(--ng-amber);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+}
+
+.ng-bittext-input {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 16em;
+  min-height: var(--ng-target);
+  padding: 8px 12px;
+  background: var(--ng-input-bg);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-body);
+  letter-spacing: 3px;
+}
+
+.ng-bittext-input:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}
+
+/* The band's octets need no weights of their own: octet 4 beside them has the row's. */
+.ng-bitband .ng-bitoctet-weights {
+  display: none;
+}

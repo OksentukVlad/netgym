@@ -1,0 +1,650 @@
+[
+  {
+    "params": {
+      "variantId": "two-switch",
+      "vendor": "cisco",
+      "level": 1,
+      "seed": 0
+    },
+    "sha256": "3c14efa8afb3b5f1c6c227c6de2ec114367fb27e6acd39968d4de177314a1532"
+  },
+  {
+    "params": {
+      "variantId": "two-switch",
+      "vendor": "cisco",
+      "level": 1,
+      "seed": 1
+    },
+    "sha256": "48c536e22184aa82e289d427562e8373b8c1bc56ae9e477a6ceaa74a00eb0167"
+  },
+  {
+    "params": {
+      "variantId": "two-switch",
+      "vendor": "cisco",
+      "level": 1,
+      "seed": 41
+    },
+    "sha256": "68894dfdaf9d1b0b196c53fd13c272aaba01cda35721f65af0d688572ff79d78"
+  },
+  {
+    "params": {
+      "variantId": "two-switch",
+      "vendor": "cisco",
+      "level": 3,
+      "seed": 0
+    },
+    "sha256": "0aefbf0a5788424cab1cb493dc832f9e9e58266ac39ff999bfe9c50b952ec8a5"
+  },
+  {
+    "params": {
+      "variantId": "two-switch",
+      "vendor": "cisco",
+      "level": 3,
+      "seed": 1
+    },
+    "sha256": "8f2f5f630fa8ba95d0390c71c7481cf516f8709f4a330158730425466b74d981"
+  },
+  {
+    "params": {
+      "variantId": "two-switch",
+      "vendor": "cisco",
+      "level": 3,
+      "seed": 41
+    },
+    "sha256": "65eb3e3306b8cc02d6ea8add5f39a61f149f9001ffa76c41d70bd0cfbb6372e7"
+  },
+  {
+    "params": {
+      "variantId": "two-switch",
+      "vendor": "routeros",
+      "level": 1,
+      "seed": 0
+    },
+    "sha256": "ae0451b5d65b532b89465e03792dea01a6caf89956c6f709fc6f8983481f8cfe"
+  },
+  {
+    "params": {
+      "variantId": "two-switch",
+      "vendor": "routeros",
+      "level": 1,
+      "seed": 1
+    },
+    "sha256": "44b815dcb052cf21ffee2c7c97f8bb7eb40723fb090242ff86f42424ebd372cc"
+  },
+  {
+    "params": {
+      "variantId": "two-switch",
+      "vendor": "routeros",
+      "level": 1,
+      "seed": 41
+    },
+    "sha256": "0cde0e90fc0d6a039d6a08168bbbdd1c6bc9c03326f7a592b0467d650df42ee2"
+  },
+  {
+    "params": {
+      "variantId": "two-switch",
+      "vendor": "routeros",
+      "level": 3,
+      "seed": 0
+    },
+    "sha256": "de47d55ade800e0c829841ad7af0ddfe7583fa1df5c1f93fa28749c801e88130"
+  },
+  {
+    "params": {
+      "variantId": "two-switch",
+      "vendor": "routeros",
+      "level": 3,
+      "seed": 1
+    },
+    "sha256": "20215131631a33b7f2c8a8dd50a42a4db4dfd84032724a504f1026393d253e00"
+  },
+  {
+    "params": {
+      "variantId": "two-switch",
+      "vendor": "routeros",
+      "level": 3,
+      "seed": 41
+    },
+    "sha256": "7b0287adc17233b8563654e6b7fe499ad6a072467e5acc9c1b3ede8d805386fb"
+  },
+  {
+    "params": {
+      "variantId": "local",
+      "vendor": "cisco",
+      "level": 1,
+      "seed": 0
+    },
+    "sha256": "44dddb1fd7dece5f1e6d50abc5e96c6dd43b3b635ffe04fab6e549f24e406c36"
+  },
+  {
+    "params": {
+      "variantId": "local",
+      "vendor": "cisco",
+      "level": 1,
+      "seed": 1
+    },
+    "sha256": "49fdd45b74a0dfb1a8124bf24340066ed9ce2f7afc81c1ef6b6a53318eb370ba"
+  },
+  {
+    "params": {
+      "variantId": "local",
+      "vendor": "cisco",
+      "level": 1,
+      "seed": 41
+    },
+    "sha256": "b3ca371b20872592155f4a24bbafdef8e4136eba569b6149897adee2f847db5d"
+  },
+  {
+    "params": {
+      "variantId": "local",
+      "vendor": "cisco",
+      "level": 3,
+      "seed": 0
+    },
+    "sha256": "df649f4c817a7df579851d4ce9cb27728369ab3404b7a11d24129bee28939b96"
+  },
+  {
+    "params": {
+      "variantId": "local",
+      "vendor": "cisco",
+      "level": 3,
+      "seed": 1
+    },
+    "sha256": "d54f196c113f7ee66dde47579601216807e335db53d6644fc52e271ef76f977c"
+  },
+  {
+    "params": {
+      "variantId": "local",
+      "vendor": "cisco",
+      "level": 3,
+      "seed": 41
+    },
+    "sha256": "d7e3f99641194891349d4d83ae991324fbf647c0c39f7c8212f608d9753e59af"
+  },
+  {
+    "params": {
+      "variantId": "local",
+      "vendor": "routeros",
+      "level": 1,
+      "seed": 0
+    },
+    "sha256": "a8b985184469d5d180d3ccae200738da87d2ed68e9fb083d06b94e8928e1ed07"
+  },
+  {
+    "params": {
+      "variantId": "local",
+      "vendor": "routeros",
+      "level": 1,
+      "seed": 1
+    },
+    "sha256": "9b9d89ee9be92bfe210c2aab3c54140aa0fb3fe2dae8937721beb70572d450ca"
+  },
+  {
+    "params": {
+      "variantId": "local",
+      "vendor": "routeros",
+      "level": 1,
+      "seed": 41
+    },
+    "sha256": "3c7021d94000f6d24d25a12092d7b63ec58d25c93490964bca019e202f90d393"
+  },
+  {
+    "params": {
+      "variantId": "local",
+      "vendor": "routeros",
+      "level": 3,
+      "seed": 0
+    },
+    "sha256": "b2062c52e9f825fd0523062cc1f94c10c06907dc9eb76c2af2b40ae02f6437c6"
+  },
+  {
+    "params": {
+      "variantId": "local",
+      "vendor": "routeros",
+      "level": 3,
+      "seed": 1
+    },
+    "sha256": "e6f3a6035fbe17638e6a8fa58e24cefd0b13c186aa1edc70fe7531be94176041"
+  },
+  {
+    "params": {
+      "variantId": "local",
+      "vendor": "routeros",
+      "level": 3,
+      "seed": 41
+    },
+    "sha256": "803d485d38a72550f05ba5b9d1f42a43a5c8a519f94fe40a5db010274a1a51b3"
+  },
+  {
+    "params": {
+      "variantId": "transit",
+      "vendor": "cisco",
+      "level": 3,
+      "seed": 0
+    },
+    "sha256": "f6f684869a41039fd68e6bff7823d6142a128cfb120950b33d3e0c20fcea5e50"
+  },
+  {
+    "params": {
+      "variantId": "transit",
+      "vendor": "cisco",
+      "level": 3,
+      "seed": 1
+    },
+    "sha256": "651a8e0453e8c4af9f8186c1071e9cc23d692e08ad6c40e44bc857914776c290"
+  },
+  {
+    "params": {
+      "variantId": "transit",
+      "vendor": "cisco",
+      "level": 3,
+      "seed": 41
+    },
+    "sha256": "795c3d1e31cff81e4e378855f10e9a3dd547810b6b2085ef832e6869c9264f56"
+  },
+  {
+    "params": {
+      "variantId": "transit",
+      "vendor": "routeros",
+      "level": 3,
+      "seed": 0
+    },
+    "sha256": "4fcb2c8ad9a9edf8f5d78aab4d5f688731df93fa23d2748bb1c409c24414414a"
+  },
+  {
+    "params": {
+      "variantId": "transit",
+      "vendor": "routeros",
+      "level": 3,
+      "seed": 1
+    },
+    "sha256": "949aaad7c1f3517a28efbc5aa5d7d328086a332f8936ef091178469265364c2f"
+  },
+  {
+    "params": {
+      "variantId": "transit",
+      "vendor": "routeros",
+      "level": 3,
+      "seed": 41
+    },
+    "sha256": "0c55947bf13340ffbf6ec19fd049fb48379c3ddfe478e40b1cb5bf5b913db2e3"
+  },
+  {
+    "params": {
+      "variantId": "route-1",
+      "vendor": "cisco",
+      "level": 2,
+      "seed": 0
+    },
+    "sha256": "9c4aea715290e9cc1bbb991b64fd9e06152fa60987ec6f8c3d3329ca6f219975"
+  },
+  {
+    "params": {
+      "variantId": "route-1",
+      "vendor": "cisco",
+      "level": 2,
+      "seed": 1
+    },
+    "sha256": "80628f623012c020410db2670ad815efa4acd53dfd61727b858b3e43fb321033"
+  },
+  {
+    "params": {
+      "variantId": "route-1",
+      "vendor": "cisco",
+      "level": 2,
+      "seed": 41
+    },
+    "sha256": "c63c7b34b50d45df706cc371442c36f608a757ab4d0def3816a72fb2609c0d3f"
+  },
+  {
+    "params": {
+      "variantId": "route-1",
+      "vendor": "cisco",
+      "level": 3,
+      "seed": 0
+    },
+    "sha256": "a2be6d5e5acbe98fa1d5cf812f6ae8a88edb7fbff781f03d6c680fdd4577c511"
+  },
+  {
+    "params": {
+      "variantId": "route-1",
+      "vendor": "cisco",
+      "level": 3,
+      "seed": 1
+    },
+    "sha256": "4c42bc5ac4e2841023bb568ff4de0125451e828a4d9fc6a5b8c7d0fee6467b7d"
+  },
+  {
+    "params": {
+      "variantId": "route-1",
+      "vendor": "cisco",
+      "level": 3,
+      "seed": 41
+    },
+    "sha256": "c8ac161597a258d510cd1daa29427a5592928316baf6d244d4a20bf019512e00"
+  },
+  {
+    "params": {
+      "variantId": "route-1",
+      "vendor": "routeros",
+      "level": 2,
+      "seed": 0
+    },
+    "sha256": "9dd7f6af9cc7029943f29e747f172d0209eafdaf3d399a415a6925195e5d4347"
+  },
+  {
+    "params": {
+      "variantId": "route-1",
+      "vendor": "routeros",
+      "level": 2,
+      "seed": 1
+    },
+    "sha256": "9f9dbb8d33ca6f18283e98a45fa48fe6e15563472ed333571983a98178a9ca7a"
+  },
+  {
+    "params": {
+      "variantId": "route-1",
+      "vendor": "routeros",
+      "level": 2,
+      "seed": 41
+    },
+    "sha256": "cbbcff23fdac3d440599eb6f52af1a664def0dfca30704bb91f00fd04502c881"
+  },
+  {
+    "params": {
+      "variantId": "route-1",
+      "vendor": "routeros",
+      "level": 3,
+      "seed": 0
+    },
+    "sha256": "615f45bd2c87f38384847dafc6f80a9d0e19251892a90780d9414ccc43f026eb"
+  },
+  {
+    "params": {
+      "variantId": "route-1",
+      "vendor": "routeros",
+      "level": 3,
+      "seed": 1
+    },
+    "sha256": "adbe707fed034c5f5c09f5f22698fe1e180b170366d282857cea75ec73855774"
+  },
+  {
+    "params": {
+      "variantId": "route-1",
+      "vendor": "routeros",
+      "level": 3,
+      "seed": 41
+    },
+    "sha256": "1750f1e120782bed255a0c1ea2afc98b1f2e322e877dcef377efba4e6422b5d4"
+  },
+  {
+    "params": {
+      "variantId": "route-2",
+      "vendor": "cisco",
+      "level": 2,
+      "seed": 0
+    },
+    "sha256": "3f4e54afcb5aa4691b8027e8de17a0c01d82c34c7b428070c5d00171f9ee4762"
+  },
+  {
+    "params": {
+      "variantId": "route-2",
+      "vendor": "cisco",
+      "level": 2,
+      "seed": 1
+    },
+    "sha256": "5c4316ae162a5c24fae89058c91785990fdb5ac9a92254472c4a2bb9c9dd11e6"
+  },
+  {
+    "params": {
+      "variantId": "route-2",
+      "vendor": "cisco",
+      "level": 2,
+      "seed": 41
+    },
+    "sha256": "4f1d244f38513f3ee54fdf9efccb4cac3101f3755e875c4d834fc9d163258943"
+  },
+  {
+    "params": {
+      "variantId": "route-2",
+      "vendor": "cisco",
+      "level": 3,
+      "seed": 0
+    },
+    "sha256": "884604129702cdcca2ac45c96c1cfb9713c04150540caf962312d46ef9cda520"
+  },
+  {
+    "params": {
+      "variantId": "route-2",
+      "vendor": "cisco",
+      "level": 3,
+      "seed": 1
+    },
+    "sha256": "dffafc2e0a43cf92e86f3431c5accf378a44d1ca46a6f2bf05ca9d80eb047512"
+  },
+  {
+    "params": {
+      "variantId": "route-2",
+      "vendor": "cisco",
+      "level": 3,
+      "seed": 41
+    },
+    "sha256": "d9489e2b515bd4d4ad1622f3b757bc7d8eafb05dfd4ba8fd91edb41e3f214f64"
+  },
+  {
+    "params": {
+      "variantId": "route-2",
+      "vendor": "routeros",
+      "level": 2,
+      "seed": 0
+    },
+    "sha256": "2d695dbca38e3145689b751435c38d85b68c56e8ac2feaffc5814658c1ffdb35"
+  },
+  {
+    "params": {
+      "variantId": "route-2",
+      "vendor": "routeros",
+      "level": 2,
+      "seed": 1
+    },
+    "sha256": "05a355f60ebb9cfc051098b60d188d6be2a9a72688d2546846622dc546e12507"
+  },
+  {
+    "params": {
+      "variantId": "route-2",
+      "vendor": "routeros",
+      "level": 2,
+      "seed": 41
+    },
+    "sha256": "e8108bb5a8cd631b6fbb7023afa51797972606f32b8191c530da1dd0475d11a2"
+  },
+  {
+    "params": {
+      "variantId": "route-2",
+      "vendor": "routeros",
+      "level": 3,
+      "seed": 0
+    },
+    "sha256": "089dac904d13c354738271cc7998542e1c4dafc6c46ae6a24af256fd77f050ef"
+  },
+  {
+    "params": {
+      "variantId": "route-2",
+      "vendor": "routeros",
+      "level": 3,
+      "seed": 1
+    },
+    "sha256": "8b59ba93d3b1d82198ebfc6b6f2878d5e269d9b621ae4e1df27aea096575ac9c"
+  },
+  {
+    "params": {
+      "variantId": "route-2",
+      "vendor": "routeros",
+      "level": 3,
+      "seed": 41
+    },
+    "sha256": "d7c062178c2fa613b77554b56f0ca9ef34543526a9216a5aa522feea9cdcfc02"
+  },
+  {
+    "params": {
+      "variantId": "route-3",
+      "vendor": "cisco",
+      "level": 2,
+      "seed": 0
+    },
+    "sha256": "69431e34d03c8049868c72346f851901f57fb6610d1db5b4c1c5dac1515b47bf"
+  },
+  {
+    "params": {
+      "variantId": "route-3",
+      "vendor": "cisco",
+      "level": 2,
+      "seed": 1
+    },
+    "sha256": "550ed1e1953e73b1e2ac64cc0518822129812660138dd9cf997e17f9d0eeaf88"
+  },
+  {
+    "params": {
+      "variantId": "route-3",
+      "vendor": "cisco",
+      "level": 2,
+      "seed": 41
+    },
+    "sha256": "06664ce6ddf7820348262490d42265fa5cf34dfc64b74a90afe8d4a9da8499fd"
+  },
+  {
+    "params": {
+      "variantId": "route-3",
+      "vendor": "cisco",
+      "level": 3,
+      "seed": 0
+    },
+    "sha256": "8b1c7e562ed77f55096f83e5e689455cebd20740c7c0d808e8826e1693d89807"
+  },
+  {
+    "params": {
+      "variantId": "route-3",
+      "vendor": "cisco",
+      "level": 3,
+      "seed": 1
+    },
+    "sha256": "acd0cd604c251f837c62b584f89ce6fd70a44a9aa90637fb4548a4e9b88b2e3d"
+  },
+  {
+    "params": {
+      "variantId": "route-3",
+      "vendor": "cisco",
+      "level": 3,
+      "seed": 41
+    },
+    "sha256": "afa43a4677809f085ebd8ff575ed9cee208b91fd744db6ffdec3068518e23c1a"
+  },
+  {
+    "params": {
+      "variantId": "route-3",
+      "vendor": "routeros",
+      "level": 2,
+      "seed": 0
+    },
+    "sha256": "b9619dafd565233c64cf88b5bc3d3c7cf521760d5a79f85551d4e02f01412d41"
+  },
+  {
+    "params": {
+      "variantId": "route-3",
+      "vendor": "routeros",
+      "level": 2,
+      "seed": 1
+    },
+    "sha256": "fe18c2f0b60d93a661cd0fe714b759531773a088887d320f39271e7e8d48f8b4"
+  },
+  {
+    "params": {
+      "variantId": "route-3",
+      "vendor": "routeros",
+      "level": 2,
+      "seed": 41
+    },
+    "sha256": "a263e466bd4a479bf59b787b1b414f6233e7260458e889c35526c1fa85ff0d4b"
+  },
+  {
+    "params": {
+      "variantId": "route-3",
+      "vendor": "routeros",
+      "level": 3,
+      "seed": 0
+    },
+    "sha256": "d33e79042fc1dbe987632233b682f4abe5d2cd588d44888257d2335e736aebd8"
+  },
+  {
+    "params": {
+      "variantId": "route-3",
+      "vendor": "routeros",
+      "level": 3,
+      "seed": 1
+    },
+    "sha256": "ea2f8c4e75138ab83983bde4d96ad331e3ee0b7941e160badcd938a77669350a"
+  },
+  {
+    "params": {
+      "variantId": "route-3",
+      "vendor": "routeros",
+      "level": 3,
+      "seed": 41
+    },
+    "sha256": "859b2ec67c16d505e6b8f401b61d3b668ba28f17fd0274c215281dbaf3af664b"
+  },
+  {
+    "params": {
+      "variantId": "route-4",
+      "vendor": "routeros",
+      "level": 2,
+      "seed": 0
+    },
+    "sha256": "be6a276a506caebfc733404e501b27cedf24aaa5c0bd34114d48f1123f4153c4"
+  },
+  {
+    "params": {
+      "variantId": "route-4",
+      "vendor": "routeros",
+      "level": 2,
+      "seed": 1
+    },
+    "sha256": "cbb3d3f990020e73b2dfcddbcde93fb254951b905a456300962d891e9464ad60"
+  },
+  {
+    "params": {
+      "variantId": "route-4",
+      "vendor": "routeros",
+      "level": 2,
+      "seed": 41
+    },
+    "sha256": "149c36d6ce4c93c3500a33c67beeddf4e0f041ea141e37c17d9a2d53e98ad12f"
+  },
+  {
+    "params": {
+      "variantId": "route-4",
+      "vendor": "routeros",
+      "level": 3,
+      "seed": 0
+    },
+    "sha256": "aa1f54334f67254b7be51892c2824313512d85125aa53a9c3add37e831246c5f"
+  },
+  {
+    "params": {
+      "variantId": "route-4",
+      "vendor": "routeros",
+      "level": 3,
+      "seed": 1
+    },
+    "sha256": "bb4a33e2d8b99796f9c3e7e8859149dd2e8715103f2fac2bb30c3219104fc844"
+  },
+  {
+    "params": {
+      "variantId": "route-4",
+      "vendor": "routeros",
+      "level": 3,
+      "seed": 41
+    },
+    "sha256": "95a75dd7c06ab490a9bfd01f3e889b2047dfe47ffdb132995ca61596d39939fb"
+  }
+]

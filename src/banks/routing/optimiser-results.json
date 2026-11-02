@@ -1,0 +1,1189 @@
+{
+  "version": "opt1bc-v2.1-dp-2",
+  "hash": "3874c2a04f475f3d9e2fa34a007a1b89bf9ec92240b0c091f8513212a13e6aa0",
+  "results": {
+    "routing.task-01/main": {
+      "answer": {
+        "R1": [
+          {
+            "id": "R1.route1",
+            "dst": "192.168.2.0",
+            "prefix": 24,
+            "via": "10.0.0.2"
+          }
+        ],
+        "R2": [
+          {
+            "id": "R2.route1",
+            "dst": "192.168.1.0",
+            "prefix": 24,
+            "via": "10.0.0.1"
+          }
+        ]
+      },
+      "counts": {
+        "R1": 1,
+        "R2": 1
+      },
+      "total": 2,
+      "referenceTotal": 2,
+      "method": "opt1bc-v2.1-dp-2"
+    },
+    "routing.task-02/main": {
+      "answer": {
+        "R1": [
+          {
+            "id": "R1.route1",
+            "dst": "10.10.0.0",
+            "prefix": 24,
+            "via": "172.16.0.2"
+          }
+        ],
+        "R2": [
+          {
+            "id": "R2.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "172.16.0.1"
+          }
+        ]
+      },
+      "counts": {
+        "R1": 1,
+        "R2": 1
+      },
+      "total": 2,
+      "referenceTotal": 2,
+      "method": "opt1bc-v2.1-dp-2"
+    },
+    "routing.task-03/explicit-routes": {
+      "answer": {
+        "R1": [
+          {
+            "id": "R1.route1",
+            "dst": "10.3.0.0",
+            "prefix": 24,
+            "via": "192.168.0.2"
+          },
+          {
+            "id": "R1.route2",
+            "dst": "10.4.0.0",
+            "prefix": 24,
+            "via": "192.168.0.2"
+          }
+        ],
+        "R2": [
+          {
+            "id": "R2.route1",
+            "dst": "10.1.0.0",
+            "prefix": 24,
+            "via": "192.168.0.1"
+          },
+          {
+            "id": "R2.route2",
+            "dst": "10.2.0.0",
+            "prefix": 24,
+            "via": "192.168.0.1"
+          }
+        ]
+      },
+      "counts": {
+        "R1": 2,
+        "R2": 2
+      },
+      "total": 4,
+      "referenceTotal": 4,
+      "method": "opt1bc-v2.1-dp-2"
+    },
+    "routing.task-03/defaults": {
+      "answer": {
+        "R1": [
+          {
+            "id": "R1.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "192.168.0.2"
+          }
+        ],
+        "R2": [
+          {
+            "id": "R2.route1",
+            "dst": "10.1.0.0",
+            "prefix": 24,
+            "via": "192.168.0.1"
+          },
+          {
+            "id": "R2.route2",
+            "dst": "10.2.0.0",
+            "prefix": 24,
+            "via": "192.168.0.1"
+          }
+        ]
+      },
+      "counts": {
+        "R1": 1,
+        "R2": 2
+      },
+      "total": 3,
+      "referenceTotal": 3,
+      "method": "opt1bc-v2.1-dp-2"
+    },
+    "routing.task-04/main": {
+      "answer": {
+        "R1": [
+          {
+            "id": "opt:R1:1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.0.0.2",
+            "distance": 1
+          }
+        ],
+        "R2": [
+          {
+            "id": "R2.route1",
+            "dst": "192.168.1.0",
+            "prefix": 24,
+            "via": "10.0.0.1"
+          },
+          {
+            "id": "R2.route2",
+            "dst": "192.168.3.0",
+            "prefix": 24,
+            "via": "10.0.0.6"
+          }
+        ],
+        "R3": [
+          {
+            "id": "opt:R3:1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.0.0.5",
+            "distance": 1
+          }
+        ]
+      },
+      "counts": {
+        "R1": 1,
+        "R2": 2,
+        "R3": 1
+      },
+      "total": 4,
+      "referenceTotal": 8,
+      "method": "opt1bc-v2.1-dp-2"
+    },
+    "routing.task-05/main": {
+      "answer": {
+        "R1": [
+          {
+            "id": "R1.route1",
+            "dst": "10.1.1.4",
+            "prefix": 30,
+            "via": "10.1.1.2"
+          },
+          {
+            "id": "R1.route2",
+            "dst": "192.168.20.0",
+            "prefix": 24,
+            "via": "10.1.1.2"
+          },
+          {
+            "id": "R1.route3",
+            "dst": "172.20.0.0",
+            "prefix": 24,
+            "via": "10.1.1.2"
+          }
+        ],
+        "R2": [
+          {
+            "id": "R2.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.1.1.1"
+          },
+          {
+            "id": "R2.route2",
+            "dst": "172.20.0.0",
+            "prefix": 24,
+            "via": "10.1.1.6"
+          }
+        ],
+        "R3": [
+          {
+            "id": "R3.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.1.1.5"
+          }
+        ]
+      },
+      "counts": {
+        "R1": 3,
+        "R2": 2,
+        "R3": 1
+      },
+      "total": 6,
+      "referenceTotal": 6,
+      "method": "opt1bc-v2.1-dp-2"
+    },
+    "routing.task-06/main": {
+      "answer": {
+        "R1": [
+          {
+            "id": "R1.route1",
+            "dst": "10.10.0.0",
+            "prefix": 23,
+            "via": "172.16.0.2"
+          }
+        ],
+        "R2": [
+          {
+            "id": "R2.route1",
+            "dst": "192.168.1.0",
+            "prefix": 24,
+            "via": "172.16.0.1"
+          }
+        ]
+      },
+      "counts": {
+        "R1": 1,
+        "R2": 1
+      },
+      "total": 2,
+      "referenceTotal": 2,
+      "method": "opt1bc-v2.1-dp-2"
+    },
+    "routing.task-07/main": {
+      "answer": {
+        "R-HUB": [
+          {
+            "id": "R-HUB.route1",
+            "dst": "172.16.1.0",
+            "prefix": 24,
+            "via": "10.0.1.2"
+          },
+          {
+            "id": "R-HUB.route2",
+            "dst": "172.16.2.0",
+            "prefix": 24,
+            "via": "10.0.2.2"
+          },
+          {
+            "id": "R-HUB.route3",
+            "dst": "172.16.3.0",
+            "prefix": 24,
+            "via": "10.0.3.2"
+          }
+        ],
+        "R1": [
+          {
+            "id": "R1.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.0.1.1"
+          }
+        ],
+        "R2": [
+          {
+            "id": "R2.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.0.2.1"
+          }
+        ],
+        "R3": [
+          {
+            "id": "R3.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.0.3.1"
+          }
+        ]
+      },
+      "counts": {
+        "R-HUB": 3,
+        "R1": 1,
+        "R2": 1,
+        "R3": 1
+      },
+      "total": 6,
+      "referenceTotal": 6,
+      "method": "opt1bc-v2.1-dp-2"
+    },
+    "routing.task-08/specific": {
+      "answer": {
+        "R1": [
+          {
+            "id": "opt:R1:1",
+            "dst": "10.0.0.4",
+            "prefix": 30,
+            "via": "10.0.0.2",
+            "distance": 1
+          },
+          {
+            "id": "opt:R1:2",
+            "dst": "10.0.0.8",
+            "prefix": 30,
+            "via": "10.0.0.2",
+            "distance": 1
+          },
+          {
+            "id": "opt:R1:3",
+            "dst": "192.168.2.0",
+            "prefix": 23,
+            "via": "10.0.0.2",
+            "distance": 1
+          },
+          {
+            "id": "opt:R1:4",
+            "dst": "192.168.4.0",
+            "prefix": 24,
+            "via": "10.0.0.2",
+            "distance": 1
+          }
+        ],
+        "R2": [
+          {
+            "id": "R2.route1",
+            "dst": "192.168.1.0",
+            "prefix": 24,
+            "via": "10.0.0.1"
+          },
+          {
+            "id": "R2.route2",
+            "dst": "192.168.3.0",
+            "prefix": 24,
+            "via": "10.0.0.6"
+          },
+          {
+            "id": "R2.route3",
+            "dst": "10.0.0.8",
+            "prefix": 30,
+            "via": "10.0.0.6"
+          },
+          {
+            "id": "R2.route4",
+            "dst": "192.168.4.0",
+            "prefix": 24,
+            "via": "10.0.0.6"
+          }
+        ],
+        "R3": [
+          {
+            "id": "R3.route1",
+            "dst": "192.168.4.0",
+            "prefix": 24,
+            "via": "10.0.0.10"
+          },
+          {
+            "id": "R3.route2",
+            "dst": "192.168.2.0",
+            "prefix": 24,
+            "via": "10.0.0.5"
+          },
+          {
+            "id": "R3.route3",
+            "dst": "10.0.0.0",
+            "prefix": 30,
+            "via": "10.0.0.5"
+          },
+          {
+            "id": "R3.route4",
+            "dst": "192.168.1.0",
+            "prefix": 24,
+            "via": "10.0.0.5"
+          }
+        ],
+        "R4": [
+          {
+            "id": "opt:R4:1",
+            "dst": "10.0.0.0",
+            "prefix": 29,
+            "via": "10.0.0.9",
+            "distance": 1
+          },
+          {
+            "id": "opt:R4:2",
+            "dst": "192.168.1.0",
+            "prefix": 24,
+            "via": "10.0.0.9",
+            "distance": 1
+          },
+          {
+            "id": "opt:R4:3",
+            "dst": "192.168.2.0",
+            "prefix": 23,
+            "via": "10.0.0.9",
+            "distance": 1
+          }
+        ]
+      },
+      "counts": {
+        "R1": 4,
+        "R2": 4,
+        "R3": 4,
+        "R4": 3
+      },
+      "total": 15,
+      "referenceTotal": 18,
+      "method": "opt1bc-v2.1-dp-2"
+    },
+    "routing.task-08/stub-defaults": {
+      "answer": {
+        "R1": [
+          {
+            "id": "R1.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.0.0.2"
+          }
+        ],
+        "R2": [
+          {
+            "id": "R2.route1",
+            "dst": "192.168.1.0",
+            "prefix": 24,
+            "via": "10.0.0.1"
+          },
+          {
+            "id": "R2.route2",
+            "dst": "192.168.3.0",
+            "prefix": 24,
+            "via": "10.0.0.6"
+          },
+          {
+            "id": "R2.route3",
+            "dst": "10.0.0.8",
+            "prefix": 30,
+            "via": "10.0.0.6"
+          },
+          {
+            "id": "R2.route4",
+            "dst": "192.168.4.0",
+            "prefix": 24,
+            "via": "10.0.0.6"
+          }
+        ],
+        "R3": [
+          {
+            "id": "R3.route1",
+            "dst": "192.168.4.0",
+            "prefix": 24,
+            "via": "10.0.0.10"
+          },
+          {
+            "id": "R3.route2",
+            "dst": "192.168.2.0",
+            "prefix": 24,
+            "via": "10.0.0.5"
+          },
+          {
+            "id": "R3.route3",
+            "dst": "10.0.0.0",
+            "prefix": 30,
+            "via": "10.0.0.5"
+          },
+          {
+            "id": "R3.route4",
+            "dst": "192.168.1.0",
+            "prefix": 24,
+            "via": "10.0.0.5"
+          }
+        ],
+        "R4": [
+          {
+            "id": "R4.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.0.0.9"
+          }
+        ]
+      },
+      "counts": {
+        "R1": 1,
+        "R2": 4,
+        "R3": 4,
+        "R4": 1
+      },
+      "total": 10,
+      "referenceTotal": 10,
+      "method": "opt1bc-v2.1-dp-2"
+    },
+    "routing.task-09/main": {
+      "answer": {
+        "R1": [
+          {
+            "id": "opt:R1:1",
+            "dst": "10.0.0.4",
+            "prefix": 30,
+            "via": "10.0.0.2",
+            "distance": 1
+          },
+          {
+            "id": "opt:R1:2",
+            "dst": "10.0.0.8",
+            "prefix": 30,
+            "via": "10.0.0.2",
+            "distance": 1
+          },
+          {
+            "id": "opt:R1:3",
+            "dst": "192.168.2.0",
+            "prefix": 23,
+            "via": "10.0.0.2",
+            "distance": 1
+          },
+          {
+            "id": "opt:R1:4",
+            "dst": "192.168.4.0",
+            "prefix": 24,
+            "via": "10.0.0.2",
+            "distance": 1
+          }
+        ],
+        "R2": [
+          {
+            "id": "R2.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.0.0.1"
+          },
+          {
+            "id": "R2.route2",
+            "dst": "192.168.3.0",
+            "prefix": 24,
+            "via": "10.0.0.6"
+          },
+          {
+            "id": "R2.route3",
+            "dst": "10.0.0.8",
+            "prefix": 30,
+            "via": "10.0.0.6"
+          },
+          {
+            "id": "R2.route4",
+            "dst": "192.168.4.0",
+            "prefix": 24,
+            "via": "10.0.0.6"
+          }
+        ],
+        "R3": [
+          {
+            "id": "R3.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.0.0.5"
+          },
+          {
+            "id": "R3.route2",
+            "dst": "192.168.4.0",
+            "prefix": 24,
+            "via": "10.0.0.10"
+          }
+        ],
+        "R4": [
+          {
+            "id": "R4.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.0.0.9"
+          }
+        ]
+      },
+      "counts": {
+        "R1": 4,
+        "R2": 4,
+        "R3": 2,
+        "R4": 1
+      },
+      "total": 11,
+      "referenceTotal": 12,
+      "method": "opt1bc-v2.1-dp-2"
+    },
+    "routing.task-10/main": {
+      "answer": {
+        "R1": [
+          {
+            "id": "R1.route1",
+            "dst": "192.168.2.0",
+            "prefix": 24,
+            "via": "10.1.0.2"
+          },
+          {
+            "id": "R1.route2",
+            "dst": "10.3.0.0",
+            "prefix": 30,
+            "via": "10.1.0.2"
+          },
+          {
+            "id": "R1.route3",
+            "dst": "192.168.3.0",
+            "prefix": 24,
+            "via": "10.2.0.2"
+          }
+        ],
+        "R2": [
+          {
+            "id": "R2.route1",
+            "dst": "192.168.1.0",
+            "prefix": 24,
+            "via": "10.1.0.1"
+          },
+          {
+            "id": "R2.route2",
+            "dst": "10.2.0.0",
+            "prefix": 30,
+            "via": "10.1.0.1"
+          },
+          {
+            "id": "R2.route3",
+            "dst": "192.168.3.0",
+            "prefix": 24,
+            "via": "10.3.0.2"
+          }
+        ],
+        "R3": [
+          {
+            "id": "R3.route1",
+            "dst": "192.168.1.0",
+            "prefix": 24,
+            "via": "10.2.0.1"
+          },
+          {
+            "id": "R3.route2",
+            "dst": "10.1.0.0",
+            "prefix": 30,
+            "via": "10.2.0.1"
+          },
+          {
+            "id": "R3.route3",
+            "dst": "192.168.2.0",
+            "prefix": 24,
+            "via": "10.3.0.1"
+          }
+        ]
+      },
+      "counts": {
+        "R1": 3,
+        "R2": 3,
+        "R3": 3
+      },
+      "total": 9,
+      "referenceTotal": 9,
+      "method": "opt1bc-v2.1-dp-2"
+    },
+    "routing.task-11/main": {
+      "answer": {
+        "R-GW": [
+          {
+            "id": "R-GW.route1",
+            "dst": "10.20.1.0",
+            "prefix": 24,
+            "via": "10.10.1.2"
+          },
+          {
+            "id": "R-GW.route2",
+            "dst": "10.20.2.0",
+            "prefix": 24,
+            "via": "10.10.2.2"
+          },
+          {
+            "id": "R-GW.route3",
+            "dst": "10.20.3.0",
+            "prefix": 24,
+            "via": "10.10.3.2"
+          }
+        ],
+        "R-A": [
+          {
+            "id": "R-A.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.10.1.1"
+          }
+        ],
+        "R-B": [
+          {
+            "id": "R-B.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.10.2.1"
+          }
+        ],
+        "R-C": [
+          {
+            "id": "R-C.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.10.3.1"
+          }
+        ]
+      },
+      "counts": {
+        "R-GW": 3,
+        "R-A": 1,
+        "R-B": 1,
+        "R-C": 1
+      },
+      "total": 6,
+      "referenceTotal": 6,
+      "method": "opt1bc-v2.1-dp-2"
+    },
+    "routing.task-12/main": {
+      "answer": {
+        "R-CORE": [
+          {
+            "id": "R-CORE.route1",
+            "dst": "192.168.10.0",
+            "prefix": 24,
+            "via": "10.0.1.2"
+          },
+          {
+            "id": "R-CORE.route2",
+            "dst": "192.168.20.0",
+            "prefix": 24,
+            "via": "10.0.2.2"
+          }
+        ],
+        "R-A": [
+          {
+            "id": "R-A.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.0.1.1"
+          }
+        ],
+        "R-B": [
+          {
+            "id": "R-B.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.0.2.1"
+          }
+        ]
+      },
+      "counts": {
+        "R-CORE": 2,
+        "R-A": 1,
+        "R-B": 1
+      },
+      "total": 4,
+      "referenceTotal": 4,
+      "method": "opt1bc-v2.1-dp-2"
+    },
+    "routing.task-13/main": {
+      "answer": {
+        "R1": [
+          {
+            "id": "R1.route1",
+            "dst": "10.0.0.0",
+            "prefix": 22,
+            "via": "172.16.0.2"
+          }
+        ],
+        "R2": [
+          {
+            "id": "R2.route1",
+            "dst": "192.168.1.0",
+            "prefix": 24,
+            "via": "172.16.0.1"
+          }
+        ]
+      },
+      "counts": {
+        "R1": 1,
+        "R2": 1
+      },
+      "total": 2,
+      "referenceTotal": 2,
+      "method": "opt1bc-v2.1-dp-2"
+    },
+    "routing.task-14/main": {
+      "answer": {
+        "R-HQ": [
+          {
+            "id": "R-HQ.route1",
+            "dst": "172.20.0.0",
+            "prefix": 23,
+            "via": "10.1.0.2"
+          },
+          {
+            "id": "R-HQ.route2",
+            "dst": "172.30.0.0",
+            "prefix": 24,
+            "via": "10.2.0.2"
+          }
+        ],
+        "R-F1": [
+          {
+            "id": "R-F1.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.1.0.1"
+          }
+        ],
+        "R-F2": [
+          {
+            "id": "R-F2.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.2.0.1"
+          }
+        ]
+      },
+      "counts": {
+        "R-HQ": 2,
+        "R-F1": 1,
+        "R-F2": 1
+      },
+      "total": 4,
+      "referenceTotal": 4,
+      "method": "opt1bc-v2.1-dp-2"
+    },
+    "routing.task-15/main": {
+      "answer": {
+        "R1": [
+          {
+            "id": "R1.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "100.64.1.1",
+            "distance": 1
+          },
+          {
+            "id": "R1.route2",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "100.64.2.1",
+            "distance": 2
+          }
+        ]
+      },
+      "counts": {
+        "R1": 2
+      },
+      "total": 2,
+      "referenceTotal": 2,
+      "method": "opt1bc-v2.1-dp-2"
+    },
+    "routing.task-16/main": {
+      "answer": {
+        "R-INET": [
+          {
+            "id": "R-INET.route1",
+            "dst": "172.16.0.0",
+            "prefix": 22,
+            "via": "10.0.0.2"
+          },
+          {
+            "id": "R-INET.route2",
+            "dst": "10.0.1.0",
+            "prefix": 30,
+            "via": "10.0.0.2"
+          },
+          {
+            "id": "R-INET.route3",
+            "dst": "10.0.2.0",
+            "prefix": 30,
+            "via": "10.0.0.2"
+          },
+          {
+            "id": "R-INET.route4",
+            "dst": "10.1.1.0",
+            "prefix": 30,
+            "via": "10.0.0.2"
+          },
+          {
+            "id": "R-INET.route5",
+            "dst": "10.1.2.0",
+            "prefix": 30,
+            "via": "10.0.0.2"
+          },
+          {
+            "id": "R-INET.route6",
+            "dst": "10.2.1.0",
+            "prefix": 30,
+            "via": "10.0.0.2"
+          }
+        ],
+        "R-CORE": [
+          {
+            "id": "opt:R-CORE:1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.0.0.1",
+            "distance": 1
+          },
+          {
+            "id": "opt:R-CORE:2",
+            "dst": "10.1.1.0",
+            "prefix": 30,
+            "via": "10.0.1.2",
+            "distance": 1
+          },
+          {
+            "id": "opt:R-CORE:3",
+            "dst": "10.1.2.0",
+            "prefix": 30,
+            "via": "10.0.1.2",
+            "distance": 1
+          },
+          {
+            "id": "opt:R-CORE:4",
+            "dst": "10.2.1.0",
+            "prefix": 30,
+            "via": "10.0.2.2",
+            "distance": 1
+          },
+          {
+            "id": "opt:R-CORE:5",
+            "dst": "172.16.0.0",
+            "prefix": 23,
+            "via": "10.0.1.2",
+            "distance": 1
+          },
+          {
+            "id": "opt:R-CORE:6",
+            "dst": "172.16.2.0",
+            "prefix": 23,
+            "via": "10.0.2.2",
+            "distance": 1
+          }
+        ],
+        "R-AGG1": [
+          {
+            "id": "R-AGG1.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.0.1.1"
+          },
+          {
+            "id": "R-AGG1.route2",
+            "dst": "172.16.0.0",
+            "prefix": 24,
+            "via": "10.1.1.2"
+          },
+          {
+            "id": "R-AGG1.route3",
+            "dst": "172.16.1.0",
+            "prefix": 24,
+            "via": "10.1.2.2"
+          }
+        ],
+        "R-AGG2": [
+          {
+            "id": "R-AGG2.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.0.2.1"
+          },
+          {
+            "id": "R-AGG2.route2",
+            "dst": "172.16.2.0",
+            "prefix": 23,
+            "via": "10.2.1.2"
+          }
+        ],
+        "R-ACC1": [
+          {
+            "id": "R-ACC1.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.1.1.1"
+          }
+        ],
+        "R-ACC2": [
+          {
+            "id": "R-ACC2.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.1.2.1"
+          }
+        ],
+        "R-ACC3": [
+          {
+            "id": "R-ACC3.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.2.1.1"
+          }
+        ]
+      },
+      "counts": {
+        "R-INET": 6,
+        "R-CORE": 6,
+        "R-AGG1": 3,
+        "R-AGG2": 2,
+        "R-ACC1": 1,
+        "R-ACC2": 1,
+        "R-ACC3": 1
+      },
+      "total": 20,
+      "referenceTotal": 21,
+      "method": "opt1bc-v2.1-dp-2"
+    },
+    "routing.task-17/main": {
+      "answer": {
+        "R-INET": [
+          {
+            "id": "R-INET.route1",
+            "dst": "172.16.0.0",
+            "prefix": 22,
+            "via": "10.0.0.2"
+          },
+          {
+            "id": "R-INET.route2",
+            "dst": "10.0.1.0",
+            "prefix": 30,
+            "via": "10.0.0.2"
+          },
+          {
+            "id": "R-INET.route3",
+            "dst": "10.0.2.0",
+            "prefix": 30,
+            "via": "10.0.0.2"
+          },
+          {
+            "id": "R-INET.route4",
+            "dst": "10.1.1.0",
+            "prefix": 30,
+            "via": "10.0.0.2"
+          },
+          {
+            "id": "R-INET.route5",
+            "dst": "10.1.2.0",
+            "prefix": 30,
+            "via": "10.0.0.2"
+          },
+          {
+            "id": "R-INET.route6",
+            "dst": "10.2.1.0",
+            "prefix": 30,
+            "via": "10.0.0.2"
+          }
+        ],
+        "R-CORE": [
+          {
+            "id": "opt:R-CORE:1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.0.0.1",
+            "distance": 1
+          },
+          {
+            "id": "opt:R-CORE:2",
+            "dst": "10.1.1.0",
+            "prefix": 30,
+            "via": "10.0.1.2",
+            "distance": 1
+          },
+          {
+            "id": "opt:R-CORE:3",
+            "dst": "10.1.2.0",
+            "prefix": 30,
+            "via": "10.0.1.2",
+            "distance": 1
+          },
+          {
+            "id": "opt:R-CORE:4",
+            "dst": "10.2.1.0",
+            "prefix": 30,
+            "via": "10.0.2.2",
+            "distance": 1
+          },
+          {
+            "id": "opt:R-CORE:5",
+            "dst": "172.16.0.0",
+            "prefix": 22,
+            "discard": true,
+            "distance": 1
+          },
+          {
+            "id": "opt:R-CORE:6",
+            "dst": "172.16.0.0",
+            "prefix": 23,
+            "via": "10.0.1.2",
+            "distance": 1
+          },
+          {
+            "id": "opt:R-CORE:7",
+            "dst": "172.16.2.0",
+            "prefix": 24,
+            "via": "10.0.2.2",
+            "distance": 1
+          }
+        ],
+        "R-AGG1": [
+          {
+            "id": "R-AGG1.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.0.1.1"
+          },
+          {
+            "id": "R-AGG1.route2",
+            "dst": "172.16.0.0",
+            "prefix": 24,
+            "via": "10.1.1.2"
+          },
+          {
+            "id": "R-AGG1.route3",
+            "dst": "172.16.1.0",
+            "prefix": 24,
+            "via": "10.1.2.2"
+          }
+        ],
+        "R-AGG2": [
+          {
+            "id": "R-AGG2.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.0.2.1"
+          },
+          {
+            "id": "R-AGG2.route2",
+            "dst": "172.16.2.0",
+            "prefix": 24,
+            "via": "10.2.1.2"
+          }
+        ],
+        "R-ACC1": [
+          {
+            "id": "R-ACC1.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.1.1.1"
+          }
+        ],
+        "R-ACC2": [
+          {
+            "id": "R-ACC2.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.1.2.1"
+          }
+        ],
+        "R-ACC3": [
+          {
+            "id": "R-ACC3.route1",
+            "dst": "0.0.0.0",
+            "prefix": 0,
+            "via": "10.2.1.1"
+          }
+        ]
+      },
+      "counts": {
+        "R-INET": 6,
+        "R-CORE": 7,
+        "R-AGG1": 3,
+        "R-AGG2": 2,
+        "R-ACC1": 1,
+        "R-ACC2": 1,
+        "R-ACC3": 1
+      },
+      "total": 21,
+      "referenceTotal": 22,
+      "method": "opt1bc-v2.1-dp-2"
+    }
+  }
+}

@@ -1,0 +1,2902 @@
+{
+ "source": "34ee9ac (apps/ unchanged at 09a1c0e)",
+ "schemaVersion": 1,
+ "note": "Captured from the live round 1 routing apps before their deletion (step 8 retirement). Replay only; never regenerate from current code.",
+ "counts": {
+  "topologies": 32,
+  "commands": 110
+ },
+ "topologies": [
+  {
+   "syntax": "cisco",
+   "task": "routing.task-01",
+   "displayNumber": 1,
+   "title": "Два роутери, дві LAN",
+   "routers": {
+    "R1": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "192.168.1.1/24",
+       "note": "LAN-A"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.0.0.1/30",
+       "note": "→R2"
+      }
+     ]
+    },
+    "R2": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.0.0.2/30",
+       "note": "→R1"
+      },
+      {
+       "name": "g0/1",
+       "ip": "192.168.2.1/24",
+       "note": "LAN-B"
+      }
+     ]
+    }
+   },
+   "dhcpWan": {
+    "R1": false,
+    "R2": false
+   }
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-02",
+   "displayNumber": 2,
+   "title": "Два роутери, один з виходом в інтернет",
+   "routers": {
+    "R1": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "DHCP",
+       "note": "WAN"
+      },
+      {
+       "name": "g0/1",
+       "ip": "172.16.0.1/30",
+       "note": "→R2"
+      },
+      {
+       "name": "g0/2",
+       "ip": "10.20.0.1/24",
+       "note": "LAN1"
+      }
+     ]
+    },
+    "R2": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "172.16.0.2/30",
+       "note": "→R1"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.10.0.1/24",
+       "note": "LAN2"
+      }
+     ]
+    }
+   },
+   "dhcpWan": {
+    "R1": true,
+    "R2": false
+   }
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-03",
+   "displayNumber": 3,
+   "title": "Два тупікові роутери — default route",
+   "routers": {
+    "R1": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.1.0.1/24",
+       "note": "LAN-A1"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.2.0.1/24",
+       "note": "LAN-A2"
+      },
+      {
+       "name": "g0/2",
+       "ip": "192.168.0.1/30",
+       "note": "→R2"
+      }
+     ]
+    },
+    "R2": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "192.168.0.2/30",
+       "note": "→R1"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.3.0.1/24",
+       "note": "LAN-B1"
+      },
+      {
+       "name": "g0/2",
+       "ip": "10.4.0.1/24",
+       "note": "LAN-B2"
+      }
+     ]
+    }
+   },
+   "dhcpWan": {
+    "R1": false,
+    "R2": false
+   }
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-04",
+   "displayNumber": 4,
+   "title": "Три роутери в ланцюжку",
+   "routers": {
+    "R1": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "192.168.1.1/24",
+       "note": "LAN1"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.0.0.1/30",
+       "note": "→R2"
+      }
+     ]
+    },
+    "R2": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.0.0.2/30",
+       "note": "→R1"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.0.0.5/30",
+       "note": "→R3"
+      },
+      {
+       "name": "g0/2",
+       "ip": "192.168.2.1/24",
+       "note": "LAN2"
+      }
+     ]
+    },
+    "R3": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.0.0.6/30",
+       "note": "→R2"
+      },
+      {
+       "name": "g0/1",
+       "ip": "192.168.3.1/24",
+       "note": "LAN3"
+      }
+     ]
+    }
+   },
+   "dhcpWan": {
+    "R1": false,
+    "R2": false,
+    "R3": false
+   }
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-05",
+   "displayNumber": 5,
+   "title": "Три роутери + default routes",
+   "routers": {
+    "R1": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "DHCP",
+       "note": "WAN"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.1.1.1/30",
+       "note": "→R2"
+      },
+      {
+       "name": "g0/2",
+       "ip": "192.168.10.1/24",
+       "note": "LAN1"
+      }
+     ]
+    },
+    "R2": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.1.1.2/30",
+       "note": "→R1"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.1.1.5/30",
+       "note": "→R3"
+      },
+      {
+       "name": "g0/2",
+       "ip": "192.168.20.1/24",
+       "note": "LAN2"
+      }
+     ]
+    },
+    "R3": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.1.1.6/30",
+       "note": "→R2"
+      },
+      {
+       "name": "g0/1",
+       "ip": "172.20.0.1/24",
+       "note": "LAN3"
+      }
+     ]
+    }
+   },
+   "dhcpWan": {
+    "R1": true,
+    "R2": false,
+    "R3": false
+   }
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-06",
+   "displayNumber": 6,
+   "title": "Сумаризація маршрутів",
+   "routers": {
+    "R1": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "192.168.1.1/24",
+       "note": "LAN"
+      },
+      {
+       "name": "g0/1",
+       "ip": "172.16.0.1/30",
+       "note": "→R2"
+      }
+     ]
+    },
+    "R2": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "172.16.0.2/30",
+       "note": "→R1"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.10.0.1/24",
+       "note": "LAN-A"
+      },
+      {
+       "name": "g0/2",
+       "ip": "10.10.1.1/24",
+       "note": "LAN-B"
+      }
+     ]
+    }
+   },
+   "dhcpWan": {
+    "R1": false,
+    "R2": false
+   }
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-07",
+   "displayNumber": 7,
+   "title": "Зірка — один центральний роутер",
+   "routers": {
+    "R-HUB": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.0.1.1/30",
+       "note": "→R1"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.0.2.1/30",
+       "note": "→R2"
+      },
+      {
+       "name": "g0/2",
+       "ip": "10.0.3.1/30",
+       "note": "→R3"
+      },
+      {
+       "name": "g0/3",
+       "ip": "192.168.0.1/24",
+       "note": "LAN-HUB"
+      }
+     ]
+    },
+    "R1": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.0.1.2/30",
+       "note": "→HUB"
+      },
+      {
+       "name": "g0/1",
+       "ip": "172.16.1.1/24",
+       "note": "LAN1"
+      }
+     ]
+    },
+    "R2": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.0.2.2/30",
+       "note": "→HUB"
+      },
+      {
+       "name": "g0/1",
+       "ip": "172.16.2.1/24",
+       "note": "LAN2"
+      }
+     ]
+    },
+    "R3": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.0.3.2/30",
+       "note": "→HUB"
+      },
+      {
+       "name": "g0/1",
+       "ip": "172.16.3.1/24",
+       "note": "LAN3"
+      }
+     ]
+    }
+   },
+   "dhcpWan": {
+    "R-HUB": false,
+    "R1": false,
+    "R2": false,
+    "R3": false
+   }
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-08",
+   "displayNumber": 8,
+   "title": "Чотири роутери в ланцюжку",
+   "routers": {
+    "R1": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "192.168.1.1/24",
+       "note": "LAN1"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.0.0.1/30",
+       "note": "→R2"
+      }
+     ]
+    },
+    "R2": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.0.0.2/30",
+       "note": "→R1"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.0.0.5/30",
+       "note": "→R3"
+      },
+      {
+       "name": "g0/2",
+       "ip": "192.168.2.1/24",
+       "note": "LAN2"
+      }
+     ]
+    },
+    "R3": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.0.0.6/30",
+       "note": "→R2"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.0.0.9/30",
+       "note": "→R4"
+      },
+      {
+       "name": "g0/2",
+       "ip": "192.168.3.1/24",
+       "note": "LAN3"
+      }
+     ]
+    },
+    "R4": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.0.0.10/30",
+       "note": "→R3"
+      },
+      {
+       "name": "g0/1",
+       "ip": "192.168.4.1/24",
+       "note": "LAN4"
+      }
+     ]
+    }
+   },
+   "dhcpWan": {
+    "R1": false,
+    "R2": false,
+    "R3": false,
+    "R4": false
+   }
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-09",
+   "displayNumber": 9,
+   "title": "Чотири роутери + default routes оптимально",
+   "routers": {
+    "R1": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "DHCP",
+       "note": "WAN"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.0.0.1/30",
+       "note": "→R2"
+      },
+      {
+       "name": "g0/2",
+       "ip": "192.168.1.1/24",
+       "note": "LAN1"
+      }
+     ]
+    },
+    "R2": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.0.0.2/30",
+       "note": "→R1"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.0.0.5/30",
+       "note": "→R3"
+      },
+      {
+       "name": "g0/2",
+       "ip": "192.168.2.1/24",
+       "note": "LAN2"
+      }
+     ]
+    },
+    "R3": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.0.0.6/30",
+       "note": "→R2"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.0.0.9/30",
+       "note": "→R4"
+      },
+      {
+       "name": "g0/2",
+       "ip": "192.168.3.1/24",
+       "note": "LAN3"
+      }
+     ]
+    },
+    "R4": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.0.0.10/30",
+       "note": "→R3"
+      },
+      {
+       "name": "g0/1",
+       "ip": "192.168.4.1/24",
+       "note": "LAN4"
+      }
+     ]
+    }
+   },
+   "dhcpWan": {
+    "R1": true,
+    "R2": false,
+    "R3": false,
+    "R4": false
+   }
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-10",
+   "displayNumber": 10,
+   "title": "Три роутери — трикутник",
+   "routers": {
+    "R1": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.1.0.1/30",
+       "note": "→R2"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.2.0.1/30",
+       "note": "→R3"
+      },
+      {
+       "name": "g0/2",
+       "ip": "192.168.1.1/24",
+       "note": "LAN1"
+      }
+     ]
+    },
+    "R2": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.1.0.2/30",
+       "note": "→R1"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.3.0.1/30",
+       "note": "→R3"
+      },
+      {
+       "name": "g0/2",
+       "ip": "192.168.2.1/24",
+       "note": "LAN2"
+      }
+     ]
+    },
+    "R3": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.2.0.2/30",
+       "note": "→R1"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.3.0.2/30",
+       "note": "→R2"
+      },
+      {
+       "name": "g0/2",
+       "ip": "192.168.3.1/24",
+       "note": "LAN3"
+      }
+     ]
+    }
+   },
+   "dhcpWan": {
+    "R1": false,
+    "R2": false,
+    "R3": false
+   }
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-11",
+   "displayNumber": 11,
+   "title": "Зірка: шлюз + 3 філії (NAT на GW)",
+   "routers": {
+    "R-GW": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "DHCP",
+       "note": "WAN"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.10.1.1/30",
+       "note": "→R-A"
+      },
+      {
+       "name": "g0/2",
+       "ip": "10.10.2.1/30",
+       "note": "→R-B"
+      },
+      {
+       "name": "g0/3",
+       "ip": "10.10.3.1/30",
+       "note": "→R-C"
+      }
+     ]
+    },
+    "R-A": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.10.1.2/30",
+       "note": "→GW"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.20.1.1/24",
+       "note": "LAN-A"
+      }
+     ]
+    },
+    "R-B": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.10.2.2/30",
+       "note": "→GW"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.20.2.1/24",
+       "note": "LAN-B"
+      }
+     ]
+    },
+    "R-C": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.10.3.2/30",
+       "note": "→GW"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.20.3.1/24",
+       "note": "LAN-C"
+      }
+     ]
+    }
+   },
+   "dhcpWan": {
+    "R-GW": true,
+    "R-A": false,
+    "R-B": false,
+    "R-C": false
+   }
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-12",
+   "displayNumber": 12,
+   "title": "Два офіси + спільний сервер",
+   "routers": {
+    "R-CORE": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.0.1.1/30",
+       "note": "→R-A"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.0.2.1/30",
+       "note": "→R-B"
+      },
+      {
+       "name": "g0/2",
+       "ip": "10.100.0.1/24",
+       "note": "Servers"
+      },
+      {
+       "name": "g0/3",
+       "ip": "DHCP",
+       "note": "WAN"
+      }
+     ]
+    },
+    "R-A": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.0.1.2/30",
+       "note": "→CORE"
+      },
+      {
+       "name": "g0/1",
+       "ip": "192.168.10.1/24",
+       "note": "Office-A"
+      }
+     ]
+    },
+    "R-B": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.0.2.2/30",
+       "note": "→CORE"
+      },
+      {
+       "name": "g0/1",
+       "ip": "192.168.20.1/24",
+       "note": "Office-B"
+      }
+     ]
+    }
+   },
+   "dhcpWan": {
+    "R-CORE": true,
+    "R-A": false,
+    "R-B": false
+   }
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-13",
+   "displayNumber": 13,
+   "title": "Сумаризація /22 із чотирьох /24",
+   "routers": {
+    "R1": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "192.168.1.1/24",
+       "note": "LAN"
+      },
+      {
+       "name": "g0/1",
+       "ip": "172.16.0.1/30",
+       "note": "→R2"
+      }
+     ]
+    },
+    "R2": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "172.16.0.2/30",
+       "note": "→R1"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.0.0.1/24",
+       "note": "VLAN10"
+      },
+      {
+       "name": "g0/2",
+       "ip": "10.0.1.1/24",
+       "note": "VLAN20"
+      },
+      {
+       "name": "g0/3",
+       "ip": "10.0.2.1/24",
+       "note": "VLAN30"
+      },
+      {
+       "name": "g0/4",
+       "ip": "10.0.3.1/24",
+       "note": "VLAN40"
+      }
+     ]
+    }
+   },
+   "dhcpWan": {
+    "R1": false,
+    "R2": false
+   }
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-14",
+   "displayNumber": 14,
+   "title": "Асиметрична мережа філій",
+   "routers": {
+    "R-HQ": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "DHCP",
+       "note": "WAN"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.1.0.1/30",
+       "note": "→F1"
+      },
+      {
+       "name": "g0/2",
+       "ip": "10.2.0.1/30",
+       "note": "→F2"
+      },
+      {
+       "name": "g0/3",
+       "ip": "192.168.0.1/24",
+       "note": "LAN-HQ"
+      }
+     ]
+    },
+    "R-F1": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.1.0.2/30",
+       "note": "→HQ"
+      },
+      {
+       "name": "g0/1",
+       "ip": "172.20.0.1/24",
+       "note": "F1-a"
+      },
+      {
+       "name": "g0/2",
+       "ip": "172.20.1.1/24",
+       "note": "F1-b"
+      }
+     ]
+    },
+    "R-F2": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.2.0.2/30",
+       "note": "→HQ"
+      },
+      {
+       "name": "g0/1",
+       "ip": "172.30.0.1/24",
+       "note": "F2"
+      }
+     ]
+    }
+   },
+   "dhcpWan": {
+    "R-HQ": true,
+    "R-F1": false,
+    "R-F2": false
+   }
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-15",
+   "displayNumber": 15,
+   "title": "Подвійний аплінк — два провайдери",
+   "routers": {
+    "R1": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "100.64.1.2/30",
+       "note": "ISP1 (основний)"
+      },
+      {
+       "name": "g0/1",
+       "ip": "100.64.2.2/30",
+       "note": "ISP2 (резервний)"
+      },
+      {
+       "name": "g0/2",
+       "ip": "192.168.100.1/24",
+       "note": "LAN"
+      }
+     ]
+    }
+   },
+   "dhcpWan": {
+    "R1": false
+   }
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-16",
+   "displayNumber": 16,
+   "title": "Сім роутерів — корпоративна мережа",
+   "routers": {
+    "R-INET": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "DHCP",
+       "note": "WAN"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.0.0.1/30",
+       "note": "→CORE"
+      }
+     ]
+    },
+    "R-CORE": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.0.0.2/30",
+       "note": "→INET"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.0.1.1/30",
+       "note": "→AGG1"
+      },
+      {
+       "name": "g0/2",
+       "ip": "10.0.2.1/30",
+       "note": "→AGG2"
+      }
+     ]
+    },
+    "R-AGG1": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.0.1.2/30",
+       "note": "→CORE"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.1.1.1/30",
+       "note": "→ACC1"
+      },
+      {
+       "name": "g0/2",
+       "ip": "10.1.2.1/30",
+       "note": "→ACC2"
+      }
+     ]
+    },
+    "R-AGG2": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.0.2.2/30",
+       "note": "→CORE"
+      },
+      {
+       "name": "g0/1",
+       "ip": "10.2.1.1/30",
+       "note": "→ACC3"
+      }
+     ]
+    },
+    "R-ACC1": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.1.1.2/30",
+       "note": "→AGG1"
+      },
+      {
+       "name": "g0/1",
+       "ip": "172.16.0.1/24",
+       "note": "LAN1"
+      }
+     ]
+    },
+    "R-ACC2": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.1.2.2/30",
+       "note": "→AGG1"
+      },
+      {
+       "name": "g0/1",
+       "ip": "172.16.1.1/24",
+       "note": "LAN2"
+      }
+     ]
+    },
+    "R-ACC3": {
+     "interfaces": [
+      {
+       "name": "g0/0",
+       "ip": "10.2.1.2/30",
+       "note": "→AGG2"
+      },
+      {
+       "name": "g0/1",
+       "ip": "172.16.2.1/23",
+       "note": "LAN3"
+      }
+     ]
+    }
+   },
+   "dhcpWan": {
+    "R-INET": true,
+    "R-CORE": false,
+    "R-AGG1": false,
+    "R-AGG2": false,
+    "R-ACC1": false,
+    "R-ACC2": false,
+    "R-ACC3": false
+   }
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-01",
+   "displayNumber": 1,
+   "title": "Два роутери, дві LAN",
+   "routers": {
+    "R1": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "192.168.1.1/24",
+       "note": "LAN-A"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.0.0.1/30",
+       "note": "→R2"
+      }
+     ]
+    },
+    "R2": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.0.0.2/30",
+       "note": "→R1"
+      },
+      {
+       "name": "ether2",
+       "ip": "192.168.2.1/24",
+       "note": "LAN-B"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-02",
+   "displayNumber": 2,
+   "title": "Два роутери, один з виходом в інтернет",
+   "routers": {
+    "R1": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "DHCP",
+       "note": "WAN"
+      },
+      {
+       "name": "ether2",
+       "ip": "172.16.0.1/30",
+       "note": "→R2"
+      },
+      {
+       "name": "ether3",
+       "ip": "10.20.0.1/24",
+       "note": "LAN1"
+      }
+     ]
+    },
+    "R2": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "172.16.0.2/30",
+       "note": "→R1"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.10.0.1/24",
+       "note": "LAN2"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-03",
+   "displayNumber": 3,
+   "title": "Два роутери, у кожного по дві LAN",
+   "routers": {
+    "R1": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.1.0.1/24",
+       "note": "LAN-A1"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.2.0.1/24",
+       "note": "LAN-A2"
+      },
+      {
+       "name": "ether3",
+       "ip": "192.168.0.1/30",
+       "note": "→R2"
+      }
+     ]
+    },
+    "R2": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "192.168.0.2/30",
+       "note": "→R1"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.3.0.1/24",
+       "note": "LAN-B1"
+      },
+      {
+       "name": "ether3",
+       "ip": "10.4.0.1/24",
+       "note": "LAN-B2"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-04",
+   "displayNumber": 4,
+   "title": "Три роутери в ланцюжку",
+   "routers": {
+    "R1": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "192.168.1.1/24",
+       "note": "LAN1"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.0.0.1/30",
+       "note": "→R2"
+      }
+     ]
+    },
+    "R2": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.0.0.2/30",
+       "note": "→R1"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.0.0.5/30",
+       "note": "→R3"
+      },
+      {
+       "name": "ether3",
+       "ip": "192.168.2.1/24",
+       "note": "LAN2"
+      }
+     ]
+    },
+    "R3": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.0.0.6/30",
+       "note": "→R2"
+      },
+      {
+       "name": "ether2",
+       "ip": "192.168.3.1/24",
+       "note": "LAN3"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-05",
+   "displayNumber": 5,
+   "title": "Три роутери + default routes",
+   "routers": {
+    "R1": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "DHCP",
+       "note": "WAN"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.1.1.1/30",
+       "note": "→R2"
+      },
+      {
+       "name": "ether3",
+       "ip": "192.168.10.1/24",
+       "note": "LAN1"
+      }
+     ]
+    },
+    "R2": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.1.1.2/30",
+       "note": "→R1"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.1.1.5/30",
+       "note": "→R3"
+      },
+      {
+       "name": "ether3",
+       "ip": "192.168.20.1/24",
+       "note": "LAN2"
+      }
+     ]
+    },
+    "R3": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.1.1.6/30",
+       "note": "→R2"
+      },
+      {
+       "name": "ether2",
+       "ip": "172.20.0.1/24",
+       "note": "LAN3"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-06",
+   "displayNumber": 6,
+   "title": "Сумаризація маршрутів",
+   "routers": {
+    "R1": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "192.168.1.1/24",
+       "note": "LAN"
+      },
+      {
+       "name": "ether2",
+       "ip": "172.16.0.1/30",
+       "note": "→R2"
+      }
+     ]
+    },
+    "R2": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "172.16.0.2/30",
+       "note": "→R1"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.10.0.1/24",
+       "note": "LAN-A"
+      },
+      {
+       "name": "ether3",
+       "ip": "10.10.1.1/24",
+       "note": "LAN-B"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-07",
+   "displayNumber": 7,
+   "title": "Зірка — один центральний роутер",
+   "routers": {
+    "R-HUB": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.0.1.1/30",
+       "note": "→R1"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.0.2.1/30",
+       "note": "→R2"
+      },
+      {
+       "name": "ether3",
+       "ip": "10.0.3.1/30",
+       "note": "→R3"
+      },
+      {
+       "name": "ether4",
+       "ip": "192.168.0.1/24",
+       "note": "LAN-HUB"
+      }
+     ]
+    },
+    "R1": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.0.1.2/30",
+       "note": "→HUB"
+      },
+      {
+       "name": "ether2",
+       "ip": "172.16.1.1/24",
+       "note": "LAN1"
+      }
+     ]
+    },
+    "R2": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.0.2.2/30",
+       "note": "→HUB"
+      },
+      {
+       "name": "ether2",
+       "ip": "172.16.2.1/24",
+       "note": "LAN2"
+      }
+     ]
+    },
+    "R3": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.0.3.2/30",
+       "note": "→HUB"
+      },
+      {
+       "name": "ether2",
+       "ip": "172.16.3.1/24",
+       "note": "LAN3"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-08",
+   "displayNumber": 8,
+   "title": "Чотири роутери в ланцюжку",
+   "routers": {
+    "R1": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "192.168.1.1/24",
+       "note": "LAN1"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.0.0.1/30",
+       "note": "→R2"
+      }
+     ]
+    },
+    "R2": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.0.0.2/30",
+       "note": "→R1"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.0.0.5/30",
+       "note": "→R3"
+      },
+      {
+       "name": "ether3",
+       "ip": "192.168.2.1/24",
+       "note": "LAN2"
+      }
+     ]
+    },
+    "R3": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.0.0.6/30",
+       "note": "→R2"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.0.0.9/30",
+       "note": "→R4"
+      },
+      {
+       "name": "ether3",
+       "ip": "192.168.3.1/24",
+       "note": "LAN3"
+      }
+     ]
+    },
+    "R4": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.0.0.10/30",
+       "note": "→R3"
+      },
+      {
+       "name": "ether2",
+       "ip": "192.168.4.1/24",
+       "note": "LAN4"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-09",
+   "displayNumber": 9,
+   "title": "Чотири роутери + default routes оптимально",
+   "routers": {
+    "R1": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "DHCP",
+       "note": "WAN"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.0.0.1/30",
+       "note": "→R2"
+      },
+      {
+       "name": "ether3",
+       "ip": "192.168.1.1/24",
+       "note": "LAN1"
+      }
+     ]
+    },
+    "R2": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.0.0.2/30",
+       "note": "→R1"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.0.0.5/30",
+       "note": "→R3"
+      },
+      {
+       "name": "ether3",
+       "ip": "192.168.2.1/24",
+       "note": "LAN2"
+      }
+     ]
+    },
+    "R3": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.0.0.6/30",
+       "note": "→R2"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.0.0.9/30",
+       "note": "→R4"
+      },
+      {
+       "name": "ether3",
+       "ip": "192.168.3.1/24",
+       "note": "LAN3"
+      }
+     ]
+    },
+    "R4": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.0.0.10/30",
+       "note": "→R3"
+      },
+      {
+       "name": "ether2",
+       "ip": "192.168.4.1/24",
+       "note": "LAN4"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-10",
+   "displayNumber": 10,
+   "title": "Три роутери — трикутник",
+   "routers": {
+    "R1": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.1.0.1/30",
+       "note": "→R2"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.2.0.1/30",
+       "note": "→R3"
+      },
+      {
+       "name": "ether3",
+       "ip": "192.168.1.1/24",
+       "note": "LAN1"
+      }
+     ]
+    },
+    "R2": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.1.0.2/30",
+       "note": "→R1"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.3.0.1/30",
+       "note": "→R3"
+      },
+      {
+       "name": "ether3",
+       "ip": "192.168.2.1/24",
+       "note": "LAN2"
+      }
+     ]
+    },
+    "R3": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.2.0.2/30",
+       "note": "→R1"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.3.0.2/30",
+       "note": "→R2"
+      },
+      {
+       "name": "ether3",
+       "ip": "192.168.3.1/24",
+       "note": "LAN3"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-11",
+   "displayNumber": 11,
+   "title": "Чотири роутери + NAT на шлюзі",
+   "routers": {
+    "R-GW": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "DHCP",
+       "note": "WAN"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.10.1.1/30",
+       "note": "→R-A"
+      },
+      {
+       "name": "ether3",
+       "ip": "10.10.2.1/30",
+       "note": "→R-B"
+      },
+      {
+       "name": "ether4",
+       "ip": "10.10.3.1/30",
+       "note": "→R-C"
+      }
+     ]
+    },
+    "R-A": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.10.1.2/30",
+       "note": "→GW"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.20.1.1/24",
+       "note": "LAN-A"
+      }
+     ]
+    },
+    "R-B": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.10.2.2/30",
+       "note": "→GW"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.20.2.1/24",
+       "note": "LAN-B"
+      }
+     ]
+    },
+    "R-C": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.10.3.2/30",
+       "note": "→GW"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.20.3.1/24",
+       "note": "LAN-C"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-12",
+   "displayNumber": 12,
+   "title": "Два офіси + спільний сервер",
+   "routers": {
+    "R-CORE": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.0.1.1/30",
+       "note": "→R-A"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.0.2.1/30",
+       "note": "→R-B"
+      },
+      {
+       "name": "ether3",
+       "ip": "10.100.0.1/24",
+       "note": "Servers"
+      },
+      {
+       "name": "ether4",
+       "ip": "DHCP",
+       "note": "WAN"
+      }
+     ]
+    },
+    "R-A": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.0.1.2/30",
+       "note": "→CORE"
+      },
+      {
+       "name": "ether2",
+       "ip": "192.168.10.1/24",
+       "note": "Office-A"
+      }
+     ]
+    },
+    "R-B": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.0.2.2/30",
+       "note": "→CORE"
+      },
+      {
+       "name": "ether2",
+       "ip": "192.168.20.1/24",
+       "note": "Office-B"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-13",
+   "displayNumber": 13,
+   "title": "Сумаризація /22 із чотирьох /24",
+   "routers": {
+    "R1": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "192.168.1.1/24",
+       "note": "LAN"
+      },
+      {
+       "name": "ether2",
+       "ip": "172.16.0.1/30",
+       "note": "→R2"
+      }
+     ]
+    },
+    "R2": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "172.16.0.2/30",
+       "note": "→R1"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.0.0.1/24",
+       "note": "VLAN10"
+      },
+      {
+       "name": "ether3",
+       "ip": "10.0.1.1/24",
+       "note": "VLAN20"
+      },
+      {
+       "name": "ether4",
+       "ip": "10.0.2.1/24",
+       "note": "VLAN30"
+      },
+      {
+       "name": "ether5",
+       "ip": "10.0.3.1/24",
+       "note": "VLAN40"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-14",
+   "displayNumber": 14,
+   "title": "Асиметрична мережа філій",
+   "routers": {
+    "R-HQ": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "DHCP",
+       "note": "WAN"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.1.0.1/30",
+       "note": "→F1"
+      },
+      {
+       "name": "ether3",
+       "ip": "10.2.0.1/30",
+       "note": "→F2"
+      },
+      {
+       "name": "ether4",
+       "ip": "192.168.0.1/24",
+       "note": "LAN-HQ"
+      }
+     ]
+    },
+    "R-F1": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.1.0.2/30",
+       "note": "→HQ"
+      },
+      {
+       "name": "ether2",
+       "ip": "172.20.0.1/24",
+       "note": "F1-a"
+      },
+      {
+       "name": "ether3",
+       "ip": "172.20.1.1/24",
+       "note": "F1-b"
+      }
+     ]
+    },
+    "R-F2": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.2.0.2/30",
+       "note": "→HQ"
+      },
+      {
+       "name": "ether2",
+       "ip": "172.30.0.1/24",
+       "note": "F2"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-15",
+   "displayNumber": 15,
+   "title": "Подвійний аплінк — два провайдери",
+   "routers": {
+    "R1": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "100.64.1.2/30",
+       "note": "ISP1 (основний)"
+      },
+      {
+       "name": "ether2",
+       "ip": "100.64.2.2/30",
+       "note": "ISP2 (резервний)"
+      },
+      {
+       "name": "ether3",
+       "ip": "192.168.100.1/24",
+       "note": "LAN"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-16",
+   "displayNumber": 16,
+   "title": "Сім роутерів — корпоративна мережа",
+   "routers": {
+    "R-INET": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "DHCP",
+       "note": "WAN"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.0.0.1/30",
+       "note": "→CORE"
+      }
+     ]
+    },
+    "R-CORE": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.0.0.2/30",
+       "note": "→INET"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.0.1.1/30",
+       "note": "→AGG1"
+      },
+      {
+       "name": "ether3",
+       "ip": "10.0.2.1/30",
+       "note": "→AGG2"
+      }
+     ]
+    },
+    "R-AGG1": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.0.1.2/30",
+       "note": "→CORE"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.1.1.1/30",
+       "note": "→ACC1"
+      },
+      {
+       "name": "ether3",
+       "ip": "10.1.2.1/30",
+       "note": "→ACC2"
+      }
+     ]
+    },
+    "R-AGG2": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.0.2.2/30",
+       "note": "→CORE"
+      },
+      {
+       "name": "ether2",
+       "ip": "10.2.1.1/30",
+       "note": "→ACC3"
+      }
+     ]
+    },
+    "R-ACC1": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.1.1.2/30",
+       "note": "→AGG1"
+      },
+      {
+       "name": "ether2",
+       "ip": "172.16.0.1/24",
+       "note": "LAN1"
+      }
+     ]
+    },
+    "R-ACC2": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.1.2.2/30",
+       "note": "→AGG1"
+      },
+      {
+       "name": "ether2",
+       "ip": "172.16.1.1/24",
+       "note": "LAN2"
+      }
+     ]
+    },
+    "R-ACC3": {
+     "interfaces": [
+      {
+       "name": "ether1",
+       "ip": "10.2.1.2/30",
+       "note": "→AGG2"
+      },
+      {
+       "name": "ether2",
+       "ip": "172.16.2.1/23",
+       "note": "LAN3"
+      }
+     ]
+    }
+   }
+  }
+ ],
+ "commands": [
+  {
+   "syntax": "cisco",
+   "task": "routing.task-01",
+   "variant": "main",
+   "code": "1",
+   "router": "R1",
+   "block": "configure terminal\nip route 192.168.2.0 255.255.255.0 10.0.0.2\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-01",
+   "variant": "main",
+   "code": "1",
+   "router": "R2",
+   "block": "configure terminal\nip route 192.168.1.0 255.255.255.0 10.0.0.1\nend\nwrite memory"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-01",
+   "variant": "main",
+   "code": "1",
+   "router": "R1",
+   "block": "/ip route add dst-address=192.168.2.0/24 gateway=10.0.0.2"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-01",
+   "variant": "main",
+   "code": "1",
+   "router": "R2",
+   "block": "/ip route add dst-address=192.168.1.0/24 gateway=10.0.0.1"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-02",
+   "variant": "main",
+   "code": "2",
+   "router": "R1",
+   "block": "configure terminal\nip route 10.10.0.0 255.255.255.0 172.16.0.2\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-02",
+   "variant": "main",
+   "code": "2",
+   "router": "R2",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 172.16.0.1\nend\nwrite memory"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-02",
+   "variant": "main",
+   "code": "2",
+   "router": "R1",
+   "block": "/ip route add dst-address=10.10.0.0/24 gateway=172.16.0.2"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-02",
+   "variant": "main",
+   "code": "2",
+   "router": "R2",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=172.16.0.1"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-03",
+   "variant": "explicit-routes",
+   "code": "3",
+   "router": "R1",
+   "block": "configure terminal\nip route 10.3.0.0 255.255.255.0 192.168.0.2\nip route 10.4.0.0 255.255.255.0 192.168.0.2\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-03",
+   "variant": "explicit-routes",
+   "code": "3",
+   "router": "R2",
+   "block": "configure terminal\nip route 10.1.0.0 255.255.255.0 192.168.0.1\nip route 10.2.0.0 255.255.255.0 192.168.0.1\nend\nwrite memory"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-03",
+   "variant": "explicit-routes",
+   "code": "3",
+   "router": "R1",
+   "block": "/ip route add dst-address=10.3.0.0/24 gateway=192.168.0.2\n/ip route add dst-address=10.4.0.0/24 gateway=192.168.0.2"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-03",
+   "variant": "explicit-routes",
+   "code": "3",
+   "router": "R2",
+   "block": "/ip route add dst-address=10.1.0.0/24 gateway=192.168.0.1\n/ip route add dst-address=10.2.0.0/24 gateway=192.168.0.1"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-03",
+   "variant": "defaults",
+   "code": "3b",
+   "router": "R1",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 192.168.0.2\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-03",
+   "variant": "defaults",
+   "code": "3b",
+   "router": "R2",
+   "block": "configure terminal\nip route 10.1.0.0 255.255.255.0 192.168.0.1\nip route 10.2.0.0 255.255.255.0 192.168.0.1\nend\nwrite memory"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-03",
+   "variant": "defaults",
+   "code": "3b",
+   "router": "R1",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=192.168.0.2"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-03",
+   "variant": "defaults",
+   "code": "3b",
+   "router": "R2",
+   "block": "/ip route add dst-address=10.1.0.0/24 gateway=192.168.0.1\n/ip route add dst-address=10.2.0.0/24 gateway=192.168.0.1"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-04",
+   "variant": "main",
+   "code": "4",
+   "router": "R1",
+   "block": "configure terminal\nip route 192.168.2.0 255.255.255.0 10.0.0.2\nip route 10.0.0.4 255.255.255.252 10.0.0.2\nip route 192.168.3.0 255.255.255.0 10.0.0.2\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-04",
+   "variant": "main",
+   "code": "4",
+   "router": "R2",
+   "block": "configure terminal\nip route 192.168.1.0 255.255.255.0 10.0.0.1\nip route 192.168.3.0 255.255.255.0 10.0.0.6\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-04",
+   "variant": "main",
+   "code": "4",
+   "router": "R3",
+   "block": "configure terminal\nip route 192.168.1.0 255.255.255.0 10.0.0.5\nip route 192.168.2.0 255.255.255.0 10.0.0.5\nip route 10.0.0.0 255.255.255.252 10.0.0.5\nend\nwrite memory"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-04",
+   "variant": "main",
+   "code": "4",
+   "router": "R1",
+   "block": "/ip route add dst-address=192.168.2.0/24 gateway=10.0.0.2\n/ip route add dst-address=10.0.0.4/30 gateway=10.0.0.2\n/ip route add dst-address=192.168.3.0/24 gateway=10.0.0.2"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-04",
+   "variant": "main",
+   "code": "4",
+   "router": "R2",
+   "block": "/ip route add dst-address=192.168.1.0/24 gateway=10.0.0.1\n/ip route add dst-address=192.168.3.0/24 gateway=10.0.0.6"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-04",
+   "variant": "main",
+   "code": "4",
+   "router": "R3",
+   "block": "/ip route add dst-address=192.168.1.0/24 gateway=10.0.0.5\n/ip route add dst-address=192.168.2.0/24 gateway=10.0.0.5\n/ip route add dst-address=10.0.0.0/30 gateway=10.0.0.5"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-05",
+   "variant": "main",
+   "code": "5",
+   "router": "R1",
+   "block": "configure terminal\nip route 10.1.1.4 255.255.255.252 10.1.1.2\nip route 192.168.20.0 255.255.255.0 10.1.1.2\nip route 172.20.0.0 255.255.255.0 10.1.1.2\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-05",
+   "variant": "main",
+   "code": "5",
+   "router": "R2",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 10.1.1.1\nip route 172.20.0.0 255.255.255.0 10.1.1.6\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-05",
+   "variant": "main",
+   "code": "5",
+   "router": "R3",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 10.1.1.5\nend\nwrite memory"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-05",
+   "variant": "main",
+   "code": "5",
+   "router": "R1",
+   "block": "/ip route add dst-address=10.1.1.4/30 gateway=10.1.1.2\n/ip route add dst-address=192.168.20.0/24 gateway=10.1.1.2\n/ip route add dst-address=172.20.0.0/24 gateway=10.1.1.2"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-05",
+   "variant": "main",
+   "code": "5",
+   "router": "R2",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=10.1.1.1\n/ip route add dst-address=172.20.0.0/24 gateway=10.1.1.6"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-05",
+   "variant": "main",
+   "code": "5",
+   "router": "R3",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=10.1.1.5"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-06",
+   "variant": "main",
+   "code": "6",
+   "router": "R1",
+   "block": "configure terminal\nip route 10.10.0.0 255.255.254.0 172.16.0.2\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-06",
+   "variant": "main",
+   "code": "6",
+   "router": "R2",
+   "block": "configure terminal\nip route 192.168.1.0 255.255.255.0 172.16.0.1\nend\nwrite memory"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-06",
+   "variant": "main",
+   "code": "6",
+   "router": "R1",
+   "block": "/ip route add dst-address=10.10.0.0/23 gateway=172.16.0.2"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-06",
+   "variant": "main",
+   "code": "6",
+   "router": "R2",
+   "block": "/ip route add dst-address=192.168.1.0/24 gateway=172.16.0.1"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-07",
+   "variant": "main",
+   "code": "7",
+   "router": "R-HUB",
+   "block": "configure terminal\nip route 172.16.1.0 255.255.255.0 10.0.1.2\nip route 172.16.2.0 255.255.255.0 10.0.2.2\nip route 172.16.3.0 255.255.255.0 10.0.3.2\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-07",
+   "variant": "main",
+   "code": "7",
+   "router": "R1",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 10.0.1.1\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-07",
+   "variant": "main",
+   "code": "7",
+   "router": "R2",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 10.0.2.1\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-07",
+   "variant": "main",
+   "code": "7",
+   "router": "R3",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 10.0.3.1\nend\nwrite memory"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-07",
+   "variant": "main",
+   "code": "7",
+   "router": "R-HUB",
+   "block": "/ip route add dst-address=172.16.1.0/24 gateway=10.0.1.2\n/ip route add dst-address=172.16.2.0/24 gateway=10.0.2.2\n/ip route add dst-address=172.16.3.0/24 gateway=10.0.3.2"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-07",
+   "variant": "main",
+   "code": "7",
+   "router": "R1",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=10.0.1.1"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-07",
+   "variant": "main",
+   "code": "7",
+   "router": "R2",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=10.0.2.1"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-07",
+   "variant": "main",
+   "code": "7",
+   "router": "R3",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=10.0.3.1"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-08",
+   "variant": "specific",
+   "code": "8",
+   "router": "R1",
+   "block": "configure terminal\nip route 192.168.2.0 255.255.255.0 10.0.0.2\nip route 10.0.0.4 255.255.255.252 10.0.0.2\nip route 192.168.3.0 255.255.255.0 10.0.0.2\nip route 10.0.0.8 255.255.255.252 10.0.0.2\nip route 192.168.4.0 255.255.255.0 10.0.0.2\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-08",
+   "variant": "specific",
+   "code": "8",
+   "router": "R2",
+   "block": "configure terminal\nip route 192.168.1.0 255.255.255.0 10.0.0.1\nip route 192.168.3.0 255.255.255.0 10.0.0.6\nip route 10.0.0.8 255.255.255.252 10.0.0.6\nip route 192.168.4.0 255.255.255.0 10.0.0.6\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-08",
+   "variant": "specific",
+   "code": "8",
+   "router": "R3",
+   "block": "configure terminal\nip route 192.168.4.0 255.255.255.0 10.0.0.10\nip route 192.168.2.0 255.255.255.0 10.0.0.5\nip route 10.0.0.0 255.255.255.252 10.0.0.5\nip route 192.168.1.0 255.255.255.0 10.0.0.5\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-08",
+   "variant": "specific",
+   "code": "8",
+   "router": "R4",
+   "block": "configure terminal\nip route 192.168.1.0 255.255.255.0 10.0.0.9\nip route 192.168.2.0 255.255.255.0 10.0.0.9\nip route 192.168.3.0 255.255.255.0 10.0.0.9\nip route 10.0.0.0 255.255.255.252 10.0.0.9\nip route 10.0.0.4 255.255.255.252 10.0.0.9\nend\nwrite memory"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-08",
+   "variant": "specific",
+   "code": "8",
+   "router": "R1",
+   "block": "/ip route add dst-address=192.168.2.0/24 gateway=10.0.0.2\n/ip route add dst-address=10.0.0.4/30 gateway=10.0.0.2\n/ip route add dst-address=192.168.3.0/24 gateway=10.0.0.2\n/ip route add dst-address=10.0.0.8/30 gateway=10.0.0.2\n/ip route add dst-address=192.168.4.0/24 gateway=10.0.0.2"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-08",
+   "variant": "specific",
+   "code": "8",
+   "router": "R2",
+   "block": "/ip route add dst-address=192.168.1.0/24 gateway=10.0.0.1\n/ip route add dst-address=192.168.3.0/24 gateway=10.0.0.6\n/ip route add dst-address=10.0.0.8/30 gateway=10.0.0.6\n/ip route add dst-address=192.168.4.0/24 gateway=10.0.0.6"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-08",
+   "variant": "specific",
+   "code": "8",
+   "router": "R3",
+   "block": "/ip route add dst-address=192.168.4.0/24 gateway=10.0.0.10\n/ip route add dst-address=192.168.2.0/24 gateway=10.0.0.5\n/ip route add dst-address=10.0.0.0/30 gateway=10.0.0.5\n/ip route add dst-address=192.168.1.0/24 gateway=10.0.0.5"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-08",
+   "variant": "specific",
+   "code": "8",
+   "router": "R4",
+   "block": "/ip route add dst-address=192.168.1.0/24 gateway=10.0.0.9\n/ip route add dst-address=192.168.2.0/24 gateway=10.0.0.9\n/ip route add dst-address=192.168.3.0/24 gateway=10.0.0.9\n/ip route add dst-address=10.0.0.0/30 gateway=10.0.0.9\n/ip route add dst-address=10.0.0.4/30 gateway=10.0.0.9"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-08",
+   "variant": "stub-defaults",
+   "code": "8b",
+   "router": "R1",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 10.0.0.2\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-08",
+   "variant": "stub-defaults",
+   "code": "8b",
+   "router": "R2",
+   "block": "configure terminal\nip route 192.168.1.0 255.255.255.0 10.0.0.1\nip route 192.168.3.0 255.255.255.0 10.0.0.6\nip route 10.0.0.8 255.255.255.252 10.0.0.6\nip route 192.168.4.0 255.255.255.0 10.0.0.6\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-08",
+   "variant": "stub-defaults",
+   "code": "8b",
+   "router": "R3",
+   "block": "configure terminal\nip route 192.168.4.0 255.255.255.0 10.0.0.10\nip route 192.168.2.0 255.255.255.0 10.0.0.5\nip route 10.0.0.0 255.255.255.252 10.0.0.5\nip route 192.168.1.0 255.255.255.0 10.0.0.5\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-08",
+   "variant": "stub-defaults",
+   "code": "8b",
+   "router": "R4",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 10.0.0.9\nend\nwrite memory"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-08",
+   "variant": "stub-defaults",
+   "code": "8b",
+   "router": "R1",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=10.0.0.2"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-08",
+   "variant": "stub-defaults",
+   "code": "8b",
+   "router": "R2",
+   "block": "/ip route add dst-address=192.168.1.0/24 gateway=10.0.0.1\n/ip route add dst-address=192.168.3.0/24 gateway=10.0.0.6\n/ip route add dst-address=10.0.0.8/30 gateway=10.0.0.6\n/ip route add dst-address=192.168.4.0/24 gateway=10.0.0.6"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-08",
+   "variant": "stub-defaults",
+   "code": "8b",
+   "router": "R3",
+   "block": "/ip route add dst-address=192.168.4.0/24 gateway=10.0.0.10\n/ip route add dst-address=192.168.2.0/24 gateway=10.0.0.5\n/ip route add dst-address=10.0.0.0/30 gateway=10.0.0.5\n/ip route add dst-address=192.168.1.0/24 gateway=10.0.0.5"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-08",
+   "variant": "stub-defaults",
+   "code": "8b",
+   "router": "R4",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=10.0.0.9"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-09",
+   "variant": "main",
+   "code": "9",
+   "router": "R1",
+   "block": "configure terminal\nip route 10.0.0.4 255.255.255.252 10.0.0.2\nip route 10.0.0.8 255.255.255.252 10.0.0.2\nip route 192.168.2.0 255.255.255.0 10.0.0.2\nip route 192.168.3.0 255.255.255.0 10.0.0.2\nip route 192.168.4.0 255.255.255.0 10.0.0.2\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-09",
+   "variant": "main",
+   "code": "9",
+   "router": "R2",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 10.0.0.1\nip route 192.168.3.0 255.255.255.0 10.0.0.6\nip route 10.0.0.8 255.255.255.252 10.0.0.6\nip route 192.168.4.0 255.255.255.0 10.0.0.6\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-09",
+   "variant": "main",
+   "code": "9",
+   "router": "R3",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 10.0.0.5\nip route 192.168.4.0 255.255.255.0 10.0.0.10\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-09",
+   "variant": "main",
+   "code": "9",
+   "router": "R4",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 10.0.0.9\nend\nwrite memory"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-09",
+   "variant": "main",
+   "code": "9",
+   "router": "R1",
+   "block": "/ip route add dst-address=10.0.0.4/30 gateway=10.0.0.2\n/ip route add dst-address=10.0.0.8/30 gateway=10.0.0.2\n/ip route add dst-address=192.168.2.0/24 gateway=10.0.0.2\n/ip route add dst-address=192.168.3.0/24 gateway=10.0.0.2\n/ip route add dst-address=192.168.4.0/24 gateway=10.0.0.2"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-09",
+   "variant": "main",
+   "code": "9",
+   "router": "R2",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=10.0.0.1\n/ip route add dst-address=192.168.3.0/24 gateway=10.0.0.6\n/ip route add dst-address=10.0.0.8/30 gateway=10.0.0.6\n/ip route add dst-address=192.168.4.0/24 gateway=10.0.0.6"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-09",
+   "variant": "main",
+   "code": "9",
+   "router": "R3",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=10.0.0.5\n/ip route add dst-address=192.168.4.0/24 gateway=10.0.0.10"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-09",
+   "variant": "main",
+   "code": "9",
+   "router": "R4",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=10.0.0.9"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-10",
+   "variant": "main",
+   "code": "10",
+   "router": "R1",
+   "block": "configure terminal\nip route 192.168.2.0 255.255.255.0 10.1.0.2\nip route 10.3.0.0 255.255.255.252 10.1.0.2\nip route 192.168.3.0 255.255.255.0 10.2.0.2\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-10",
+   "variant": "main",
+   "code": "10",
+   "router": "R2",
+   "block": "configure terminal\nip route 192.168.1.0 255.255.255.0 10.1.0.1\nip route 10.2.0.0 255.255.255.252 10.1.0.1\nip route 192.168.3.0 255.255.255.0 10.3.0.2\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-10",
+   "variant": "main",
+   "code": "10",
+   "router": "R3",
+   "block": "configure terminal\nip route 192.168.1.0 255.255.255.0 10.2.0.1\nip route 10.1.0.0 255.255.255.252 10.2.0.1\nip route 192.168.2.0 255.255.255.0 10.3.0.1\nend\nwrite memory"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-10",
+   "variant": "main",
+   "code": "10",
+   "router": "R1",
+   "block": "/ip route add dst-address=192.168.2.0/24 gateway=10.1.0.2\n/ip route add dst-address=10.3.0.0/30 gateway=10.1.0.2\n/ip route add dst-address=192.168.3.0/24 gateway=10.2.0.2"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-10",
+   "variant": "main",
+   "code": "10",
+   "router": "R2",
+   "block": "/ip route add dst-address=192.168.1.0/24 gateway=10.1.0.1\n/ip route add dst-address=10.2.0.0/30 gateway=10.1.0.1\n/ip route add dst-address=192.168.3.0/24 gateway=10.3.0.2"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-10",
+   "variant": "main",
+   "code": "10",
+   "router": "R3",
+   "block": "/ip route add dst-address=192.168.1.0/24 gateway=10.2.0.1\n/ip route add dst-address=10.1.0.0/30 gateway=10.2.0.1\n/ip route add dst-address=192.168.2.0/24 gateway=10.3.0.1"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-11",
+   "variant": "main",
+   "code": "11",
+   "router": "R-GW",
+   "block": "configure terminal\nip route 10.20.1.0 255.255.255.0 10.10.1.2\nip route 10.20.2.0 255.255.255.0 10.10.2.2\nip route 10.20.3.0 255.255.255.0 10.10.3.2\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-11",
+   "variant": "main",
+   "code": "11",
+   "router": "R-A",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 10.10.1.1\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-11",
+   "variant": "main",
+   "code": "11",
+   "router": "R-B",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 10.10.2.1\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-11",
+   "variant": "main",
+   "code": "11",
+   "router": "R-C",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 10.10.3.1\nend\nwrite memory"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-11",
+   "variant": "main",
+   "code": "11",
+   "router": "R-GW",
+   "block": "/ip route add dst-address=10.20.1.0/24 gateway=10.10.1.2\n/ip route add dst-address=10.20.2.0/24 gateway=10.10.2.2\n/ip route add dst-address=10.20.3.0/24 gateway=10.10.3.2"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-11",
+   "variant": "main",
+   "code": "11",
+   "router": "R-A",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=10.10.1.1"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-11",
+   "variant": "main",
+   "code": "11",
+   "router": "R-B",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=10.10.2.1"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-11",
+   "variant": "main",
+   "code": "11",
+   "router": "R-C",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=10.10.3.1"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-12",
+   "variant": "main",
+   "code": "12",
+   "router": "R-CORE",
+   "block": "configure terminal\nip route 192.168.10.0 255.255.255.0 10.0.1.2\nip route 192.168.20.0 255.255.255.0 10.0.2.2\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-12",
+   "variant": "main",
+   "code": "12",
+   "router": "R-A",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 10.0.1.1\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-12",
+   "variant": "main",
+   "code": "12",
+   "router": "R-B",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 10.0.2.1\nend\nwrite memory"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-12",
+   "variant": "main",
+   "code": "12",
+   "router": "R-CORE",
+   "block": "/ip route add dst-address=192.168.10.0/24 gateway=10.0.1.2\n/ip route add dst-address=192.168.20.0/24 gateway=10.0.2.2"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-12",
+   "variant": "main",
+   "code": "12",
+   "router": "R-A",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=10.0.1.1"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-12",
+   "variant": "main",
+   "code": "12",
+   "router": "R-B",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=10.0.2.1"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-13",
+   "variant": "main",
+   "code": "13",
+   "router": "R1",
+   "block": "configure terminal\nip route 10.0.0.0 255.255.252.0 172.16.0.2\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-13",
+   "variant": "main",
+   "code": "13",
+   "router": "R2",
+   "block": "configure terminal\nip route 192.168.1.0 255.255.255.0 172.16.0.1\nend\nwrite memory"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-13",
+   "variant": "main",
+   "code": "13",
+   "router": "R1",
+   "block": "/ip route add dst-address=10.0.0.0/22 gateway=172.16.0.2"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-13",
+   "variant": "main",
+   "code": "13",
+   "router": "R2",
+   "block": "/ip route add dst-address=192.168.1.0/24 gateway=172.16.0.1"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-14",
+   "variant": "main",
+   "code": "14",
+   "router": "R-HQ",
+   "block": "configure terminal\nip route 172.20.0.0 255.255.254.0 10.1.0.2\nip route 172.30.0.0 255.255.255.0 10.2.0.2\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-14",
+   "variant": "main",
+   "code": "14",
+   "router": "R-F1",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 10.1.0.1\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-14",
+   "variant": "main",
+   "code": "14",
+   "router": "R-F2",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 10.2.0.1\nend\nwrite memory"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-14",
+   "variant": "main",
+   "code": "14",
+   "router": "R-HQ",
+   "block": "/ip route add dst-address=172.20.0.0/23 gateway=10.1.0.2\n/ip route add dst-address=172.30.0.0/24 gateway=10.2.0.2"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-14",
+   "variant": "main",
+   "code": "14",
+   "router": "R-F1",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=10.1.0.1"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-14",
+   "variant": "main",
+   "code": "14",
+   "router": "R-F2",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=10.2.0.1"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-15",
+   "variant": "main",
+   "code": "15",
+   "router": "R1",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 100.64.1.1 1\nip route 0.0.0.0 0.0.0.0 100.64.2.1 2\nend\nwrite memory"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-15",
+   "variant": "main",
+   "code": "15",
+   "router": "R1",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=100.64.1.1 distance=1\n/ip route add dst-address=0.0.0.0/0 gateway=100.64.2.1 distance=2"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-16",
+   "variant": "main",
+   "code": "16",
+   "router": "R-INET",
+   "block": "configure terminal\nip route 172.16.0.0 255.255.252.0 10.0.0.2\nip route 10.0.1.0 255.255.255.252 10.0.0.2\nip route 10.0.2.0 255.255.255.252 10.0.0.2\nip route 10.1.1.0 255.255.255.252 10.0.0.2\nip route 10.1.2.0 255.255.255.252 10.0.0.2\nip route 10.2.1.0 255.255.255.252 10.0.0.2\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-16",
+   "variant": "main",
+   "code": "16",
+   "router": "R-CORE",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 10.0.0.1\nip route 172.16.0.0 255.255.255.0 10.0.1.2\nip route 172.16.1.0 255.255.255.0 10.0.1.2\nip route 10.1.1.0 255.255.255.252 10.0.1.2\nip route 10.1.2.0 255.255.255.252 10.0.1.2\nip route 172.16.2.0 255.255.254.0 10.0.2.2\nip route 10.2.1.0 255.255.255.252 10.0.2.2\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-16",
+   "variant": "main",
+   "code": "16",
+   "router": "R-AGG1",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 10.0.1.1\nip route 172.16.0.0 255.255.255.0 10.1.1.2\nip route 172.16.1.0 255.255.255.0 10.1.2.2\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-16",
+   "variant": "main",
+   "code": "16",
+   "router": "R-AGG2",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 10.0.2.1\nip route 172.16.2.0 255.255.254.0 10.2.1.2\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-16",
+   "variant": "main",
+   "code": "16",
+   "router": "R-ACC1",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 10.1.1.1\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-16",
+   "variant": "main",
+   "code": "16",
+   "router": "R-ACC2",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 10.1.2.1\nend\nwrite memory"
+  },
+  {
+   "syntax": "cisco",
+   "task": "routing.task-16",
+   "variant": "main",
+   "code": "16",
+   "router": "R-ACC3",
+   "block": "configure terminal\nip route 0.0.0.0 0.0.0.0 10.2.1.1\nend\nwrite memory"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-16",
+   "variant": "main",
+   "code": "16",
+   "router": "R-INET",
+   "block": "/ip route add dst-address=172.16.0.0/22 gateway=10.0.0.2\n/ip route add dst-address=10.0.1.0/30 gateway=10.0.0.2\n/ip route add dst-address=10.0.2.0/30 gateway=10.0.0.2\n/ip route add dst-address=10.1.1.0/30 gateway=10.0.0.2\n/ip route add dst-address=10.1.2.0/30 gateway=10.0.0.2\n/ip route add dst-address=10.2.1.0/30 gateway=10.0.0.2"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-16",
+   "variant": "main",
+   "code": "16",
+   "router": "R-CORE",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=10.0.0.1\n/ip route add dst-address=172.16.0.0/24 gateway=10.0.1.2\n/ip route add dst-address=172.16.1.0/24 gateway=10.0.1.2\n/ip route add dst-address=10.1.1.0/30 gateway=10.0.1.2\n/ip route add dst-address=10.1.2.0/30 gateway=10.0.1.2\n/ip route add dst-address=172.16.2.0/23 gateway=10.0.2.2\n/ip route add dst-address=10.2.1.0/30 gateway=10.0.2.2"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-16",
+   "variant": "main",
+   "code": "16",
+   "router": "R-AGG1",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=10.0.1.1\n/ip route add dst-address=172.16.0.0/24 gateway=10.1.1.2\n/ip route add dst-address=172.16.1.0/24 gateway=10.1.2.2"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-16",
+   "variant": "main",
+   "code": "16",
+   "router": "R-AGG2",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=10.0.2.1\n/ip route add dst-address=172.16.2.0/23 gateway=10.2.1.2"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-16",
+   "variant": "main",
+   "code": "16",
+   "router": "R-ACC1",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=10.1.1.1"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-16",
+   "variant": "main",
+   "code": "16",
+   "router": "R-ACC2",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=10.1.2.1"
+  },
+  {
+   "syntax": "routeros",
+   "task": "routing.task-16",
+   "variant": "main",
+   "code": "16",
+   "router": "R-ACC3",
+   "block": "/ip route add dst-address=0.0.0.0/0 gateway=10.2.1.1"
+  }
+ ]
+}

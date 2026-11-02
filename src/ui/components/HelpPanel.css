@@ -1,0 +1,254 @@
+/* The help panel (HelpPanel.jsx): the check row and one message area, in
+   the normal flow (never sticky: a sticky bar covered hint 3 in the mask
+   screen). Tokens only; the looks of Feedback, HintLadder and Reveal. */
+
+.ng-help {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* The portal's container next to a long board (HelpPanel `boardRef`). */
+.ng-help-host {
+  display: block;
+  min-width: 0;
+  margin: 6px 0;
+}
+
+.ng-help-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+
+/* «Показати відповідь»: a quiet link on its own line under the buttons, the
+   same in every screen; it never takes the place of a button that goes. */
+.ng-help-row-link {
+  flex-basis: 100%;
+  display: flex;
+  margin-top: -6px;
+}
+
+.ng-help-reveal-link {
+  width: fit-content;
+  padding: 0 6px;
+}
+
+.ng-help-message {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* «Підказки (n)»: earlier rungs, folded but reachable. */
+.ng-help-fold > summary {
+  width: fit-content;
+  min-height: 28px;
+  padding: 2px 4px;
+  color: var(--ng-muted);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  cursor: pointer;
+}
+
+.ng-help-fold > summary:focus-visible,
+.ng-help-more > summary:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}
+
+.ng-help-folded {
+  margin-top: 6px;
+}
+
+/* The verdict shrunk to one line above the current hint, with its evidence. */
+.ng-help-mini-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.ng-help-mini-box.is-stale > .ng-help-node {
+  opacity: 0.7;
+}
+
+.ng-help-mini {
+  margin: 0;
+  color: var(--ng-muted);
+  font-size: var(--ng-font-small);
+  line-height: 1.4;
+}
+
+.ng-help-badge {
+  font-family: var(--ng-mono);
+  font-weight: 700;
+}
+
+.ng-help-mini.is-ok .ng-help-badge,
+.ng-help-verdict.is-ok .ng-help-badge { color: var(--ng-green); }
+.ng-help-mini.is-no .ng-help-badge,
+.ng-help-verdict.is-no .ng-help-badge { color: var(--ng-amber); }
+
+/* «до змін»: the answer changed since this verdict. */
+.ng-help-stale {
+  color: var(--ng-muted);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+}
+
+.ng-help-mini.is-stale,
+.ng-help-verdict.is-stale .ng-help-summary,
+.ng-help-verdict.is-stale .ng-help-node,
+.ng-help-verdict.is-stale .ng-help-detail {
+  opacity: 0.7;
+}
+
+/* The current item: a verdict, a hint or the answer. Empty: no box, but the
+   status region stays in the accessibility tree. */
+.ng-help-current {
+  min-width: 0;
+  color: var(--ng-text);
+  font-size: var(--ng-font-body);
+  line-height: 1.45;
+}
+
+.ng-help-current:not([data-help-current]) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  border: 0;
+}
+
+.ng-help-said p,
+.ng-help-detail p {
+  margin: 0 0 6px;
+}
+
+.ng-help-said p:last-child,
+.ng-help-detail p:last-child {
+  margin-bottom: 0;
+}
+
+.ng-help-said .is-clearing {
+  visibility: hidden;
+}
+
+.ng-help-verdict {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--ng-surf);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+}
+
+.ng-help-verdict.is-ok {
+  background: var(--ng-green-bg);
+  border-color: var(--ng-green);
+}
+
+/* «Ще ні» is amber, not red: a wrong try is part of learning. */
+.ng-help-verdict.is-no {
+  background: var(--ng-amber-bg);
+  border-color: var(--ng-amber);
+}
+
+.ng-help-more > summary {
+  width: fit-content;
+  min-height: 28px;
+  color: var(--ng-muted);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  cursor: pointer;
+}
+
+.ng-help-more > .ng-help-detail {
+  margin-top: 6px;
+}
+
+.ng-help-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: var(--ng-font-small);
+}
+
+/* A hint: a quiet box. Amber means «Ще ні» (a wrong check) only, everywhere. */
+.ng-help-hint {
+  padding: 10px 14px;
+  background: var(--ng-surf);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  font-size: var(--ng-font-small);
+  line-height: 1.5;
+}
+
+.ng-help-hint b { color: var(--ng-text); }
+
+/* Folded hints keep the same quiet look (HintLadder's list is amber). */
+.ng-help .ng-help-folded {
+  background: var(--ng-surf);
+  border-color: var(--ng-stroke);
+}
+
+.ng-help .ng-help-folded b { color: var(--ng-text); }
+
+/* The hint button's place, held after it goes (HelpPanel.jsx holdHint). */
+.ng-help-placeholder {
+  visibility: hidden;
+  display: inline-flex;
+  align-items: center;
+}
+
+.ng-help-hint-text { margin: 0; }
+
+.ng-help-hint-text:focus-visible,
+.ng-help-applied-text:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 3px;
+}
+
+/* An answer applied on the board: one line, the board shows the rest. */
+.ng-help-applied {
+  padding: 10px 14px;
+  background: var(--ng-surf);
+  border: 1px solid var(--ng-stroke);
+  border-left: 4px solid var(--ng-cyan);
+  border-radius: var(--ng-radius);
+}
+
+.ng-help-applied-text { margin: 0; }
+
+/* A long current item starts with a cue that the rest is below. */
+.ng-help-cue {
+  margin: 0 0 6px;
+  color: var(--ng-muted);
+  font-size: var(--ng-font-caption);
+}
+
+/* «показано»: a board showing the revealed answer (spec A1), never a solve's look. */
+.ng-shown-chip {
+  display: inline-block;
+  padding: 0 8px;
+  border: 1px dashed var(--ng-cyan);
+  border-radius: 10px;
+  color: var(--ng-cyan);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  line-height: 1.5;
+}
+
+/* Nothing in the message area yet: no gap under the row (the empty status
+   region stays in the accessibility tree, out of the flow). */
+.ng-help-message:not(:has(> details, > .ng-help-mini-box, > [data-help-current])) {
+  margin-top: -10px;
+}

@@ -1,0 +1,63 @@
+.ng-copy {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* Long lines wrap: the block never scrolls on its own. The lines are text
+   separated by real line breaks (pre-wrap), so a manual copy keeps them. */
+.ng-copy-pre {
+  margin: 0;
+  padding: 6px 10px;
+  background: var(--ng-code-bg);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  color: var(--ng-code);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+
+.ng-copy-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.ng-copy-button {
+  box-sizing: border-box;
+  min-height: var(--ng-target);
+  padding: 0 14px;
+  background: var(--ng-input-bg);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ng-copy-button:hover {
+  background: var(--ng-blue-bg);
+  border-color: var(--ng-blue);
+}
+
+.ng-copy-button:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}
+
+.ng-copy-said {
+  position: relative;
+  margin: 0;
+  color: var(--ng-text);
+  font-size: var(--ng-font-caption);
+}
+
