@@ -1,3 +1,5 @@
+// First: polyfills for older browsers, before any app module runs.
+import '@compat'
 import React from 'react'
 import {createRoot} from 'react-dom/client'
 import './style.css'

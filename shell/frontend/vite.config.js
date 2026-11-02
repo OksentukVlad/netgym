@@ -17,12 +17,21 @@ const web = process.env.NETGYM_WEB === '1'
 export default defineConfig({
   plugins: [react()],
   base: web ? './' : '/',
+  // Older browsers: syntax is lowered to what Chrome 80 (February 2020) and
+  // its peers run; newer built-in methods come from src/app/compat.js.
+  // Layout features they lack (container queries, :has, color-mix) degrade
+  // instead of failing.
+  build: {
+    target: ['chrome80', 'edge80', 'firefox78', 'safari14']
+  },
   define: {
     __NETGYM_WEB__: JSON.stringify(web)
   },
   resolve: {
     alias: {
       '@target': target,
+      // Polyfills for older browsers (src/app/compat.js), loaded before the app.
+      '@compat': fileURLToPath(new URL('../../src/app/compat.js', import.meta.url)),
       'react': fileURLToPath(new URL('./node_modules/react', import.meta.url)),
       'react-dom': fileURLToPath(new URL('./node_modules/react-dom', import.meta.url))
     },
