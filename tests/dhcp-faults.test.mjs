@@ -227,7 +227,7 @@ test('E4 feedback is probe-first (screen repair v1): the given configuration is 
     const own = checkRepair(t, c);
     assert.equal(own.kind, 'info'); assert.deepEqual(own.target, { field: id });
   }
-  assert.equal(words.probesFailing(1, 4), 'Ще не працює: не проходить 1 із 4 перевірок.');
+  assert.equal(words.probesFailing(1, 4), 'Поки не проходить 1 із 4 перевірок.');
 });
 
 test('E4 all four checks pass but capacity or safety rejects: the verdict says so, with the field', () => {

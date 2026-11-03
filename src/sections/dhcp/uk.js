@@ -263,7 +263,7 @@ export const fault = {
     dnsOk: 'DNS провайдера відповів адресою сайту.',
   },
   repairFailed: 'Перевір налаштування за показами ПК і R1.',
-  probesFailing: (n, total) => `Ще не працює: ${n === 1 ? 'не проходить' : 'не проходять'} ${n} із ${total} перевірок.`,
+  probesFailing: (n, total) => `Поки ${n === 1 ? 'не проходить' : 'не проходять'} ${n} із ${total} перевірок.`,
   probesPassBut: text => `Перевірки проходять, але ${text.charAt(0).toLowerCase()}${text.slice(1)}`,
   safety: 'Налаштування мають бути безпечними для всієї LAN і чинних оренд.',
   exampleContext: 'Інша мережа: ПК не отримав DNS від DHCP.',

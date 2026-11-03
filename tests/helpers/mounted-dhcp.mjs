@@ -370,8 +370,8 @@ scenario('E4 L1', m => {
   click(q('.ng-help-check'));
   const first = faults.checkRepair(task, task.config);
   const failingRows = start.rows.filter(r => !r.ok);
-  check('E4: the given configuration fails probe-first: «Ще не працює: не проходять N із 4», the first failing row marked, no field', tone() === 'no'
-    && status().includes(`Ще не працює: ${failingRows.length === 1 ? 'не проходить' : 'не проходять'} ${failingRows.length} із 4 перевірок.`)
+  check('E4: the given configuration fails probe-first: «Поки не проходять N із 4», the first failing row marked, no field', tone() === 'no'
+    && status().includes(`Поки ${failingRows.length === 1 ? 'не проходить' : 'не проходять'} ${failingRows.length} із 4 перевірок.`)
     && q('.ng-dh-probe[data-evidence="current"]')?.getAttribute('data-row') === failingRows[0].id
     && !q('.ng-dh-repair [data-evidence]') && !q('.ng-dh-repair [aria-invalid="true"]'), [status(), first.code]);
   const before = rowsNow().map(r => r.text).join('|');
@@ -448,7 +448,7 @@ scenario('E4 missing gateway', m => {
   click(button(words.screen.fault.toRepair));
   click(q('.ng-help-check'));
   check('E4 gateway: a missing option is a broken configuration, not a syntax error: the three failing checks, no IPv4 message', tone() === 'no'
-    && status().includes('Ще не працює: не проходять 3 із 4 перевірок.') && !status().includes(words.findings.syntax), status());
+    && status().includes('Поки не проходять 3 із 4 перевірок.') && !status().includes(words.findings.syntax), status());
   check('E4 gateway: the gateway row is the evidence; the untouched gateway field is not marked', q('.ng-dh-probe[data-evidence="current"]')?.getAttribute('data-row') === 'gateway'
     && !q('[data-field="gateway"] .is-invalid') && !q('[data-field="gateway"][data-evidence]'));
   type(q('[data-field="gateway"] input'), '192.168.88');
