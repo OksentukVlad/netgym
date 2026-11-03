@@ -1,0 +1,34 @@
+/* «По кроках» (WalkStepper.jsx), moved from the firewall's stylesheet in
+ * round 6 with its class names. Its buttons' look is RouterDiagram.css's
+ * .ng-fw-btn and .ng-fw-icon. */
+
+.ng-fw-walkbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.ng-fw-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ng-fw-step-text {
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+}
+
+/* Round 5 (5b-2 B): what this step of the walk is, in words, under the stepper. */
+.ng-fw-step-caption {
+  margin: 4px 0 0;
+  color: var(--ng-text);
+  font-size: var(--ng-font-small);
+  line-height: 1.35;
+}
+
+.ng-fw-walkbar [aria-disabled="true"] {
+  cursor: default;
+  opacity: 0.55;
+}

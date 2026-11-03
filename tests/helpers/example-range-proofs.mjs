@@ -156,5 +156,49 @@ export const rangeProofs = [
       "198.16.0.0/13"
     ],
     "reason": "Wrong destination adds one block to a nondefault dst; all nondefault bank/frozen prefixes are >= /22 (asserted in reservation test). Expanded intervals enclose each entire source pool plus this increment. Other address faults use existing neighbour IPs."
+  },
+  {
+    "file": "src/sections/dhcp/logic/scenario.js",
+    "sha256": "1db127d42ef4d52196b2021f481c38ba64b9664ce1af0973d5346ff6705a13e5",
+    "ranges": [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/16",
+      "203.0.113.0/24"
+    ],
+    "reason": "Maps a /24 LAN unit into one aligned /24 selected within engine.privatePools; same host offsets. ISP endpoints use identity-mapped TEST-NET-3 only. Rejects returning the base LAN for otherAddresses."
+  },
+  {
+    "file": "src/sections/dhcp/logic/sides.js",
+    "sha256": "caa6e3b1ce3e3ee2d13b7a2f3392ffdf0800bec812f3bfbda1bf670b0edf982d",
+    "ranges": [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/16",
+      "203.0.113.0/24"
+    ],
+    "reason": "Selects/shuffles the cardBank on scenario.createTopology; no address arithmetic except host suffixes 1..254 inside its private /24."
+  },
+  {
+    "file": "src/sections/dhcp/logic/server.js",
+    "sha256": "b7005867e16c0b242c493101977c94c93b1a38ffbfcf06e2ec92d56dd60acc3c",
+    "ranges": [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/16",
+      "203.0.113.0/24"
+    ],
+    "reason": "Chooses an aligned /24 or /25..27 subblock inside the base /24; all offsets stay inside it. Delegates whole /24 placement to scenario.lanMapper and fixed ISP DNS in TEST-NET-3."
+  },
+  {
+    "file": "src/sections/dhcp/logic/nat.js",
+    "sha256": "a591098d84b2c48fd2f937916559126abd588eff2bc9aba4d1e14f9b8d769ff1",
+    "ranges": [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/16",
+      "203.0.113.0/24"
+    ],
+    "reason": "Delegates placement to scenario.createTopology. Additional /24 networks XOR only bits 8 or 9, preserving all private-pool high bits. WAN, ISP and remote endpoints stay in TEST-NET-3."
   }
 ];

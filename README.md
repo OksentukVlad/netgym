@@ -1,8 +1,8 @@
 # NetGym
 
 NetGym is a networking trainer in Ukrainian: one app with sections for IP
-addressing, static routing (Cisco IOS and MikroTik RouterOS), firewall
-filtering, VLANs and device setup. Every exercise checks by behaviour (any
+addressing, static routing (Cisco IOS and MikroTik RouterOS), DHCP and NAT,
+firewall filtering, VLANs and device setup. Every exercise checks by behaviour (any
 working answer passes), explains with hints, and shows the reference answer
 only when asked. It runs offline as a Windows `.exe` (Wails) and in a browser.
 
@@ -19,6 +19,7 @@ start screen still says the web version is meant for a computer.
 | IP-адреси: маска | exercises with masks and address blocks |
 | IP-адреси: у бітах | address and mask bit by bit: network and broadcast |
 | Маршрутизація | static routes on Cisco or MikroTik; «Знайди несправність» (find the fault) |
+| DHCP і NAT | which side of the router a setting is on; what a DHCP server gives out (range, gateway, DNS; Cisco exclusions, MikroTik's DHCP Setup); what NAT changes and the rule that does it |
 | Фаєрвол | how a filter decides a packet's fate: input and forward, rule order |
 | VLAN | access ports, trunks and a broadcast frame's path; routing between VLANs; finding faults |
 | Налаштування з нуля | the order of setup commands: Cisco router and switch, MikroTik router |

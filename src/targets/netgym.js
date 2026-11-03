@@ -1,6 +1,7 @@
 // NetGym.exe: the start screen in front of every section, in the order a
 // learner needs them (round 4 spec A7): the calculator, the mask exercise,
-// the binary walk; then routing; then the firewall (FW-1), then VLAN
+// the binary walk; then routing; then «DHCP і NAT» (round 6: its card carries
+// its blurb and advice from its uk.js); then the firewall (FW-1), then VLAN
 // (VLAN-1, VLAN-2's «Між VLAN» and VLAN-3's «Знайди несправність»), then
 // «Налаштування з нуля» (the setup decks: DR-1 Cisco router, DR-2 Cisco
 // 2960, DR-3 MikroTik), last. The first card says «Почни тут»; nothing is
@@ -23,6 +24,8 @@ import CalculatorScreen from '../sections/ip/screens/CalculatorScreen.jsx';
 import MaskScreen from '../sections/ip/screens/MaskScreen.jsx';
 import BinaryScreen from '../sections/ip/screens/BinaryScreen.jsx';
 import { sections as ip } from '../sections/ip/uk.js';
+import DhcpScreen from '../sections/dhcp/screens/DhcpScreen.jsx';
+import { section as dhcpSection } from '../sections/dhcp/uk.js';
 import FirewallScreen from '../sections/firewall/screens/FirewallScreen.jsx';
 import { comprehension as firewallWords, section as firewallSection } from '../sections/firewall/uk.js';
 import * as firewallBank from '../banks/firewall/tasks.js';
@@ -44,6 +47,7 @@ const target = {
     { id: 'ip-mask', ...ip.mask, Screen: MaskScreen },
     { id: 'ip-binary', ...ip.binary, Screen: BinaryScreen },
     { id: 'routing', ...routingSection, advice: routingWords.recommendedFirst, Screen: RoutingScreen, bank: { ...routingBank, faults: routingFaults } },
+    { id: 'dhcp', ...dhcpSection, Screen: DhcpScreen },
     { id: 'firewall', ...firewallSection, advice: firewallWords.recommendedFirst, Screen: FirewallScreen, bank: firewallBank },
     { id: 'vlan', ...vlanSection, advice: vlanWords.recommendedFirst, Screen: VlanScreen, bank: { predict: vlanPredict, ports: vlanPorts, route: vlanRoute, faults: vlanFaults } },
     { id: 'setup', ...setupSection, advice: setupWords.recommendedFirst, Screen: SetupScreen, bank: setupBank },

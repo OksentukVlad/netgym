@@ -48,7 +48,7 @@ test('phone gate: every essential recipe has a first view of the task, the actio
   assert.deepEqual(phoneEssentials('fw-predict', 'wrong'), null, 'later states declare none');
   const home = phoneEssentials('home', 'first');
   assert.deepEqual(home.filter(e => !e.reach).map(e => e.sel), ['.ng-home-title', '.ng-cards > li:first-child .ng-card-title']);
-  assert.ok(home.some(e => e.sel === '.ng-card-title' && e.count === 7 && e.reach), 'every card reachable');
+  assert.ok(home.some(e => e.sel === '.ng-card-title' && e.count === 8 && e.reach), 'every card reachable');
 });
 
 test('phone gate: P3 screens have «Перевірити» reachable at every size (after the inputs)', () => {

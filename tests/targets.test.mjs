@@ -62,7 +62,7 @@ test('targets: each manifest has its id, the window title and complete sections'
   }
 });
 
-test('targets: NetGym puts the start screen in front of the three IP screens (round 4 A7: what a learner needs first), routing, the firewall, VLAN, and the setup drill last', async () => {
+test('targets: NetGym puts the start screen in front of the three IP screens (round 4 A7: what a learner needs first), routing, «DHCP і NAT» (round 6), the firewall, VLAN, and the setup drill last', async () => {
   const { default: manifest, Root } = await load('netgym');
   assert.equal(manifest.only, undefined);
   assert.deepEqual(manifest.sections.map(({ id, title, blurb, legacy }) => ({ id, title, blurb, legacy })), [
@@ -70,6 +70,7 @@ test('targets: NetGym puts the start screen in front of the three IP screens (ro
     { id: 'ip-mask', title: 'IP-адреси: маска', blurb: 'вправи з маскою і блоками адрес', legacy: undefined },
     { id: 'ip-binary', title: 'IP-адреси: у бітах', blurb: 'адреса і маска по бітах: мережа і широкомовна', legacy: undefined },
     { id: 'routing', title: 'Маршрутизація', blurb: 'статичні маршрути: Cisco або MikroTik', legacy: undefined },
+    { id: 'dhcp', title: 'DHCP і NAT', blurb: 'як ПК отримує адресу і як виходить в Інтернет', legacy: undefined },
     { id: 'firewall', title: 'Фаєрвол', blurb: 'як фільтр вирішує долю пакета: input і forward, порядок правил', legacy: undefined },
     { id: 'vlan', title: 'VLAN', blurb: 'порти доступу, транки й шлях широкомовного кадру', legacy: undefined },
     { id: 'setup', title: 'Налаштування з нуля', blurb: 'порядок команд: роутер і комутатор Cisco, роутер MikroTik', legacy: undefined },
@@ -121,6 +122,12 @@ test('targets: the target chooses the routing bank; the routing screen imports n
   const vlanScreen = importGraph(resolve(root, 'src/sections/vlan/screens/VlanScreen.jsx'));
   assert.deepEqual(vlanScreen.filter(file => file.startsWith('src/banks/')), [], 'the VLAN screen gets its banks as a prop');
   assert.deepEqual(vlanScreen.filter(file => /^src\/sections\/(?!vlan\/)/.test(file)), [], 'and imports no other section');
+  // «DHCP і NAT» (round 6): its card's advice, and a screen that imports no other section (the shared drawing,
+  // ruler and stepper are in src/ui).
+  const dhcp = netgym.sections.find(s => s.id === 'dhcp');
+  assert.equal(dhcp.advice, 'радимо спершу: IP-адреси');
+  assert.ok(importGraph(resolve(targetDir, 'netgym.js')).includes('src/sections/dhcp/screens/DhcpScreen.jsx'));
+  assert.deepEqual(importGraph(resolve(root, 'src/sections/dhcp/screens/DhcpScreen.jsx')).filter(file => /^src\/(?:sections\/(?!dhcp\/)|banks\/)/.test(file)), [], 'and imports no other section or bank');
   // The setup decks: NetGym's manifest chooses the deck registry (DR-1 alone
   // until the round 3 decks screens; now DR-1, DR-2, DR-3); the screen imports no bank.
   const setupDecks = await import(pathToFileURL(resolve(root, 'src/banks/setup/index.js')).href);

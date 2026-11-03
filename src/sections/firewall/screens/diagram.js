@@ -1,69 +1,17 @@
 // The firewall diagram's fixed layout and what it shows at a walk frame
 // (FW-1 screen spec §3, v2 S4). Pure: tested in Node.
 //
-// Layout (viewBox units; round 5 made it compact, so the whole drawing
-// keeps 12 px text in the 1000 × 700 window's left column, about 510 px):
-//
-//    (Інтернет)                       ┌ ПК ──────────┐
-//   203.0.113.50   ┌ R1 ─ сам роутер ┐┌┤192.168.88.10│
-//         │        │    [input]      ││└──────────────┘
-//   [шлюз ISP]─────■                 ■┴[Сервер        ]
-//    100.64.0.1    │    [forward]    │  192.168.88.20
-//   ether1 · WAN   │ адреси цього    │ bridge · LAN
-//                  │ роутера: ether1 │
-//                  │ · …, bridge · … │
-//                  └─────────────────┘
-//
-// Label placement, per element:
-//   - the cloud and the host boxes: name, then address, centred inside;
-//     the cloud sits above the ISP gateway, the PC above the server, so the
-//     links stay straight and the port labels have room beneath them;
-//   - the ISP gateway: «шлюз ISP», then its address, inside its box;
-//   - the router's own addresses (round 5, spec G): a three-line block at
-//     the bottom of R1, «адреси цього роутера», then «ether1 · 100.64.0.2»
-//     and «bridge · 192.168.88.1» (WAN first, as the ports), 12-unit bold
-//     monospace like the hosts' addresses;
-//   - each port: «ether1 · WAN» / «bridge · LAN» under the link, outside R1,
-//     right-aligned to R1's left edge or left-aligned to its right edge;
-//   - the doors: two-line pills inside R1 («input» / «до самого роутера»,
-//     «forward» / «крізь роутер»), 14 units, the same size and style;
-//   - R1's name top left inside its box; the core mark top centre with
-//     «сам роутер» to its right;
-//   - the ingress chip («ether1 ∈ WAN») under the ingress port's label;
-//   - a dst-NAT card's rule: three lines under the bridge label.
-// Text is 12 units or more; the door labels 14.
+// The layout itself (the drawing shared with «DHCP і NAT») is
+// ui/topology/router-layout.js; it is re-exported here for the firewall's
+// screens and tests.
 //
 // Before commitment the scene depends only on the givens the spec allows:
 // the source, the ingress port (with its list chip) and a dst-NAT card's
 // label. It never reads the destination, the door or a verdict, so two
 // cards with the same source, ingress and dst-NAT draw the same picture.
-export const VIEW = { x: 0, y: 0, w: 452, h: 252 };
-export const TEXT = { min: 12, label: 12, name: 13, door: 14, router: 18 };
+import { BUS_X, CLOUD, CORE, DOORS, HOSTS, LINK_Y, MID, PORTS, doorSide } from '../../../ui/topology/router-layout.js';
 
-export const R1 = { x: 124, y: 8, w: 184, h: 238 };
-const MID = R1.x + R1.w / 2;
-const LINK_Y = 118;
-export const PORTS = {
-  ether1: { x: R1.x, y: LINK_Y, side: 'left' },
-  bridge: { x: R1.x + R1.w, y: LINK_Y, side: 'right' },
-};
-export const DOORS = {
-  input: { x: MID - 75, y: 56, w: 150, h: 38 },
-  forward: { x: MID - 75, y: 142, w: 150, h: 38 },
-};
-export const CORE = { x: MID, y: 32, r: 12 };
-/** The router's own addresses (spec G): baselines of the heading and the two lines, inside R1. */
-export const ADDRESSES = { x: R1.x + 12, y: [204, 220, 236] };
-export const CLOUD = { cx: 58, cy: 50, rx: 52, ry: 36 };
-export const ISP = { x: 16, y: LINK_Y - 22, w: 84, h: 44 };
-/** Port labels and the ingress chip under the link; the dst-NAT lines under the bridge's. */
-export const UNDER = { label: LINK_Y + 38, chip: LINK_Y + 46, nat: [204, 220, 236] };
-const BUS_X = 330;
-export const HOSTS = {
-  pc: { x: 342, y: LINK_Y - 86, w: 104, h: 44 },
-  'web-server': { x: 342, y: LINK_Y - 22, w: 104, h: 44 },
-};
-export const BUS = { x: BUS_X, y1: HOSTS.pc.y + HOSTS.pc.h / 2, y2: LINK_Y };
+export { ADDRESSES, BUS, CLOUD, CORE, DOORS, HOSTS, ISP, LANES, PORTS, R1, TEXT, UNDER, VIEW, pointsOf } from '../../../ui/topology/router-layout.js';
 
 const centre = box => ({ x: box.x + box.w / 2, y: box.y + box.h / 2 });
 /** Where inside its door the envelope waits: beside the short first line
@@ -71,16 +19,6 @@ const centre = box => ({ x: box.x + box.w / 2, y: box.y + box.h / 2 });
 const WAIT_INSET = 16;
 const WAIT_TOP = 11;
 const doorCentre = hook => centre(DOORS[hook]);
-const doorSide = (hook, side) => ({ x: side === 'left' ? DOORS[hook].x : DOORS[hook].x + DOORS[hook].w, y: DOORS[hook].y + DOORS[hook].h / 2 });
-
-/** The neutral lanes inside R1: each port to each door, and input up to the core. Equal for both doors. */
-export const LANES = [
-  ...['ether1', 'bridge'].flatMap(port => ['input', 'forward'].map(hook => {
-    const p = PORTS[port], d = doorSide(hook, p.side);
-    return { key: `${port}-${hook}`, hook, x1: p.x, y1: p.y, x2: d.x, y2: d.y };
-  })),
-  { key: 'input-core', hook: 'input', x1: MID, y1: DOORS.input.y, x2: MID, y2: CORE.y + CORE.r },
-];
 
 /** Where a host, the internet or the router's core sits on the drawing. */
 function placeOf(topology, address) {
@@ -159,6 +97,3 @@ export function sceneOf({ topology, card, walk = null, frame = null, context = n
 export function neutralScene(nat = null) {
   return { source: null, ingress: null, ingressLists: [], nat, doors: { input: 'neutral', forward: 'neutral' }, path: [], envelope: null, stop: null, arrived: null };
 }
-
-/** SVG points attribute for a polyline. */
-export const pointsOf = points => points.map(p => `${p.x},${p.y}`).join(' ');

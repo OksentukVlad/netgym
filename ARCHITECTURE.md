@@ -296,6 +296,12 @@ tools/           setup, build, test, browser checks
   - `RouterButtons` is the keyboard path.
   - `RouterCard`.
   - A `TextEquivalent` always sits next to a `TopologyDiagram`.
+  - `RouterDiagram` (round 6): the PC / R1 / Інтернет drawing shared by the
+    firewall (its `firewall` view: doors, lanes, the walk) and «DHCP і NAT»
+    (its `dhcp` view); the layout is `router-layout.js`.
+- **Shared in round 6 for «DHCP і NAT»:** `AddressRuler` (the IP screens'
+  ruler, plus a span, bands and pins for DHCP's address strip) and
+  `WalkStepper` (the firewall's «По кроках»).
 
 **Section-specific components:**
 - routing's `RouteRow`, built from a syntax adapter

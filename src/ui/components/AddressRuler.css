@@ -1,4 +1,4 @@
-/* Vlad's address ruler (AddressRuler.jsx), in the NetGym tokens: the strip and
+/* Vlad's address ruler (AddressRuler.jsx, shared in round 6), in the NetGym tokens: the strip and
    ticks in the text colour, the block shaded blue, the address in amber. */
 .ng-ruler {
   display: flex;
@@ -60,4 +60,34 @@
   margin: 0;
   color: var(--ng-muted);
   font-size: var(--ng-font-small);
+}
+
+/* Round 6 (DHCP's address strip): the ranges given out, and the taken
+   addresses' pins with their labels above the strip. */
+.ng-ruler-band {
+  fill: var(--ng-blue);
+  opacity: 0.35;
+}
+
+.ng-ruler-pin-line {
+  stroke: var(--ng-text);
+  stroke-width: 2;
+}
+
+.ng-ruler-pin-line.is-auto {
+  stroke-dasharray: 3 2;
+}
+
+.ng-ruler-pin-line.is-marked {
+  stroke: var(--ng-amber);
+  stroke-width: 3;
+}
+
+.ng-ruler-svg .ng-ruler-pin-label.is-marked {
+  fill: var(--ng-amber);
+}
+
+.ng-ruler-svg .ng-ruler-pin-label {
+  font-size: 12px;
+  font-weight: 700;
 }

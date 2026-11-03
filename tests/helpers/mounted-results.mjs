@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-export const mountedHelpers = { routing: 453, firewall: 343, ip: 179, vlan: 288, vlan3: 158, setup: 509, shared: 135 };
+export const mountedHelpers = { routing: 453, firewall: 343, ip: 179, vlan: 288, vlan3: 158, setup: 509, shared: 135, dhcp: 92 };
 
 export function mountedResults(text, minimum) {
   // Parse the whole output, so extra, malformed or truncated output cannot pass.

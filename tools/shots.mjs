@@ -22,7 +22,7 @@ const origin = 'http://netgym.test';
 const sections = {
   home: 'Розділи', routing: 'Маршрутизація', calc: 'IP-калькулятор',
   mask: 'IP-адреси: маска', binary: 'IP-адреси: у бітах', firewall: 'Фаєрвол',
-  vlan: 'VLAN', setup: 'Налаштування з нуля',
+  vlan: 'VLAN', setup: 'Налаштування з нуля', dhcp: 'DHCP і NAT',
 };
 const standard = ['first', 'wrong', 'hint', 'done'];
 // The setup decks' recall step and the reveal's «Моя відповідь» (spec S v2 shots table).
@@ -70,13 +70,28 @@ const exercises = [
   { id: 'setup-router', section: 'setup', title: 'Роутер Cisco · картки, потім по пам’яті', states: [...standard, ...setupRecallStates] },
   { id: 'setup-switch', section: 'setup', title: 'Комутатор Cisco 2960 · картки, потім по пам’яті', states: [...standard, ...setupRecallStates] },
   { id: 'setup-mikrotik', section: 'setup', title: 'Роутер MikroTik · картки', states: [...standard, 'shown-own', 'checkpoint'] },
+  // Round 6, «DHCP і NAT» (spec v2.1): E1 (vendor-neutral cards; the native lines follow the vendor),
+  // E2 at every level for both vendors, E3's round and its level 2 for both vendors. `dlevel` is the
+  // exercise's level (its own «Рівень n» choice), `syntax` the vendor.
+  { id: 'dhcp-sides', section: 'dhcp', title: 'WAN чи LAN', states: ['first', 'wrong', 'right', 'l1-card2', 'done'] },
+  { id: 'dhcp-sides-mt', base: 'dhcp-sides', section: 'dhcp', title: 'WAN чи LAN · MikroTik', syntax: 'routeros', states: ['first', 'wrong'] },
+  { id: 'dhcp-server', section: 'dhcp', title: 'DHCP-сервер · рівень 1 · Cisco', dlevel: 1, states: ['first', 'wrong', 'step2', 'done', 'reveal'] },
+  { id: 'dhcp-server-mt', base: 'dhcp-server', section: 'dhcp', title: 'DHCP-сервер · рівень 1 · MikroTik', dlevel: 1, syntax: 'routeros', states: ['first', 'done'] },
+  { id: 'dhcp-server2', base: 'dhcp-server', section: 'dhcp', title: 'DHCP-сервер · рівень 2 · Cisco', dlevel: 2, states: ['first', 'wrong', 'step2', 'done'] },
+  { id: 'dhcp-server2-mt', base: 'dhcp-server', section: 'dhcp', title: 'DHCP-сервер · рівень 2 · MikroTik', dlevel: 2, syntax: 'routeros', states: ['first', 'wrong', 'done'] },
+  { id: 'dhcp-server3', base: 'dhcp-server', section: 'dhcp', title: 'DHCP-сервер · рівень 3 · Cisco (виключення)', dlevel: 3, states: ['first', 'wrong', 'step2', 'done', 'reveal'] },
+  { id: 'dhcp-server3-mt', base: 'dhcp-server', section: 'dhcp', title: 'DHCP-сервер · рівень 3 · MikroTik (майстер)', dlevel: 3, syntax: 'routeros', states: ['first', 'wrong', 'done', 'reveal'] },
+  { id: 'dhcp-nat', section: 'dhcp', title: 'Що бачить сайт · рівень 1', dlevel: 1, states: ['first', 'wrong', 'step2', 'replay', 'l1-card2', 'done'] },
+  { id: 'dhcp-nat2', base: 'dhcp-nat', section: 'dhcp', title: 'Що бачить сайт · рівень 2 · Cisco', dlevel: 2, states: ['first', 'wrong', 'step2', 'done'] },
+  { id: 'dhcp-nat2-mt', base: 'dhcp-nat', section: 'dhcp', title: 'Що бачить сайт · рівень 2 · MikroTik', dlevel: 2, syntax: 'routeros', states: ['first', 'wrong', 'done'] },
 ].map(e => ({ states: standard, ...e }));
 const mistakes = new Set(['rt-guided', 'rt-free', 'rt-mikrotik', 'rt-fault', 'mask-type', 'binary', 'vl-ports', 'vl-route', 'vl-fault', 'setup-router', 'setup-switch', 'setup-mikrotik']);
 const replays = new Set(['rt-hard', 'rt-fault', 'fw-order1', 'fw-order2', 'vl-ports', 'vl-route', 'vl-fault', 'setup-router', 'setup-switch', 'setup-mikrotik']);
 const narrows = new Set(['rt-hard', 'rt-fault', 'fw-order2', 'vl-fault', 'vl-route', 'setup-router']);
 /** The exercise a variant shares its recipe and targets with (round 4 repair). */
 const baseOf = id => exercises.find(e => e.id === id)?.base ?? id;
-const hasHints = e => !['home', 'calc', 'vl-predict'].includes(baseOf(e.id));
+// «DHCP і NAT» has no hint ladder (a choice answers at once; E2 has «Показати відповідь», its `reveal` state).
+const hasHints = e => !['home', 'calc', 'vl-predict'].includes(baseOf(e.id)) && !baseOf(e.id).startsWith('dhcp-');
 for (const e of exercises) {
   e.states = [...new Set([...e.states, ...(mistakes.has(e.id) ? ['mistake'] : []), ...(hasHints(e) ? ['hints-all'] : []), ...(replays.has(e.id) ? ['solved'] : [])])];
 }
@@ -119,6 +134,7 @@ export function argumentsOf(args) {
 // success is the current verdict; 'stale': the current verdict predates an
 // edit); the gate fails when the page shows anything else.
 export function expectedTargets(id, raw) {
+  const exerciseId = id;
   id = baseOf(id);
   // Round 4 2b: a variant of a state (the mask's chips or fit task, a binary
   // level) has its base state's targets.
@@ -163,7 +179,7 @@ export function expectedTargets(id, raw) {
   let kind = 'verdict';
   // vl-fault «Ремонт» is opened by a tap after a check and a hint: the hint is current (Astra 4).
   if (['hint', 'hint2', 'hints-all'].includes(state) || (id === 'vl-fault' && state === 'repair')) kind = 'hint';
-  if (state === 'reveal' || (state === 'done' && !['rt-guided', 'rt-free', 'rt-mikrotik', 'mask-type', 'binary', 'fw-predict', 'vl-predict'].includes(id))) kind = 'reveal';
+  if (state === 'reveal' || (state === 'done' && !['rt-guided', 'rt-free', 'rt-mikrotik', 'mask-type', 'binary', 'fw-predict', 'vl-predict', 'dhcp-sides', 'dhcp-server', 'dhcp-nat'].includes(id))) kind = 'reveal';
   if (state === 'reveal-next') kind = 'empty';
   const evidence = [];
   if (['verdict', 'hint'].includes(kind) || state === 'device-tab' || (kind === 'reveal' && ['fw-predict', 'vl-fault', 'rt-fault'].includes(id))) {
@@ -176,6 +192,8 @@ export function expectedTargets(id, raw) {
     else if (id === 'vl-predict') evidence.push('.ng-vl-choices, .ng-vl-question');
     else if (id.startsWith('vl-')) evidence.push('[data-evidence="current"], .ng-vl-form-head');
     else if (id.startsWith('setup-')) evidence.push('.ng-su-board .is-marked, .ng-su-board .ng-reorder-item');
+    // «DHCP і NAT»: the card a choice answered (E1, E3), the form or strip a check is about (E2).
+    else if (id.startsWith('dhcp-')) evidence.push('.ng-dh [data-evidence="current"], .ng-dh-card, .ng-dh-form');
   }
   // Rule order (HelpPanel): a solve and a recheck of a still-working list are
   // task-scope successes about the whole list; an edit after success leaves
@@ -196,6 +214,20 @@ export function expectedTargets(id, raw) {
   }
   // The binary walk's last row: the success names the accepted result (the ruler and the two addresses).
   if (id === 'binary' && ['done', 'solved'].includes(state)) return { kind, row: true, evidence, expect: 'success' };
+  // «DHCP і NAT»: `done` is a checked success (E1's round, E2's server, E3's round or rule); E3's replay is a
+  // view the learner opens after its success (the stepper under the drawing; its verdict stays current).
+  if (id.startsWith('dhcp-') && state === 'done') return { kind, row: true, evidence, expect: 'success' };
+  // E1 and E3's round: a choice answers at once (no «Перевірити»), and the help row has a button only
+  // once the card is right («Наступна картка →») or the round done (repair v1, Fable 1: no skip before).
+  if ((exerciseId.startsWith('dhcp-sides') || exerciseId === 'dhcp-nat') && ['wrong', 'step2'].includes(state)) {
+    return { kind, row: true, evidence, waive: { row: 'a choice answers at once and this card is not yet right: the help row has no button until it is (no «Перевірити», no skip)' } };
+  }
+  if (id === 'dhcp-nat' && state === 'replay') {
+    return { kind: null, row: false, evidence: [], targets: ['.ng-dh-replay .ng-fw-step-caption'], waive: {
+      evidence: 'opening «По кроках» is a view toggle after the card\'s verdict: its declared target is the step\'s caption (full checks)',
+      message: 'stepping through the replay is not an event of the help panel: nothing scrolls to a message',
+    } };
+  }
   // VLAN configure and fault screens (round 4, spec F4–F6): a solve is about
   // the whole network; an edit after a check leaves its verdict stale, with
   // the field edited as its evidence; choosing a cause after «Мережа працює»
@@ -413,14 +445,50 @@ const fwOrderEssentials = () => [
   ...[1, 2, 3, 4, 5].flatMap(n => ['.ng-fwo-chain', '.ng-fwo-desc', '.ng-fwo-native']
     .map(part => ({ sel: `.ng-fwo-list .ng-reorder > .ng-reorder-item:nth-child(${n}) ${part}`, count: 1 }))),
 ];
+// «DHCP і NAT» (round 6, spec v2.1): the task, the action line, the first control, and what the first
+// decision reads. E1: the card's purpose and native line, both sides, the drawing's two port labels. E2:
+// every pin on the strip (counted from the task: the strip's data-pins) and its text, the level's first
+// fields (L3: Cisco's first exclusion row, MikroTik's three wizard fields), «Перевірити» (reachable after
+// a long form). E3 level 1: the card, its three addresses, every address on the drawing (data-hosts:
+// PC, website, ISP gateway, the LAN server on its card) and R1's two; level 2: the given lines, the
+// options, the drawing's port labels. Variants share their base's recipe; the raw id picks the form.
+const dhSvg = '.ng-dh .ng-fw-svg';
+const dhAction = { sel: '.ng-exercise-work .ng-action-line', count: 1 };
+export function dhcpEssentials(raw) {
+  if (raw.startsWith('dhcp-sides')) return [
+    { sel: '.ng-dh-task', count: 1 }, { sel: '.ng-dh-card .ng-dh-purpose', count: 1 }, { sel: '.ng-dh-card .ng-dh-native', count: 1 },
+    dhAction, { sel: '.ng-dh-sides .ng-dh-option', count: 2 }, { sel: `${dhSvg} .ng-fw-port-name`, count: 2 },
+  ];
+  if (raw.startsWith('dhcp-server')) {
+    const form = raw === 'dhcp-server3' ? 'cisco' : raw === 'dhcp-server3-mt' ? 'wizard' : 'neutral';
+    return [
+      { sel: '.ng-dh-intro .ng-dh-task', count: 1 }, allOf('.ng-dh-strip .ng-ruler-pin-label', '.ng-dh-strip', 'pins'), { sel: '.ng-dh-strip .ng-ruler-text', count: 1 },
+      dhAction,
+      // The fields with their labels (an empty input has no text to measure).
+      form === 'neutral' ? { sel: '.ng-dh-range .ng-field', count: 2 } : form === 'cisco' ? { sel: '.ng-dh-row .ng-field', count: 2 } : { sel: '.ng-dh-wizard .ng-field', count: 3, first: 1 },
+      { sel: '.ng-exercise-help .ng-help-check', count: 1, ...(form === 'neutral' ? {} : { reach: true }) },
+    ];
+  }
+  if (['dhcp-nat2', 'dhcp-nat2-mt'].includes(raw)) return [
+    { sel: '.ng-dh-card .ng-dh-task', count: 1 }, { sel: '.ng-dh-card .ng-dh-given-line', count: 2 },
+    ...(raw === 'dhcp-nat2' ? [{ sel: '.ng-dh-card .ng-dh-pre', count: 1 }] : []),
+    dhAction, { sel: '.ng-dh-options .ng-dh-option', count: raw === 'dhcp-nat2' ? 2 : 3 }, { sel: `${dhSvg} .ng-fw-port-name`, count: 2 },
+  ];
+  if (raw.startsWith('dhcp-nat')) return [
+    { sel: '.ng-dh-card .ng-dh-task', count: 1 }, dhAction, { sel: '.ng-dh-options .ng-dh-option', count: 3 },
+    allOf(`${dhSvg} .ng-fw-box-ip`, '.ng-dh-picture', 'hosts'), { sel: `${dhSvg} .ng-fw-address`, count: 2 },
+  ];
+  return null;
+}
 /** Recipes whose first views must declare essentials (a first view without them fails). */
-export const essentialRecipes = new Set(['fw-predict', 'fw-order2', 'setup-router', 'setup-switch', 'setup-mikrotik', 'rt-guided', 'rt-hard', 'rt-free', 'rt-mikrotik', 'rt-fault', 'binary', ...Object.keys(vlEssentials)]);
+export const essentialRecipes = new Set(['fw-predict', 'fw-order2', 'setup-router', 'setup-switch', 'setup-mikrotik', 'rt-guided', 'rt-hard', 'rt-free', 'rt-mikrotik', 'rt-fault', 'binary', ...Object.keys(vlEssentials), 'dhcp-sides', 'dhcp-server', 'dhcp-nat']);
 /** Gate-only first views of later cards: each destination's card is measured fresh (level 1 and level 2). */
 const laterCard = /^l[12]-card\d$/;
 /** The first views of a recipe. */
 export const isFirstView = state => ['first', 'l1-first'].includes(state) || laterCard.test(state);
 /** A state's declared essentials (selectors or { sel, count }), or null. */
 export function essentialsOf(id, state) {
+  if (id.startsWith('dhcp-') && isFirstView(state)) return dhcpEssentials(id);
   id = baseOf(id);
   if (id === 'fw-predict' && (state === 'first' || /^l2-card\d$/.test(state))) return fwPredictEssentials(2);
   if (id === 'fw-predict' && (state === 'l1-first' || /^l1-card\d$/.test(state))) return fwPredictEssentials(1);
@@ -455,7 +523,7 @@ export function essentialsOf(id, state) {
 const svgLabel = entry => /-svg\b/.test(typeof entry === 'string' ? entry : entry.sel);
 const selOf = entry => (typeof entry === 'string' ? entry : entry.sel);
 /** The phone's first-view entries per recipe (the rest of the desktop list becomes `reach`). */
-function phoneFirstView(id, state) {
+function phoneFirstView(id, state, raw = id) {
   const prompted = id !== 'setup-mikrotik';
   const firstItem = '.ng-reorder > .ng-reorder-item:nth-child(1)';
   if (id === 'home') return [{ sel: '.ng-home-title', count: 1 }, { sel: '.ng-cards > li:first-child .ng-card-title', count: 1 }];
@@ -473,16 +541,24 @@ function phoneFirstView(id, state) {
   if (id === 'vl-ports') return [{ sel: '.ng-vl-intro .ng-vl-task-text', count: 1 }, { sel: `${vlWork} .ng-action-line`, count: 1 }, { sel: `${vlWork} .ng-vl-form-table :is(.ng-vl-modes, .ng-vl-frames)`, first: 1 }];
   if (id === 'vl-route') return [{ sel: '.ng-vl-intro .ng-vl-task-text', count: 1 }, { sel: `${vlWork} .ng-action-line`, count: 1 }, { sel: `${vlWork} .ng-vl-form-head [role="radiogroup"]`, count: 1 }];
   if (id === 'vl-fault') return [{ sel: '.ng-vl-intro .ng-vl-task-text', count: 1 }, { sel: `${vlWork} .ng-action-line`, count: 1 }, { sel: `${vlWork} .ng-vf-grid .ng-vf-row.is-no`, first: 1 }];
+  // «DHCP і NAT»: the task (E1's sentence, E2's network, E3's card), the action line and the first control.
+  if (id === 'dhcp-sides') return [{ sel: '.ng-dh-task', count: 1 }, dhAction, { sel: '.ng-dh-sides .ng-dh-option', count: 2, first: 1 }];
+  if (id === 'dhcp-server') {
+    const control = dhcpEssentials(raw).find(entry => / \.ng-field$/.test(entry.sel));
+    return [{ sel: '.ng-dh-intro .ng-dh-task', count: 1 }, dhAction, { ...control, first: 1 }];
+  }
+  if (id === 'dhcp-nat') return [{ sel: '.ng-dh-card .ng-dh-task', count: 1 }, dhAction, { sel: '.ng-dh-options .ng-dh-option', count: raw === 'dhcp-nat2' ? 2 : 3, first: 1 }];
   return [];
 }
 /** A phone's essentials for a state (the desktop list, re-cast), or null. */
 export function phoneEssentials(id, state) {
+  const raw = id;
   id = baseOf(id);
-  const desk = id === 'home' && state === 'first' ? [{ sel: '.ng-card-title', count: 7 }] : essentialsOf(id, state);
+  const desk = id === 'home' && state === 'first' ? [{ sel: '.ng-card-title', count: 8 }] : essentialsOf(raw, state);
   if (!desk) return null;
   // A first-view entry keeps the desktop entry's other declarations (a VLAN `countAttr`).
   const deskBy = new Map(desk.map(entry => [selOf(entry), typeof entry === 'string' ? {} : entry]));
-  const view = phoneFirstView(id, state).map(entry => ({ ...deskBy.get(entry.sel), ...entry }));
+  const view = phoneFirstView(id, state, raw).map(entry => ({ ...deskBy.get(entry.sel), ...entry }));
   const inView = new Set(view.map(selOf));
   const rest = desk.filter(entry => !svgLabel(entry) && !inView.has(selOf(entry)))
     .map(entry => ({ ...(typeof entry === 'string' ? { sel: entry } : entry), reach: true }));
@@ -534,7 +610,7 @@ export function declaredEssentials(id, state, phone = false) {
 //     over), separately from the declared essentials, which are measured
 //     with the folded row in place.
 /** Recipes whose screens carry a worked example (the section writers add theirs). */
-export const exampleRecipes = new Set(['setup-router', 'setup-switch', 'setup-mikrotik', 'rt-guided', 'rt-hard', 'rt-free', 'rt-mikrotik', 'mask-type', 'fw-order1', 'fw-order2', 'vl-ports', 'vl-route']);
+export const exampleRecipes = new Set(['setup-router', 'setup-switch', 'setup-mikrotik', 'rt-guided', 'rt-hard', 'rt-free', 'rt-mikrotik', 'mask-type', 'fw-order1', 'fw-order2', 'vl-ports', 'vl-route', 'dhcp-sides', 'dhcp-server', 'dhcp-nat']);
 /** The folded row's words (measured on first views). */
 export const EXAMPLE_LABEL = '[data-worked-example] > .ng-wex-toggle .ng-wex-label';
 /** What `exampleRow` checks on a state: 'first' (a first view), 'open' (example-open) or 'closed' (any other). */
@@ -924,8 +1000,8 @@ export function measureEssentials({ essentials, minFont }) {
 /** Round 6: the phone's own gate-only views (phoneGates), at phone sizes only. */
 export const phoneStates = ['sheet-open', 'diagram-full', 'keyboard'];
 /** Recipes with a diagram (its «Розгорнути схему») and with a text field on the first view (the keyboard). */
-const hasDiagram = id => /^(rt|fw|vl)-/.test(id);
-const keyboardRecipes = new Set(['rt-guided', 'rt-hard', 'rt-free', 'rt-mikrotik', 'rt-fault', 'calc', 'mask-type', 'vl-ports']);
+const hasDiagram = id => /^(?:(?:rt|fw|vl)-|dhcp-(?:sides|nat))/.test(id);
+const keyboardRecipes = new Set(['rt-guided', 'rt-hard', 'rt-free', 'rt-mikrotik', 'rt-fault', 'calc', 'mask-type', 'vl-ports', 'dhcp-server', 'dhcp-server3', 'dhcp-server3-mt']);
 /** The phone views a recipe gets: the sheet on every section screen, the diagram where there is one, the keyboard where a field is. */
 export const phoneStatesOf = exercise => phoneStates.filter(state => (state === 'sheet-open' ? exercise.id !== 'home'
   : state === 'diagram-full' ? hasDiagram(exercise.id) : keyboardRecipes.has(exercise.id)));
@@ -1252,6 +1328,12 @@ class Driver {
     if (e.shape) await this.click(this.page.getByRole('radiogroup', { name: 'Мережа', exact: true }).getByRole('radio', { name: new RegExp(`^${e.shape}`) }), `Choose the network «${e.shape}»`);
     if (e.task) await this.click(this.page.getByRole('radiogroup', { name: 'Задача', exact: true }).getByRole('radio', { name: new RegExp(`^${e.task} ·`) }), `Choose task ${e.task}`);
     for (let n = 1; n < (e.level ?? 1); n++) await this.click(this.button(/^Далі/).first(), 'Skip to the next level («Далі →»)');
+    // «DHCP і NAT»: the exercise (in the bar; on a phone in the «⋯» sheet), then its level.
+    const dhcpTabs = { 'dhcp-sides': 'WAN чи LAN', 'dhcp-server': 'DHCP-сервер', 'dhcp-nat': 'Що бачить сайт' };
+    if (dhcpTabs[baseOf(e.id)]) {
+      await this.radio(dhcpTabs[baseOf(e.id)], `Choose ${dhcpTabs[baseOf(e.id)]}`);
+      if ((e.dlevel ?? 1) > 1) await this.radio(new RegExp(`^Рівень ${e.dlevel}`), `Choose level ${e.dlevel}`);
+    }
     const decks = { 'setup-switch': 'Комутатор Cisco 2960', 'setup-mikrotik': 'Роутер MikroTik' };
     if (decks[e.id]) await this.radio(decks[e.id], `Choose ${decks[e.id]}`);
     await this.settle();
@@ -1720,6 +1802,118 @@ async function vlanShots(d) {
   await d.shot('edit-after-pass');
 }
 
+// «DHCP і NAT» (round 6). Every answer is read from the screen's own words: E1's sides by trying «WAN»
+// first, E2's numbers from the task and the strip's text, E3's choices by their Ukrainian words.
+const dhcpOption = (d, text) => d.page.locator('.ng-dh-options .ng-dh-option').filter({ hasText: text }).first();
+const dhcpVerdict = (d, tone) => d.page.locator(`[data-help-current][data-help-tone="${tone}"]`).count();
+async function dhcpShots(d) {
+  const id = d.exercise.id, base = baseOf(id), want = state => d.exercise.states.includes(state);
+  if (base === 'dhcp-sides') {
+    let wrong = false;
+    for (let i = 0; i < 6; i++) {
+      await d.click(dhcpOption(d, '(WAN)'), 'Answer «бік провайдера (WAN)»');
+      if (await dhcpVerdict(d, 'no')) {
+        if (!wrong) { await d.shot('wrong'); wrong = true; if (!want('right')) return; }
+        await d.click(dhcpOption(d, '(LAN)'), 'Answer «локальна мережа (LAN)» after the wrong side');
+      }
+      if (i === 0) await d.shot('right');
+      if (!await d.button('Наступна картка →').count()) break;
+      await d.press('Наступна картка →', 'Move to the next card');
+      if (i === 0) await d.shot('l1-card2');
+    }
+    if (!wrong) throw new Error('No card in the round was on the LAN side');
+    await d.shot('done');
+    return;
+  }
+  if (base === 'dhcp-server') {
+    const facts = await dhcpServerFacts(d);
+    const form = await d.page.locator('.ng-dh-form').getAttribute('data-form');
+    const label = name => d.page.getByLabel(name, { exact: true });
+    const options = async () => {
+      // «DNS провайдера: X, Y»: a line in step 2, the DNS field's hint in the wizard.
+      const dns = clean(await d.page.locator('.ng-dh-form').innerText()).match(/DNS провайдера: (\d+\.\d+\.\d+\.\d+)/)[1];
+      await fill(d, form === 'wizard' ? label('Gateway for DHCP Network') : d.page.getByLabel(/^Шлюз для ПК/), facts.router);
+      await fill(d, form === 'wizard' ? label('DNS Servers') : d.page.getByLabel(/^DNS для ПК/), dns);
+    };
+    const check = async (what, tone) => {
+      await d.press('Перевірити', what); await d.feedback();
+      if (tone && !await dhcpVerdict(d, tone)) throw new Error(`Expected a «${tone}» verdict: ${what}`);
+    };
+    if (form === 'wizard') {
+      if (want('wrong')) {
+        await fill(d, label('Addresses to Give Out'), `${facts.first}-${facts.last}`); await options();
+        await check('Check the whole network as the pool (it gives out a device\'s address)', 'no'); await d.shot('wrong');
+      }
+      await fill(d, label('Addresses to Give Out'), `${facts.gap.from}-${facts.gap.to}`); await options();
+      await check('Check the free range with the router as gateway and the ISP\'s DNS', 'ok'); await d.shot('done');
+    } else {
+      const range = async (rows, what) => {
+        if (form === 'neutral') { await fill(d, label('від'), rows[0].from); await fill(d, label('до'), rows[0].to); }
+        else {
+          for (let i = 0; i < rows.length; i++) {
+            if (i && await d.page.locator('.ng-dh-row').count() <= i) await d.press('+ ще один рядок', 'Add an exclusion row');
+            const row = d.page.locator('.ng-dh-row').nth(i);
+            await fill(d, row.getByLabel('від', { exact: true }), rows[i].from); await fill(d, row.getByLabel('до', { exact: true }), rows[i].to);
+          }
+        }
+        d.note(what);
+      };
+      if (want('wrong')) {
+        // Neutral: the whole usable range (it holds a device); Cisco: only the first address excluded (the devices stay in the pool).
+        await range(form === 'neutral' ? [{ from: facts.first, to: facts.last }] : [{ from: facts.first, to: '' }], 'A range that gives out a device\'s address');
+        await check('Check the range', 'no'); await d.shot('wrong');
+      }
+      const rows = form === 'neutral' ? [facts.gap] : facts.exclusions;
+      await range(rows, 'The free range (Cisco: its complement as exclusions)');
+      await check('Check the range', 'ok');
+      if (want('step2')) await d.shot('step2');
+      await options();
+      await check('Check the gateway and DNS', 'ok'); await d.shot('done');
+    }
+    if (want('reveal')) { await d.open(); await d.reveal(); await d.shot('reveal'); }
+    return;
+  }
+  // E3.
+  if ((d.exercise.dlevel ?? 1) === 1) {
+    await d.click(dhcpOption(d, 'адресу ПК'), 'Choose the PC\'s own address for the website (NAT changes it: wrong)'); await d.shot('wrong');
+    await d.click(dhcpOption(d, 'WAN-адресу роутера'), 'Choose R1\'s WAN address'); await d.shot('step2');
+    await d.click(dhcpOption(d, 'на ПК'), 'The reply goes back to the PC');
+    await d.press('По кроках', 'Open the replay step by step');
+    await d.press('Крок уперед', 'Step forward: R1 replaces the source'); await d.shot('replay');
+    for (let i = 0; i < 2; i++) {
+      await d.press('Наступна картка →', 'Move to the next card');
+      if (i === 0) await d.shot('l1-card2');
+      await d.click(dhcpOption(d, 'адресу ПК'), 'Inside the LAN (or to R1 itself) the source stays the PC\'s address');
+    }
+    await d.shot('done');
+    return;
+  }
+  const cisco = id === 'dhcp-nat2';
+  await d.click(dhcpOption(d, cisco ? 'внутрішній бік на WAN' : 'змінити відправника на LAN'), cisco ? 'Choose ip nat inside on the WAN interface (wrong)' : 'Choose the rule for the LAN interface list (wrong)');
+  await d.shot('wrong');
+  if (cisco) { await d.click(dhcpOption(d, 'внутрішній бік на LAN'), 'Choose ip nat inside on the LAN interface'); await d.shot('step2'); }
+  await d.click(dhcpOption(d, cisco ? 'перекладати точно задані LAN' : 'змінити відправника на WAN'), cisco ? 'Choose the ACL that selects exactly the LANs' : 'Choose masquerade out of the WAN list');
+  await d.shot('done');
+}
+/** E2's numbers from its words: the network, the router and devices (the strip's text), the largest free gap. */
+async function dhcpServerFacts(d) {
+  const task = clean(await d.page.locator('.ng-dh-intro .ng-dh-task').innerText());
+  const [, net, prefix] = task.match(/Мережа (\d+\.\d+\.\d+\.\d+)\/(\d+)/);
+  const caption = clean(await d.page.locator('.ng-dh-strip .ng-ruler-text').innerText());
+  const taken = [...caption.matchAll(/(?:роутер|принтер|сервер|камера) \.(\d+)/g)].map(m => Number(m[1]));
+  const routerOctet = Number(caption.match(/роутер \.(\d+)/)[1]);
+  const base = net.split('.').slice(0, 3).join('.'), start = Number(net.split('.')[3]), end = start + 2 ** (32 - Number(prefix)) - 1;
+  let best = null, run = null;
+  for (let v = start + 1; v < end; v++) {
+    if (taken.includes(v)) { run = null; continue; }
+    run = run ? { ...run, to: v } : { from: v, to: v };
+    if (!best || run.to - run.from > best.to - best.from) best = run;
+  }
+  const ip = v => `${base}.${v}`;
+  const exclusions = [...(best.from > start + 1 ? [{ from: ip(start + 1), to: ip(best.from - 1) }] : []), ...(best.to < end - 1 ? [{ from: ip(best.to + 1), to: ip(end - 1) }] : [])];
+  return { router: ip(routerOctet), first: ip(start + 1), last: ip(end - 1), gap: { from: ip(best.from), to: ip(best.to) }, exclusions };
+}
+
 async function exerciseShots(d, light) {
   await d.open(); await d.first(light);
   const id = d.exercise.id;
@@ -1737,6 +1931,7 @@ async function exerciseShots(d, light) {
   if (id.startsWith('rt-')) return routingShots(d);
   if (id.startsWith('fw-')) return firewallShots(d);
   if (id.startsWith('vl-')) return vlanShots(d);
+  if (id.startsWith('dhcp-')) return dhcpShots(d);
   await d.press('Перевірити', 'Check the initial shuffled deck with missing prompts/commands'); await d.feedback(); await d.shot('wrong');
   await d.hint(); await d.shot('hint'); await d.reveal(); await d.shot('done');
 }

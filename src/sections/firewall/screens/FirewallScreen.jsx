@@ -97,6 +97,7 @@ import Aside, { useAsideFold } from '../../../ui/components/Aside.jsx';
 import TextEquivalent, { TextEquivalentButton, lineCount } from '../../../ui/components/TextEquivalent.jsx';
 import DiagramExpand, { ExpandButton, useDiagramExpand, useTextOpen } from '../../../ui/topology/DiagramExpand.jsx';
 import ActionLine from '../../../ui/components/ActionLine.jsx';
+import WalkStepper from '../../../ui/components/WalkStepper.jsx';
 import FactLink, { scrollToLabel } from '../../../ui/components/FactLink.jsx';
 import { uk } from '../../../ui/uk.js';
 import { chainText, meanings, predictLevels, predictStep, t, ui } from '../uk.js';
@@ -406,10 +407,6 @@ function PredictView({ bank }) {
   const replay = () => { if (walk) started(); };
   const toggleSteps = () => setWalkUi(w => ({ ...w, at: cardKey, play: null, stepper: w.at === cardKey && w.stepper !== null ? null : 0 }));
   const stepBy = d => setWalkUi(w => (w.at === cardKey && w.stepper !== null ? { ...w, stepper: Math.max(0, Math.min(plan.last, w.stepper + d)) } : w));
-  function onStepKey(e) {
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); stepBy(1); }
-    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); stepBy(-1); }
-  }
   function closeText() {
     setTextOpen(false);
     textButton.current?.focus();
@@ -467,19 +464,10 @@ function PredictView({ bank }) {
         </DiagramExpand>
         {illustrate && <p className="ng-fw-illustration">{ui.illustration}</p>}
         {walk && (
-          <div className="ng-fw-walkbar">
-            <button type="button" className="ng-fw-btn ng-fw-replay" onClick={replay}>{ui.replay}</button>
-            <button type="button" className="ng-fw-btn" aria-pressed={stepping} onClick={toggleSteps}>{ui.steps}</button>
-            {stepping && (
-              <span className="ng-fw-stepper" role="group" aria-label={ui.stepsGroup} aria-describedby="ng-fw-step-caption" onKeyDown={onStepKey}>
-                <button type="button" className="ng-fw-icon" aria-label={ui.stepBack} aria-disabled={frame.frame <= 0} onClick={() => stepBy(-1)}>◀</button>
-                <span className="ng-fw-step-text">{ui.stepOf({ n: frame.frame + 1, total: plan.last + 1 })}</span>
-                <button type="button" className="ng-fw-icon" aria-label={ui.stepForward} aria-disabled={frame.frame >= plan.last} onClick={() => stepBy(1)}>▶</button>
-              </span>
-            )}
-          </div>
+          <WalkStepper words={ui} stepping={stepping} at={frame?.frame ?? 0} last={plan?.last ?? 0} onToggle={toggleSteps} onStep={stepBy}
+            caption={captions?.[frame?.frame] ?? ''} captionId="ng-fw-step-caption"
+            before={<button type="button" className="ng-fw-btn ng-fw-replay" onClick={replay}>{ui.replay}</button>} />
         )}
-        {stepping && <p id="ng-fw-step-caption" className="ng-fw-step-caption" aria-live="polite">{captions?.[frame.frame] ?? ''}</p>}
       </section>
   );
 

@@ -77,39 +77,8 @@
 
 /* ── Shared parts ────────────────────────────────────────── */
 
-.ng-fw-btn,
-.ng-fw-icon {
-  min-height: var(--ng-target);
-  border: 1px solid var(--ng-stroke);
-  border-radius: var(--ng-radius);
-  background: var(--ng-input-bg);
-  color: var(--ng-text);
-  font-family: var(--ng-mono);
-  font-size: var(--ng-font-small);
-  font-weight: 700;
-  line-height: 1.2;
-  cursor: pointer;
-}
-
-.ng-fw-btn { padding: 0 14px; }
-
-.ng-fw-icon {
-  min-width: var(--ng-target);
-  padding: 0 8px;
-  font-size: 18px;
-}
-
-.ng-fw-btn:hover,
-.ng-fw-icon:hover {
-  background: var(--ng-blue-bg);
-  border-color: var(--ng-blue);
-}
-
-.ng-fw-btn[aria-pressed="true"],
-.ng-fw-btn[aria-expanded="true"] {
-  background: var(--ng-blue-bg);
-  border-color: var(--ng-blue);
-}
+/* The buttons' look (.ng-fw-btn, .ng-fw-icon) is in ui/topology/RouterDiagram.css
+   (round 6: the drawing's zoom bar there uses them). */
 
 .ng-fw [aria-disabled="true"] {
   cursor: default;
@@ -700,44 +669,14 @@
 
 /* ── Stage: diagram, walk controls, hints ────────────────── */
 
-.ng-fw-dg {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  background: var(--ng-svg-bg);
-  border: 1px solid var(--ng-stroke);
-  border-radius: var(--ng-radius);
-}
+/* The drawing's own look is ui/topology/RouterDiagram.css and the walk's
+   stepper's ui/components/WalkStepper.css (shared in round 6); here, how
+   this screen sizes them. */
 
 /* The diagram fills the sticky column, never below its tool row and its frame's floor. */
 .ng-fw[data-mode="desk"] .ng-fw-dg,
 .ng-fw[data-mode="wide"] .ng-fw-dg {
   flex: 1 1 auto;
-}
-
-.ng-fw-tools {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  box-sizing: border-box;
-  /* Round 4 A3: the zoom bar's row height is reserved, so its appearance moves nothing. */
-  min-height: calc(var(--ng-target) + 6px);
-  padding: 6px 6px 0;
-}
-
-.ng-fw-zoom {
-  display: flex;
-  gap: 6px;
-  margin-left: auto;
-}
-
-.ng-fw-view {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
 }
 
 /* Round 5: the floor is the compact drawing at 12 px text (252 units + the
@@ -753,13 +692,6 @@
   min-height: min(70vh, 560px);
 }
 
-.ng-fw-frame {
-  display: flex;
-  padding: 8px; /* FirewallDiagram FRAME_PAD */
-  overflow: hidden;
-  border-radius: var(--ng-radius);
-}
-
 .ng-fw[data-mode="desk"] .ng-fw-frame,
 .ng-fw[data-mode="wide"] .ng-fw-frame {
   flex: 1 1 0;
@@ -770,78 +702,8 @@
   height: 340px;
 }
 
-.ng-fw-frame.is-pan {
-  overflow: auto;
-}
-
-.ng-fw-frame.is-covered {
-  visibility: hidden;
-}
-
 .ng-fw .ng-fw-frame:focus-visible {
   outline-offset: -3px;
-}
-
-.ng-fw-svg {
-  display: block;
-  flex: none;
-  margin: auto;
-}
-
-.ng-fw-svg text { font-family: var(--ng-mono); }
-.ng-fw-svg .ng-fw-sans { font-family: var(--ng-sans); }
-
-.ng-fw-link { stroke: var(--ng-link); stroke-width: 1.5; }
-.ng-fw-router { fill: var(--ng-surf); stroke: var(--ng-router-0); stroke-width: 2; }
-.ng-fw-router-name { fill: var(--ng-router-0); }
-.ng-fw-lane { stroke: var(--ng-muted); stroke-width: 1.5; stroke-dasharray: 4 3; }
-.ng-fw-lane.is-dim { stroke: var(--ng-stroke); }
-.ng-fw-core-mark { fill: var(--ng-input-bg); stroke: var(--ng-router-0); stroke-width: 2; }
-.ng-fw-core-dot { fill: var(--ng-router-0); }
-.ng-fw-core-text { fill: var(--ng-text); }
-.ng-fw-core.is-reached .ng-fw-core-mark { stroke: var(--ng-green); stroke-width: 3; }
-
-.ng-fw-door-box { fill: var(--ng-input-bg); stroke: var(--ng-muted); stroke-width: 1.5; }
-.ng-fw-door-name,
-.ng-fw-door-words { fill: var(--ng-text); }
-.ng-fw-door.is-chosen .ng-fw-door-box { fill: var(--ng-blue-bg); stroke: var(--ng-path); stroke-width: 3; }
-.ng-fw-door.is-dim .ng-fw-door-box { stroke: var(--ng-stroke); }
-.ng-fw-door.is-dim .ng-fw-door-name,
-.ng-fw-door.is-dim .ng-fw-door-words { fill: var(--ng-muted); }
-
-.ng-fw-box { fill: var(--ng-net-fill); stroke: var(--ng-muted); stroke-width: 1.5; }
-.ng-fw-box-name { fill: var(--ng-text); }
-.ng-fw-box-ip { fill: var(--ng-text); }
-.ng-fw-place.is-given .ng-fw-box { stroke: var(--ng-cyan); stroke-width: 3; }
-.ng-fw-place.is-given .ng-fw-box-name { fill: var(--ng-cyan); }
-
-.ng-fw-port-mark { fill: var(--ng-router-0); }
-.ng-fw-port-name { fill: var(--ng-text); }
-.ng-fw-addresses-title { fill: var(--ng-text); }
-.ng-fw-address { fill: var(--ng-text); }
-.ng-fw-port.is-given .ng-fw-port-mark { fill: var(--ng-cyan); }
-.ng-fw-port.is-given .ng-fw-port-name { fill: var(--ng-cyan); }
-.ng-fw-chip-box { fill: var(--ng-blue-bg); stroke: var(--ng-cyan); stroke-width: 1.5; }
-.ng-fw-chip-text { fill: var(--ng-text); }
-.ng-fw-nat { fill: var(--ng-text); }
-
-.ng-fw-path-line { fill: none; stroke: var(--ng-path); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
-.ng-fw-envelope { transition: transform 300ms linear; }
-.ng-fw-envelope-box { fill: var(--ng-path); stroke: var(--ng-svg-bg); stroke-width: 1; }
-.ng-fw-envelope-flap { stroke: var(--ng-svg-bg); stroke-width: 1.4; }
-.ng-fw-waiting { fill: none; stroke: var(--ng-path); stroke-width: 2; animation: ng-fw-pulse 0.9s ease-in-out infinite; }
-.ng-fw-stop-dot { fill: var(--ng-amber); }
-.ng-fw-stop-text { fill: var(--ng-svg-bg); }
-.ng-fw-place.is-arrived .ng-fw-box { stroke: var(--ng-green); stroke-width: 3; }
-
-@keyframes ng-fw-pulse {
-  0%, 100% { opacity: 0.35; }
-  50% { opacity: 1; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ng-fw-envelope { transition: none; }
-  .ng-fw-waiting { animation: none; }
 }
 
 .ng-fw-illustration {
@@ -850,32 +712,6 @@
   border-left: 3px solid var(--ng-green);
   color: var(--ng-text);
   font-size: var(--ng-font-caption);
-}
-
-.ng-fw-walkbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-}
-
-.ng-fw-stepper {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.ng-fw-step-text {
-  font-family: var(--ng-mono);
-  font-size: var(--ng-font-small);
-}
-
-/* Round 5 (5b-2 B): what this step of the walk is, in words, under the stepper. */
-.ng-fw-step-caption {
-  margin: 4px 0 0;
-  color: var(--ng-text);
-  font-size: var(--ng-font-small);
-  line-height: 1.35;
 }
 
 .ng-fw-rules-list {

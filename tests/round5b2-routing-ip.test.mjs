@@ -176,12 +176,12 @@ test('A, D: the mask\'s action line over the fields; on block tasks the folded e
   assert.equal(fits, 1);
 });
 
-test('G: the start screen advises, never locks: «радимо спершу: …» on routing, firewall, VLAN and setup, nothing on the IP cards', () => {
+test('G: the start screen advises, never locks: «радимо спершу: …» on routing, «DHCP і NAT» (round 6), firewall, VLAN and setup, nothing on the IP cards', () => {
   const html = unescape(h.renderStart());
   const cards = [...html.matchAll(/<button type="button" class="ng-card">([\s\S]*?)<\/button>/g)].map(m => m[1]);
-  assert.equal(cards.length, 7);
+  assert.equal(cards.length, 8);
   const advice = cards.map(card => /<span class="ng-card-advice">([^<]*)<\/span>/.exec(card)?.[1] ?? null);
-  assert.deepEqual(advice, [null, null, null, rt.recommendedFirst, fw.recommendedFirst, vlan.recommendedFirst, setup.recommendedFirst]);
-  assert.deepEqual(advice.slice(3), ['радимо спершу: IP-адреси', 'радимо спершу: IP-адреси й маршрутизацію', 'радимо спершу: IP-адреси', 'радимо спершу: маршрутизацію й VLAN']);
+  assert.deepEqual(advice, [null, null, null, rt.recommendedFirst, 'радимо спершу: IP-адреси', fw.recommendedFirst, vlan.recommendedFirst, setup.recommendedFirst]);
+  assert.deepEqual(advice.slice(3), ['радимо спершу: IP-адреси', 'радимо спершу: IP-адреси', 'радимо спершу: IP-адреси й маршрутизацію', 'радимо спершу: IP-адреси', 'радимо спершу: маршрутизацію й VLAN']);
   assert.ok(!/disabled|aria-disabled/.test(html), 'no card is locked');
 });
