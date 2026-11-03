@@ -465,6 +465,8 @@ export const faultsUi = {
   pings: 'ПІНГИ',
   snapshots: 'Пінги: які показати',
   pick: 'Торкнись пінгу — його шлях з’явиться на схемі.',
+  // Round 7: the link to «Перевірка мережі» («Де зламалось»).
+  checksLink: 'як це перевіряють на ПК →',
   // Hint 2 says which pings it read: «Пінги на початку: Пакет зупиняється…».
   hintFrom: where => `Пінги ${where}: `,
   works: 'працює',

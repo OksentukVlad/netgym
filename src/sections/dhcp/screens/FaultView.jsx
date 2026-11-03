@@ -35,6 +35,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import * as faults from '../logic/faults.js';
 import { useExercise } from '../../../ui/useExercise.js';
 import { usePlace, useStore } from '../../../ui/useStore.js';
+import { useNav } from '../../../ui/useNav.js';
+import Button from '../../../ui/components/Button.jsx';
 import ExerciseLayout from '../../../ui/components/ExerciseLayout.jsx';
 import HelpPanel, { bringIntoView } from '../../../ui/components/HelpPanel.jsx';
 import WorkedExample from '../../../ui/components/WorkedExample.jsx';
@@ -86,7 +88,7 @@ export function drawnPcs(task, config, result) {
 export const rowValue = row => (row.id === 'remote' ? null : row.id === 'dns' ? `DNS: ${row.value}` : row.value);
 
 /** The four rows: a tap explains (one sentence under them) and outlines the place on the drawing. */
-function Rows({ rows, picked, onPick, state, evidenceRow = null, evidence = false }) {
+function Rows({ rows, picked, onPick, state, evidenceRow = null, evidence = false, link = null }) {
   const row = rows.find(r => r.id === picked) ?? null;
   return (
     <section className="ng-dh-checks" aria-labelledby="ng-dh-checks-title">
@@ -110,6 +112,7 @@ function Rows({ rows, picked, onPick, state, evidenceRow = null, evidence = fals
         ))}
       </ul>
       <p className="ng-dh-why" aria-live="polite">{row ? <><b>{row.label}:</b> {row.explanation}</> : null}</p>
+      {link}
     </section>
   );
 }
@@ -135,6 +138,7 @@ function Evidence({ lines }) {
 /** @param {{ vendor: 'cisco'|'mikrotik', place: object, setPlace: Function }} props */
 export default function FaultView({ vendor, place, setPlace }) {
   const { state } = useStore();
+  const nav = useNav();
   usePlace(ASIDES, () => ({ asides: { condition: false } }));
   const slot = place.fault ?? { level: 1, tasks: {} };
   const level = slot.level ?? 1;
@@ -241,9 +245,13 @@ export default function FaultView({ vendor, place, setPlace }) {
   const verdict = stage === 'repair' ? repairVerdict : stage === 'cause' ? causeVerdict : null;
   const causeMarks = revealed ? { [task.faultId]: 'ok' } : Object.fromEntries(picks.map(id => [id, faults.checkCause(task, id).ok ? 'ok' : 'no']));
 
+  // Round 7: how these checks are made on a PC, in «Перевірка мережі» («Де зламалось»): right under the four rows,
+  // in «Перевірки», when the target has the section.
+  const checksLink = stage === 'checks' && nav?.has('checks')
+    ? <p className="ng-dh-checks-link"><Button variant="quiet" onClick={() => nav.go({ section: 'checks', params: { ex: 'ladder' } })}>{w.checksLink}</Button></p> : null;
   // After a passing repair the rows that turned ✓ are what the verdict is about.
   const rows = <Rows rows={shown.rows} picked={picked} onPick={pick} state={atStart ? w.atStart : w.lastChecked} evidenceRow={stage === 'repair' ? evidenceRow : null}
-    evidence={stage === 'repair' && Boolean(result?.ok) && !revealed} />;
+    evidence={stage === 'repair' && Boolean(result?.ok) && !revealed} link={checksLink} />;
   const evidence = <Evidence lines={lines} />;
   const action = stage === 'checks' ? words.actions[0]
     : stage === 'repair' ? (passed ? actions.committed : words.actions[1])

@@ -28,9 +28,13 @@ function violationsFor(path, source) {
     const sharedCommit = logic && target.join('/') === 'ui/commit.js';
     if (pure && !sharedCommit && (!specifier.startsWith('.') || ['ui', 'app', 'targets'].includes(target[0]))) violations.push('pure module imports presentation or external API');
     if (logic && target[0] === 'banks') violations.push('logic imports banks');
-    if (logic && !sharedCommit && !(target[0] === 'engine' || (target[0] === 'sections' && target[1] === parts[1] && ['logic', 'syntax', 'uk.js'].includes(target[2])))) violations.push('logic imports outside engine or its own logic');
+    // The one cross-section exception (round 7): «Перевірка мережі» diagnoses the DHCP scenarios, so its
+    // logic reads the DHCP section's logic (client, faults, nat); nothing else may, and never the reverse.
+    const checksReadsDhcp = parts[1] === 'checks' && target.slice(0, 3).join('/') === 'sections/dhcp/logic'
+      && ['client.js', 'faults.js', 'nat.js'].includes(target[3]) && target.length === 4;
+    if (logic && !sharedCommit && !checksReadsDhcp && !(target[0] === 'engine' || (target[0] === 'sections' && target[1] === parts[1] && ['logic', 'syntax', 'uk.js'].includes(target[2])))) violations.push('logic imports outside engine or its own logic');
     if (area === 'banks' && !['engine', 'banks'].includes(target[0])) violations.push('bank imports outside engine or banks');
-    if (area === 'sections' && target[0] === 'sections' && target[1] !== parts[1]) violations.push('section imports another section');
+    if (area === 'sections' && target[0] === 'sections' && target[1] !== parts[1] && !(logic && checksReadsDhcp)) violations.push('section imports another section');
     // ARCHITECTURE §5: ui imports engine (and itself), never sections, banks, app or targets.
     if (area === 'ui' && specifier.startsWith('.') && !['ui', 'engine'].includes(target[0])) violations.push('ui imports outside ui and engine');
     if (specifier.startsWith('.') && target[0] === '..') violations.push('import from outside src');
@@ -77,6 +81,13 @@ test('import guard rejects each forbidden direction and permits screens and targ
     ['sections/firewall/logic/bad.js', 'localStorage.getItem("answer")'],
     ['sections/firewall/logic/bad.js', "import x from '../../routing/logic/static.js'"],
     ['banks/firewall/bad.js', "import x from '../../sections/firewall/logic/evaluate.js'"],
+    // The checks → DHCP exception is one-way and names three modules only.
+    ['sections/dhcp/logic/bad.js', "import x from '../../checks/logic/probes.js'"],
+    ['sections/checks/logic/bad.js', "import x from '../../dhcp/logic/server.js'"],
+    ['sections/checks/logic/bad.js', "import x from '../../dhcp/uk.js'"],
+    ['sections/checks/logic/bad.js', "import x from '../../dhcp/screens/url.js'"],
+    ['sections/checks/screens/Bad.jsx', "import x from '../../dhcp/logic/client.js'"],
+    ['sections/checks/logic/bad.js', "import x from '../../routing/logic/static.js'"],
   ]) assert.ok(violationsFor(path, source).length, `${path}: ${source}`);
   for (const [path, source] of [
     ['sections/vlan/logic/good.js', "import { createCommitFlow } from '../../../ui/commit.js'"],
@@ -91,6 +102,9 @@ test('import guard rejects each forbidden direction and permits screens and targ
     ['sections/firewall/logic/good.js', "import { makeRng } from '../../../engine/rng.js'"],
     ['sections/firewall/logic/good.js', "import { evaluate } from './evaluate.js'"],
     ['banks/firewall/good.js', "import { topology } from './topology.js'"],
+    ['sections/checks/logic/good.js', "import { acquire } from '../../dhcp/logic/client.js'"],
+    ['sections/checks/logic/good.js', "import { createFault } from '../../dhcp/logic/faults.js'"],
+    ['sections/checks/logic/good.js', "import { translate } from '../../dhcp/logic/nat.js'"],
   ]) assert.deepEqual(violationsFor(path, source), [], path);
 });
 

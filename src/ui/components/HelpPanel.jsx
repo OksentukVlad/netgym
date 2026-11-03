@@ -238,6 +238,7 @@ export function bringPanelIntoView(row, current, evidence, behavior = 'auto', { 
  *   next?: { label?: string, onNext: Function, destination?: string, ready?: boolean } | null,
  *                                       // before a pass or reveal a quiet «Пропустити →» link; `ready`: the screen's own round is over
  *   continueAction?: { label: string, onClick: Function } | null,
+ *   link?: { label: string, onClick: Function } | null,   // round 7: a quiet way on to another section, in the row after «Далі →»
  *   primary?: 'check'|'continue'|'next'|'none',
  *   evidence?: Function,                // brings the referenced input/evidence into view first
  *   boardRef?: { current: Element|null },  // a long board: see the top of this file
@@ -248,7 +249,7 @@ export function bringPanelIntoView(row, current, evidence, behavior = 'auto', { 
  */
 export default function HelpPanel(props) {
   const { taskKey, stepKey = null, layoutKey = stepKey, check = null, verdict: given = null, stale = false, hints = null, reveal = null,
-    next = null, continueAction = null, evidence, boardRef = null, placement = 'auto', viewKey = null, className = '' } = props;
+    next = null, continueAction = null, link = null, evidence, boardRef = null, placement = 'auto', viewKey = null, className = '' } = props;
   const shown = hints ? Math.min(hints.shown, hints.texts.length) : 0;
   const revealed = Boolean(reveal?.revealed);
   const memRef = useRef(null);
@@ -494,6 +495,7 @@ export default function HelpPanel(props) {
         <Button ref={keep('next')} variant={variant('next')} className="ng-help-next" onClick={press('next', next.onNext)}>{nextWords}</Button>
       )}
       {skipInRow && <Button ref={keep('next')} variant="quiet" className="ng-help-next is-skip" onClick={press('next', next.onNext)}>{nextWords}</Button>}
+      {link && <Button variant="quiet" className="ng-help-link" onClick={link.onClick}>{link.label}</Button>}
       {/* Its own line, so it never slides under the pointer when the hint button goes; a skip after it. */}
       {(revealOpen || (skip && !skipInRow)) && (
         <div className="ng-help-row-link">

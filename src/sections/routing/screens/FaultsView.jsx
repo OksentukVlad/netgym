@@ -64,6 +64,8 @@ import { probeLabel } from '../syntax/presentation.js';
 import { syntaxList, syntaxes } from '../syntax/index.js';
 import { useExercise } from '../../../ui/useExercise.js';
 import { usePref, useStore } from '../../../ui/useStore.js';
+import { useNav } from '../../../ui/useNav.js';
+import Button from '../../../ui/components/Button.jsx';
 import { BarControls, SheetCaption, SheetChoice } from '../../../ui/BarSlot.jsx';
 import Segmented from '../../../ui/components/Segmented.jsx';
 import HelpPanel from '../../../ui/components/HelpPanel.jsx';
@@ -229,6 +231,7 @@ export default function FaultsView({ bank, exerciseSwitch = null }) {
 /** One instance's work: the conditions, the diagram, the pings, the routes,
  * the help and the check. */
 function FaultsWork({ bank, record, slot, syntax, layout, root, building, onAgain, focusNew }) {
+  const nav = useNav();
   // The bank stays out of useExercise's params (it serialises them): a stable
   // adapter binds it. Only `create` is used: checks, hints and the reveal go
   // through the section's own transitions (logic/faults-state.js), and the
@@ -538,6 +541,9 @@ function FaultsWork({ bank, record, slot, syntax, layout, root, building, onAgai
   // The pings: before the panel while fixing (the failing ping is the
   // evidence); after it in the cause step (the cause question is).
   boardPick.current = evidenceOf;
+  // Round 7: how a fault is checked from a PC, in «Перевірка мережі» («Де зламалось»), when the target has it.
+  const checksLink = nav?.has('checks')
+    ? <p className="ng-rf-checks-link"><Button variant="quiet" onClick={() => nav.go({ section: 'checks', params: { ex: 'ladder' } })}>{faultsUi.checksLink}</Button></p> : null;
   const pings = (
           <PingList key={`${ex.key}|${listSnap}`} snapshot={shownSnap} labelOf={labelOf} stopWords={stopWords} headRef={pingsHead}
             heading={checkedOnce ? faultsUi.pings : `${faultsUi.pings} · ${where[listSnap]}`}
@@ -637,6 +643,8 @@ function FaultsWork({ bank, record, slot, syntax, layout, root, building, onAgai
           )}
           {help}
           {evidenceOf !== 'ping' && pings}
+          {/* Last in the column, so it never pushes «Перевірити» out of the first view. */}
+          {checksLink}
         </section>
       </div>
     </>

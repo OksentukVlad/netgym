@@ -169,6 +169,8 @@ export const ui = {
   cardsAt: ({ positions }) => (positions.length === 1 ? `Картка ${positions[0]}:` : `Картки ${positions.slice(0, -1).join(', ')} і ${positions.at(-1)}:`),
   continue: 'Тепер по пам’яті →',
   nextWhere: 'нові значення',
+  // Round 7: after the deck, the link to «Перевірка мережі» («Що це доводить»).
+  checksLink: 'перевір, що роутер працює →',
   deck: 'Команди',
   promptOf: ({ n }) => `Режим для картки ${n}`,
   // The quiet prompt group's empty state, before anything is chosen.

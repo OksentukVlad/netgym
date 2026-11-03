@@ -22,7 +22,7 @@ const origin = 'http://netgym.test';
 const sections = {
   home: 'Розділи', routing: 'Маршрутизація', calc: 'IP-калькулятор',
   mask: 'IP-адреси: маска', binary: 'IP-адреси: у бітах', firewall: 'Фаєрвол',
-  vlan: 'VLAN', setup: 'Налаштування з нуля', dhcp: 'DHCP і NAT',
+  vlan: 'VLAN', setup: 'Налаштування з нуля', dhcp: 'DHCP і NAT', checks: 'Перевірка мережі',
 };
 const standard = ['first', 'wrong', 'hint', 'done'];
 // The setup decks' recall step and the reveal's «Моя відповідь» (spec S v2 shots table).
@@ -93,6 +93,15 @@ const exercises = [
   { id: 'dhcp-fault2-mt', base: 'dhcp-fault', section: 'dhcp', title: 'ПК без мережі · рівень 2 · MikroTik', dlevel: 2, syntax: 'routeros', states: ['first', 'repair', 'wrong', 'cause', 'done', 'reveal'] },
   { id: 'dhcp-fault3', base: 'dhcp-fault', section: 'dhcp', title: 'ПК без мережі · рівень 3 · Cisco', dlevel: 3, states: ['first', 'repair', 'wrong', 'done'] },
   { id: 'dhcp-fault3-mt', base: 'dhcp-fault', section: 'dhcp', title: 'ПК без мережі · рівень 3 · MikroTik', dlevel: 3, syntax: 'routeros', states: ['first', 'repair', 'wrong', 'done'] },
+  // Round 7, «Перевірка мережі»: C3 (the default), C1 at both levels, C2 at both levels. C1 level 1: a turn
+  // after «Далі ↓» (`next`), the places after «Стоп: тут» (`stop`), a stop elsewhere (`wrong`), the stop
+  // at the first unexpected result (`done`); level 2: one rung run (`step2`), an argument refused (`argument`).
+  // C2: wrong lines (`wrong`), the right lines (`step2`), the right verdict (`done`).
+  { id: 'checks-proof', section: 'checks', title: 'Що це доводить', states: ['first', 'wrong', 'right', 'l1-card2', 'done'] },
+  { id: 'checks-ladder', section: 'checks', title: 'Де зламалось · рівень 1', states: ['first', 'next', 'stop', 'wrong', 'done'] },
+  { id: 'checks-ladder2', base: 'checks-ladder', section: 'checks', title: 'Де зламалось · рівень 2', dlevel: 2, states: ['first', 'step2', 'argument', 'stop'] },
+  { id: 'checks-claims', section: 'checks', title: 'Прочитай вивід · рівень 1', states: ['first', 'wrong', 'step2', 'done'] },
+  { id: 'checks-claims2', base: 'checks-claims', section: 'checks', title: 'Прочитай вивід · рівень 2 · MikroTik', dlevel: 2, syntax: 'routeros', states: ['first'] },
 ].map(e => ({ states: standard, ...e }));
 const mistakes = new Set(['rt-guided', 'rt-free', 'rt-mikrotik', 'rt-fault', 'mask-type', 'binary', 'vl-ports', 'vl-route', 'vl-fault', 'setup-router', 'setup-switch', 'setup-mikrotik']);
 const replays = new Set(['rt-hard', 'rt-fault', 'fw-order1', 'fw-order2', 'vl-ports', 'vl-route', 'vl-fault', 'setup-router', 'setup-switch', 'setup-mikrotik']);
@@ -100,7 +109,7 @@ const narrows = new Set(['rt-hard', 'rt-fault', 'fw-order2', 'vl-fault', 'vl-rou
 /** The exercise a variant shares its recipe and targets with (round 4 repair). */
 const baseOf = id => exercises.find(e => e.id === id)?.base ?? id;
 // «DHCP і NAT» has no hint ladder (a choice answers at once; E2 has «Показати відповідь», its `reveal` state).
-const hasHints = e => !['home', 'calc', 'vl-predict'].includes(baseOf(e.id)) && !baseOf(e.id).startsWith('dhcp-');
+const hasHints = e => !['home', 'calc', 'vl-predict'].includes(baseOf(e.id)) && !baseOf(e.id).startsWith('dhcp-') && !baseOf(e.id).startsWith('checks-');
 for (const e of exercises) {
   e.states = [...new Set([...e.states, ...(mistakes.has(e.id) ? ['mistake'] : []), ...(hasHints(e) ? ['hints-all'] : []), ...(replays.has(e.id) ? ['solved'] : [])])];
 }
@@ -190,6 +199,15 @@ export function expectedTargets(id, raw) {
       message: 'opening a step is not an event of the help panel: its top comes into view, not a message',
     } };
   }
+  // «Перевірка мережі»: a turn after «Далі ↓», the places after «Стоп: тут», a rung run at level 2 and a
+  // refused argument are views of the learner's own steps (no check yet): no message is current.
+  if (id.startsWith('checks-') && ['next', 'stop', 'step2', 'argument'].includes(raw) && !(id === 'checks-claims' && raw === 'step2')) {
+    return { kind: null, row: false, evidence: [], ...(raw === 'argument' ? { targets: ['.ng-ck-argument-error'] } : {}), waive: {
+      evidence: raw === 'argument' ? 'a refused argument is answered under its field, not by the help panel: its declared target is that line (full checks)'
+        : 'a step of the learner\'s own (the next rung, the stop, a rung run) is not a check: no verdict is current, so no evidence is checked',
+      message: 'a step of the learner\'s own is not an event of the help panel: nothing scrolls to a message',
+    } };
+  }
   // Restore (leave and come back) must not scroll or move focus to help; it has no visibility target.
   // A stage opened by a tap (vl-fault «Ремонт» from a failing check) shows no new message: like a first view.
   // Round 5: the binary walk's level 1 in text mode (`l1-text`) is a first view too.
@@ -202,7 +220,7 @@ export function expectedTargets(id, raw) {
   let kind = 'verdict';
   // vl-fault «Ремонт» is opened by a tap after a check and a hint: the hint is current (Astra 4).
   if (['hint', 'hint2', 'hints-all'].includes(state) || (id === 'vl-fault' && state === 'repair')) kind = 'hint';
-  if (state === 'reveal' || (state === 'done' && !['rt-guided', 'rt-free', 'rt-mikrotik', 'mask-type', 'binary', 'fw-predict', 'vl-predict', 'dhcp-sides', 'dhcp-server', 'dhcp-nat', 'dhcp-fault'].includes(id))) kind = 'reveal';
+  if (state === 'reveal' || (state === 'done' && !['rt-guided', 'rt-free', 'rt-mikrotik', 'mask-type', 'binary', 'fw-predict', 'vl-predict', 'dhcp-sides', 'dhcp-server', 'dhcp-nat', 'dhcp-fault', 'checks-proof', 'checks-ladder', 'checks-claims'].includes(id))) kind = 'reveal';
   if (state === 'reveal-next') kind = 'empty';
   const evidence = [];
   if (['verdict', 'hint'].includes(kind) || state === 'device-tab' || (kind === 'reveal' && ['fw-predict', 'vl-fault', 'rt-fault'].includes(id))) {
@@ -217,6 +235,8 @@ export function expectedTargets(id, raw) {
     else if (id.startsWith('setup-')) evidence.push('.ng-su-board .is-marked, .ng-su-board .ng-reorder-item');
     // «DHCP і NAT»: the card a choice answered (E1, E3), the form or strip a check is about (E2).
     else if (id.startsWith('dhcp-')) evidence.push('.ng-dh [data-evidence="current"], .ng-dh-card, .ng-dh-form');
+    // «Перевірка мережі»: the choice or the lines a verdict is about.
+    else if (id.startsWith('checks-')) evidence.push('.ng-ck [data-evidence="current"]');
   }
   // Rule order (HelpPanel): a solve and a recheck of a still-working list are
   // task-scope successes about the whole list; an edit after success leaves
@@ -239,7 +259,11 @@ export function expectedTargets(id, raw) {
   if (id === 'binary' && ['done', 'solved'].includes(state)) return { kind, row: true, evidence, expect: 'success' };
   // «DHCP і NAT»: `done` is a checked success (E1's round, E2's server, E3's round or rule); E3's replay is a
   // view the learner opens after its success (the stepper under the drawing; its verdict stays current).
-  if (id.startsWith('dhcp-') && state === 'done') return { kind, row: true, evidence, expect: 'success' };
+  if ((id.startsWith('dhcp-') || id.startsWith('checks-')) && state === 'done') return { kind, row: true, evidence, expect: 'success' };
+  // C3: a choice answers at once, and the help row has a button only once the requirement is right.
+  if (exerciseId === 'checks-proof' && state === 'wrong') {
+    return { kind, row: true, evidence, waive: { row: 'a choice answers at once and this requirement is not yet right: the help row has no button until it is (no «Перевірити», no skip)' } };
+  }
   // E1 and E3's round: a choice answers at once (no «Перевірити»), and the help row has a button only
   // once the card is right («Наступна картка →») or the round done (repair v1, Fable 1: no skip before).
   if ((exerciseId.startsWith('dhcp-sides') || exerciseId === 'dhcp-nat') && ['wrong', 'step2'].includes(state)) {
@@ -518,8 +542,24 @@ export function dhcpFaultEssentials(raw, state = 'first') {
     { sel: '.ng-dh-evidence .ng-dh-evidence-line', count: level === 1 ? 6 : 9, reach: true },
     allOf(`${dhSvg} .ng-fw-box-ip`, '.ng-dh-picture', 'hosts'), { sel: `${dhSvg} .ng-fw-address`, count: 2 }];
 }
+// «Перевірка мережі» (round 7): the task, the action line and the first control, and what the first decision
+// reads. C3: the requirement and every option (data-options). C1 level 1: what must be (every line), the open
+// output and its command, «Далі ↓» and «Стоп: тут»; level 2: every rung (data-rungs). C2: the claim and every
+// line plus «жоден рядок» (data-lines; the first in view, the rest reachable: ten 44 px lines are taller than
+// a 1000 × 700 view), «Перевірити рядки» reachable after them.
+const ckAction = { sel: '.ng-exercise-work .ng-action-line', count: 1 };
+const ckTask = { sel: '.ng-ck-task', count: 1 };
+export function checksEssentials(raw) {
+  if (raw.startsWith('checks-proof')) return [ckTask, { sel: '.ng-ck-card .ng-ck-requirement', count: 1 }, ckAction, allOf('.ng-ck-proof .ng-ck-option', '.ng-ck-proof', 'options')];
+  if (raw === 'checks-ladder') return [ckTask, allOf('.ng-ck-given-lines li', '.ng-ck-given-lines', 'lines'), { sel: '.ng-ck-latest .ng-ck-command', count: 1 },
+    { sel: '.ng-ck-latest .ng-ck-pre', count: 1 }, ckAction, { sel: '.ng-ck-turn .ng-ck-decide', count: 2 }];
+  if (raw === 'checks-ladder2') return [ckTask, allOf('.ng-ck-given-lines li', '.ng-ck-given-lines', 'lines'), ckAction, { ...allOf('.ng-ck-rung', '.ng-ck-rung-choice', 'rungs'), first: 1 }];
+  if (raw.startsWith('checks-claims')) return [{ sel: '.ng-ck-claim-card .ng-ck-claim', count: 1 }, ckAction, { ...allOf('.ng-ck-claim-board .ng-ck-line', '.ng-ck-claim-board', 'lines'), first: 1 },
+    { sel: '.ng-exercise-help .ng-help-check', count: 1, reach: true }];
+  return null;
+}
 /** Recipes whose first views must declare essentials (a first view without them fails). */
-export const essentialRecipes = new Set(['fw-predict', 'fw-order2', 'setup-router', 'setup-switch', 'setup-mikrotik', 'rt-guided', 'rt-hard', 'rt-free', 'rt-mikrotik', 'rt-fault', 'binary', ...Object.keys(vlEssentials), 'dhcp-sides', 'dhcp-server', 'dhcp-nat', 'dhcp-fault']);
+export const essentialRecipes = new Set(['fw-predict', 'fw-order2', 'setup-router', 'setup-switch', 'setup-mikrotik', 'rt-guided', 'rt-hard', 'rt-free', 'rt-mikrotik', 'rt-fault', 'binary', ...Object.keys(vlEssentials), 'dhcp-sides', 'dhcp-server', 'dhcp-nat', 'dhcp-fault', 'checks-proof', 'checks-ladder', 'checks-claims']);
 /** Gate-only first views of later cards: each destination's card is measured fresh (level 1 and level 2). */
 const laterCard = /^l[12]-card\d$/;
 /** The first views of a recipe. */
@@ -527,6 +567,7 @@ export const isFirstView = state => ['first', 'l1-first'].includes(state) || lat
 /** A state's declared essentials (selectors or { sel, count }), or null. */
 export function essentialsOf(id, state) {
   if (id.startsWith('dhcp-') && isFirstView(state)) return dhcpEssentials(id);
+  if (id.startsWith('checks-') && isFirstView(state)) return checksEssentials(id);
   // E4's later steps are first views of their own (opened by their button).
   if (id.startsWith('dhcp-fault') && ['repair', 'cause'].includes(state)) return dhcpFaultEssentials(id, state);
   id = baseOf(id);
@@ -588,6 +629,11 @@ function phoneFirstView(id, state, raw = id) {
     return [{ sel: '.ng-dh-intro .ng-dh-task', count: 1 }, dhAction, { ...control, first: 1 }];
   }
   if (id === 'dhcp-nat') return [{ sel: '.ng-dh-card .ng-dh-task', count: 1 }, dhAction, { sel: '.ng-dh-options .ng-dh-option', count: raw === 'dhcp-nat2' ? 2 : 3, first: 1 }];
+  // «Перевірка мережі»: the task (C2: the claim), the action line and the first control.
+  if (id === 'checks-proof') return [ckTask, ckAction, { ...allOf('.ng-ck-proof .ng-ck-option', '.ng-ck-proof', 'options'), first: 1 }];
+  if (id === 'checks-ladder' && raw === 'checks-ladder') return [ckTask, ckAction, { sel: '.ng-ck-turn .ng-ck-decide', count: 2, first: 1 }];
+  if (id === 'checks-ladder') return [ckTask, ckAction, { ...allOf('.ng-ck-rung', '.ng-ck-rung-choice', 'rungs'), first: 1 }];
+  if (id === 'checks-claims') return [{ sel: '.ng-ck-claim-card .ng-ck-claim', count: 1 }, ckAction, { ...allOf('.ng-ck-claim-board .ng-ck-line', '.ng-ck-claim-board', 'lines'), first: 1 }];
   // E4: the task, the action line and the step's first control (a row, a field, a cause).
   if (id === 'dhcp-fault') {
     const control = dhcpFaultEssentials(raw, ['repair', 'cause'].includes(state) ? state : 'first')[2];
@@ -599,7 +645,7 @@ function phoneFirstView(id, state, raw = id) {
 export function phoneEssentials(id, state) {
   const raw = id;
   id = baseOf(id);
-  const desk = id === 'home' && state === 'first' ? [{ sel: '.ng-card-title', count: 8 }] : essentialsOf(raw, state);
+  const desk = id === 'home' && state === 'first' ? [{ sel: '.ng-card-title', count: 9 }] : essentialsOf(raw, state);
   if (!desk) return null;
   // A first-view entry keeps the desktop entry's other declarations (a VLAN `countAttr`).
   const deskBy = new Map(desk.map(entry => [selOf(entry), typeof entry === 'string' ? {} : entry]));
@@ -655,7 +701,7 @@ export function declaredEssentials(id, state, phone = false) {
 //     over), separately from the declared essentials, which are measured
 //     with the folded row in place.
 /** Recipes whose screens carry a worked example (the section writers add theirs). */
-export const exampleRecipes = new Set(['setup-router', 'setup-switch', 'setup-mikrotik', 'rt-guided', 'rt-hard', 'rt-free', 'rt-mikrotik', 'mask-type', 'fw-order1', 'fw-order2', 'vl-ports', 'vl-route', 'dhcp-sides', 'dhcp-server', 'dhcp-nat', 'dhcp-fault']);
+export const exampleRecipes = new Set(['setup-router', 'setup-switch', 'setup-mikrotik', 'rt-guided', 'rt-hard', 'rt-free', 'rt-mikrotik', 'mask-type', 'fw-order1', 'fw-order2', 'vl-ports', 'vl-route', 'dhcp-sides', 'dhcp-server', 'dhcp-nat', 'dhcp-fault', 'checks-proof', 'checks-ladder', 'checks-claims']);
 /** The folded row's words (measured on first views). */
 export const EXAMPLE_LABEL = '[data-worked-example] > .ng-wex-toggle .ng-wex-label';
 /** What `exampleRow` checks on a state: 'first' (a first view), 'open' (example-open) or 'closed' (any other). */
@@ -1379,6 +1425,12 @@ class Driver {
       await this.radio(dhcpTabs[baseOf(e.id)], `Choose ${dhcpTabs[baseOf(e.id)]}`);
       if ((e.dlevel ?? 1) > 1) await this.radio(new RegExp(`^Рівень ${e.dlevel}`), `Choose level ${e.dlevel}`);
     }
+    // «Перевірка мережі»: the exercise (in the bar; on a phone in the «⋯» sheet), then its level.
+    const checksTabs = { 'checks-proof': 'Що це доводить', 'checks-ladder': 'Де зламалось', 'checks-claims': 'Прочитай вивід' };
+    if (checksTabs[baseOf(e.id)]) {
+      await this.radio(checksTabs[baseOf(e.id)], `Choose ${checksTabs[baseOf(e.id)]}`);
+      if ((e.dlevel ?? 1) > 1) await this.radio(new RegExp(`^${e.dlevel} ·`), `Choose level ${e.dlevel}`);
+    }
     const decks = { 'setup-switch': 'Комутатор Cisco 2960', 'setup-mikrotik': 'Роутер MikroTik' };
     if (decks[e.id]) await this.radio(decks[e.id], `Choose ${decks[e.id]}`);
     await this.settle();
@@ -2063,8 +2115,117 @@ async function exerciseShots(d, light) {
   if (id.startsWith('fw-')) return firewallShots(d);
   if (id.startsWith('vl-')) return vlanShots(d);
   if (id.startsWith('dhcp-')) return dhcpShots(d);
+  if (id.startsWith('checks-')) return checksShots(d);
   await d.press('Перевірити', 'Check the initial shuffled deck with missing prompts/commands'); await d.feedback(); await d.shot('wrong');
   await d.hint(); await d.shot('hint'); await d.reveal(); await d.shot('done');
+}
+
+// «Перевірка мережі» (round 7). The recipes read only the page: C3 tries the options in order; C1 learns the
+// first unexpected result from a verdict («Перший несподіваний результат був на «…»») and stops there; C2 finds
+// the line set by trying «жоден рядок», then one, two and three lines in the page (the lines lock when right).
+const ckTone = (d, tone) => d.page.locator(`[data-help-current][data-help-tone="${tone}"]`).count();
+const ckOption = (d, text) => d.page.locator('.ng-ck-options .ng-ck-option').filter({ hasText: text }).first();
+const ckLatest = d => d.page.locator('.ng-ck-latest .ng-ck-command code').innerText();
+async function checksShots(d) {
+  const id = d.exercise.id, base = baseOf(id), want = state => d.exercise.states.includes(state);
+  if (base === 'checks-proof') {
+    let wrong = false;
+    for (let card = 0; card < 6; card++) {
+      const options = d.page.locator('.ng-ck-proof .ng-ck-option');
+      for (let i = 0; i < await options.count(); i++) {
+        if (/\bis-no\b/.test(await options.nth(i).getAttribute('class'))) continue;
+        await d.click(options.nth(i), `Answer option ${i + 1} of requirement ${card + 1}`);
+        if (await ckTone(d, 'ok')) break;
+        if (!wrong) { await d.shot('wrong'); wrong = true; if (!want('right')) return; }
+      }
+      if (card === 0) await d.shot('right');
+      if (!await d.button('Наступна вимога →').count()) break;
+      await d.press('Наступна вимога →', 'Move to the next requirement');
+      if (card === 0) await d.shot('l1-card2');
+    }
+    if (!wrong) throw new Error('No requirement had a wrong first option');
+    await d.shot('done');
+    return;
+  }
+  if (id === 'checks-ladder') {
+    for (let task = 0; task < 6; task++) {
+      for (let i = 0; i < 3; i++) {
+        await d.press('Далі ↓', 'Next rung («Далі ↓»)');
+        if (task === 0 && i === 0) await d.shot('next');
+      }
+      await d.press('Стоп: тут', 'Stop at the last rung («Стоп: тут»)');
+      if (task === 0) await d.shot('stop');
+      await d.click(ckOption(d, 'потрібно більше даних'), 'Choose «потрібно більше даних» (always consistent)');
+      if (await ckTone(d, 'ok')) { await d.press(/^(?:Далі|Пропустити)/, 'This task\'s first unexpected result is the last rung: the next task'); continue; }
+      await d.shot('wrong');
+      const said = await d.page.locator('[data-help-current]').innerText();
+      const earliest = /несподіваний результат був на «([^»]+)»/u.exec(said)?.[1];
+      if (!earliest) throw new Error(`The verdict names no first unexpected result: ${said}`);
+      await d.press('Спробувати ще раз', 'Try again («Спробувати ще раз»)');
+      while (await ckLatest(d) !== earliest) await d.press('Далі ↓', `Next rung, up to «${earliest}»`);
+      await d.press('Стоп: тут', `Stop at «${earliest}», the first unexpected result`);
+      // «потрібно більше даних» counts only while the evidence leaves a choice; else the places in order (a wrong one stays open).
+      const places = d.page.locator('.ng-ck-places .ng-ck-option');
+      await d.click(ckOption(d, 'потрібно більше даних'), 'Choose «потрібно більше даних»');
+      for (let i = 0; i < await places.count() && !await ckTone(d, 'ok'); i++) {
+        if (!/\bis-no\b/.test(await places.nth(i).getAttribute('class'))) await d.click(places.nth(i), `Choose place ${i + 1}`);
+      }
+      if (!await ckTone(d, 'ok')) throw new Error('The stop at the first unexpected result did not pass');
+      await d.shot('done');
+      return;
+    }
+    throw new Error('Six tasks in a row had their first unexpected result on the last rung');
+  }
+  if (id === 'checks-ladder2') {
+    await d.click(d.page.locator('.ng-ck-rung').filter({ hasText: 'ipconfig /all' }), 'Run «ipconfig /all» on the PC');
+    await d.shot('step2');
+    await d.click(d.page.locator('.ng-ck-rung').filter({ hasText: '— шлюз' }), 'Choose the gateway ping (its argument field opens)');
+    await d.page.locator('.ng-ck-argument input').fill('ping 192.0.2.1'); d.note('Type «ping 192.0.2.1» (the whole command) as the argument');
+    await d.press('Виконати', 'Run it: «без «ping»», the argument is refused');
+    await d.shot('argument');
+    await d.press('Стоп: тут', 'Stop at the ipconfig output («Стоп: тут»)');
+    await d.shot('stop');
+    return;
+  }
+  if (id === 'checks-claims') {
+    const lines = d.page.locator('.ng-ck-claim-board .ng-ck-terminal .ng-ck-line');
+    await d.click(lines.first(), 'Tap the first line'); await d.press('Перевірити рядки', 'Check the lines');
+    if (await ckTone(d, 'no')) await d.shot('wrong');
+    else d.skip('wrong', 'the first line alone was the right set');
+    if (!await d.page.locator('.ng-ck-verdicts').count()) {
+      d.note('Find the line set: «жоден рядок», then one, two and three lines, each checked (in the page)');
+      const found = await d.page.evaluate(async () => {
+        const frame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+        const all = () => [...document.querySelectorAll('.ng-ck-claim-board .ng-ck-terminal .ng-ck-line')];
+        const n = all().length, sets = [[]];
+        for (let a = 0; a < n; a++) { sets.push([a]); }
+        for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) sets.push([a, b]);
+        for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) for (let c = b + 1; c < n; c++) sets.push([a, b, c]);
+        for (const set of sets) {
+          for (const el of all()) if (el.getAttribute('aria-pressed') === 'true') el.click();
+          const none = document.querySelector('.ng-ck-none');
+          if (none.getAttribute('aria-pressed') === 'true') none.click();
+          await frame();
+          if (!set.length) none.click(); else for (const i of set) all()[i].click();
+          await frame();
+          document.querySelector('.ng-exercise-help .ng-help-check').click();
+          await frame();
+          if (document.querySelector('.ng-ck-verdicts')) return set;
+        }
+        return null;
+      });
+      if (!found) throw new Error('No set of up to three lines was right');
+      await d.settle();
+    }
+    await d.shot('step2');
+    const verdicts = d.page.locator('.ng-ck-verdicts .ng-ck-option');
+    for (let i = 0; i < 3; i++) {
+      await d.click(verdicts.nth(i), `Answer verdict ${i + 1}`);
+      if (await ckTone(d, 'ok')) break;
+    }
+    await d.shot('done');
+    return;
+  }
 }
 
 // V2 runs independently of the v1 recipes. Reference answers cross contexts

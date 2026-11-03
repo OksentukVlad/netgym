@@ -83,7 +83,7 @@ wait_next() {
 }
 
 # Entry points are explicit: mounted-results.mjs is the validator, not a helper.
-mounted_helpers=(routing firewall ip vlan vlan3 setup shared dhcp)
+mounted_helpers=(routing firewall ip vlan vlan3 setup shared dhcp checks)
 declare -A registered_helpers
 for helper in "${mounted_helpers[@]}"; do
   path="tests/helpers/mounted-$helper.mjs"
@@ -150,6 +150,7 @@ export NETGYM_MOUNTED_VLAN3_RESULTS="$project_root/.test-bundles/mounted-vlan3.j
 export NETGYM_MOUNTED_SETUP_RESULTS="$project_root/.test-bundles/mounted-setup.jsonl"
 export NETGYM_MOUNTED_SHARED_RESULTS="$project_root/.test-bundles/mounted-shared.jsonl"
 export NETGYM_MOUNTED_DHCP_RESULTS="$project_root/.test-bundles/mounted-dhcp.jsonl"
+export NETGYM_MOUNTED_CHECKS_RESULTS="$project_root/.test-bundles/mounted-checks.jsonl"
 # Bash launches bounded shards because nested Node process creation is denied in
 # restricted executors. Each Node still uses --test-isolation=none. No workers.
 # Profiling only affects scheduling costs; every discovered test file runs once.

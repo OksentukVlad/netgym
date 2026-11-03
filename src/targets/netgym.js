@@ -1,7 +1,9 @@
 // NetGym.exe: the start screen in front of every section, in the order a
 // learner needs them (round 4 spec A7): the calculator, the mask exercise,
 // the binary walk; then routing; then «DHCP і NAT» (round 6: its card carries
-// its blurb and advice from its uk.js); then the firewall (FW-1), then VLAN
+// its blurb and advice from its uk.js); then «Перевірка мережі» (round 7: how
+// to prove a network works and find where it breaks; its card's blurb and
+// advice from its uk.js); then the firewall (FW-1), then VLAN
 // (VLAN-1, VLAN-2's «Між VLAN» and VLAN-3's «Знайди несправність»), then
 // «Налаштування з нуля» (the setup decks: DR-1 Cisco router, DR-2 Cisco
 // 2960, DR-3 MikroTik), last. The first card says «Почни тут»; nothing is
@@ -27,6 +29,8 @@ import BinaryScreen from '../sections/ip/screens/BinaryScreen.jsx';
 import { sections as ip } from '../sections/ip/uk.js';
 import DhcpScreen from '../sections/dhcp/screens/DhcpScreen.jsx';
 import { section as dhcpSection } from '../sections/dhcp/uk.js';
+import ChecksScreen from '../sections/checks/screens/ChecksScreen.jsx';
+import { section as checksSection } from '../sections/checks/uk.js';
 import FirewallScreen from '../sections/firewall/screens/FirewallScreen.jsx';
 import { comprehension as firewallWords, section as firewallSection } from '../sections/firewall/uk.js';
 import * as firewallBank from '../banks/firewall/tasks.js';
@@ -42,6 +46,7 @@ import setupBank from '../banks/setup/index.js';
 import { url as routingUrl } from '../sections/routing/screens/url.js';
 import { binaryUrl, calculatorUrl, maskUrl } from '../sections/ip/screens/url.js';
 import { url as dhcpUrl } from '../sections/dhcp/screens/url.js';
+import { url as checksUrl } from '../sections/checks/screens/url.js';
 import { url as firewallUrl } from '../sections/firewall/screens/url.js';
 import { url as vlanUrl } from '../sections/vlan/screens/url.js';
 import { url as setupUrl } from '../sections/setup/screens/url.js';
@@ -55,6 +60,7 @@ const target = {
     { id: 'ip-binary', ...ip.binary, Screen: BinaryScreen, url: binaryUrl },
     { id: 'routing', ...routingSection, advice: routingWords.recommendedFirst, Screen: RoutingScreen, bank: { ...routingBank, faults: routingFaults }, url: routingUrl },
     { id: 'dhcp', ...dhcpSection, Screen: DhcpScreen, url: dhcpUrl },
+    { id: 'checks', ...checksSection, Screen: ChecksScreen, url: checksUrl },
     { id: 'firewall', ...firewallSection, advice: firewallWords.recommendedFirst, Screen: FirewallScreen, bank: firewallBank, url: firewallUrl },
     { id: 'vlan', ...vlanSection, advice: vlanWords.recommendedFirst, Screen: VlanScreen, bank: { predict: vlanPredict, ports: vlanPorts, route: vlanRoute, faults: vlanFaults }, url: vlanUrl },
     { id: 'setup', ...setupSection, advice: setupWords.recommendedFirst, Screen: SetupScreen, bank: setupBank, url: setupUrl },

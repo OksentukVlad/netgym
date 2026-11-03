@@ -64,6 +64,7 @@ import { explanation, hints as hintsOf, tips } from '../logic/hints.js';
 import { setupExample } from '../logic/examples.js';
 import { useExercise } from '../../../ui/useExercise.js';
 import { usePlace, usePref, useStore } from '../../../ui/useStore.js';
+import { useNav } from '../../../ui/useNav.js';
 import { SheetChoice } from '../../../ui/BarSlot.jsx';
 import ReorderList from '../../../ui/components/ReorderList.jsx';
 import HelpPanel, { bringIntoView } from '../../../ui/components/HelpPanel.jsx';
@@ -138,6 +139,7 @@ function ModesExample({ values }) {
 export default function SetupScreen({ bank }) {
   const { decks } = bank;
   const { state: store } = useStore();
+  const nav = useNav();
   const [themeName] = usePref('theme');
   const [place, setPlace] = usePlace('setup', () => firstPlace(decks));
   const record = decks.find(deck => deck.id === place.deck) ?? decks[0];
@@ -399,6 +401,8 @@ export default function SetupScreen({ bank }) {
           hints={hintList.length ? { texts: hintList.map(h => text(h.code, h.params)), shown: state.hintIndex, onMore: onHint } : null}
           reveal={reveal}
           continueAction={continueAction}
+          // Round 7: a finished deck (passed, shown, recalled): proving the router works is «Перевірка мережі»'s «Що це доводить».
+          link={!sorting && phase !== 'recall' && nav?.has('checks') ? { label: ui.checksLink, onClick: () => nav.go({ section: 'checks', params: { ex: 'proof' } }) } : null}
           next={{ onNext, ...(continueAction ? { destination: ui.nextWhere } : {}) }}
           // Recall has no check: «Далі →» (skip) stays secondary until the lines are done.
           primary={phase === 'recall' ? 'none' : undefined}

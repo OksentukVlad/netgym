@@ -197,10 +197,10 @@ test('no sticky diagram in one column (A2); the order screen has no inner scroll
 test('the start screen: the IP screens first, «Почни тут» inside the first card, the arrow a corner mark, no locks', () => {
   const html = unescape(h.startScreen());
   const cards = [...html.matchAll(/<button type="button" class="ng-card">([\s\S]*?)<\/button>/g)].map(m => m[1]);
-  assert.equal(cards.length, 8);
+  assert.equal(cards.length, 9);
   assert.ok(cards[0].includes('IP-калькулятор') && cards[0].includes('<span class="ng-card-start">Почни тут</span>'), 'chip text inside the first card\'s button');
   assert.ok(cards.slice(1).every(c => !c.includes('Почни тут')), 'only the first');
   assert.ok(cards.every(c => c.includes('<span class="ng-card-arrow" aria-hidden="true">→</span>') && !c.includes('Відкрити')), 'the whole card is the button; no separate «Відкрити →»');
   assert.ok(!/disabled|aria-disabled|🔒/.test(html), 'no locks');
-  assert.deepEqual(cards.map(c => c.match(/class="ng-card-title">([^<]+)</)[1]), ['IP-калькулятор', 'IP-адреси: маска', 'IP-адреси: у бітах', 'Маршрутизація', 'DHCP і NAT', 'Фаєрвол', 'VLAN', 'Налаштування з нуля']);
+  assert.deepEqual(cards.map(c => c.match(/class="ng-card-title">([^<]+)</)[1]), ['IP-калькулятор', 'IP-адреси: маска', 'IP-адреси: у бітах', 'Маршрутизація', 'DHCP і NAT', 'Перевірка мережі', 'Фаєрвол', 'VLAN', 'Налаштування з нуля']);
 });

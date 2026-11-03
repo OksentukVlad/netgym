@@ -1,0 +1,494 @@
+/* «Перевірка мережі» (round 7): plain classes on src/ui/tokens.css, inside the
+ * shared ExerciseLayout, one column (no drawing: the outputs carry the facts).
+ * Terminal outputs are monospace and pre-wrap, at most forty characters a
+ * line; a tappable line is a full target (--ng-target, 44 px). Existing
+ * tokens only. */
+
+.ng-ck {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.ng-ck > .ng-exercise {
+  flex: 1 0 auto;
+}
+
+.ng-ck-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.ng-ck p {
+  margin: 0;
+}
+
+/* One reading column at every width (there is no drawing): a terminal and its
+   decision stay close together. */
+.ng-ck .ng-exercise-body {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 820px;
+  padding-top: 14px;
+}
+
+.ng-ck .ng-exercise-work {
+  padding: 14px;
+  gap: 14px;
+}
+
+.ng-ck .ng-exercise-question {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-weight: 400;
+}
+
+.ng-ck-task {
+  line-height: 1.45;
+}
+
+/* ── The card (C3's requirement, C2's claim) ─────────────── */
+
+.ng-ck-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
+  background: var(--ng-input-bg);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+}
+
+.ng-ck-card:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}
+
+.ng-ck-progress {
+  color: var(--ng-muted);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-caption);
+}
+
+.ng-ck-requirement,
+.ng-ck-claim {
+  font-weight: 700;
+}
+
+.ng-ck-after {
+  margin: 2px 0 0;
+}
+
+/* ── What must be (C1) ───────────────────────────────────── */
+
+.ng-ck-given {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--ng-font-small);
+}
+
+.ng-ck-given-title {
+  color: var(--ng-muted);
+  font-size: var(--ng-font-caption);
+}
+
+.ng-ck-given-lines {
+  margin: 0;
+  padding: 0 0 0 1.1em;
+}
+
+.ng-ck-given-lines li {
+  overflow-wrap: anywhere;
+}
+
+/* ── Terminal outputs ────────────────────────────────────── */
+
+.ng-ck-collected {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ng-ck-folded {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0 0 0 1.6em;
+  color: var(--ng-muted);
+  font-size: var(--ng-font-caption);
+}
+
+.ng-ck-folded code,
+.ng-ck-next-folded code {
+  font-family: var(--ng-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ng-ck-terminal {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  min-width: 0;
+}
+
+.ng-ck-command {
+  font-size: var(--ng-font-caption);
+  overflow-wrap: anywhere;
+}
+
+.ng-ck-command code {
+  font-family: var(--ng-mono);
+  font-weight: 700;
+  color: var(--ng-text);
+}
+
+.ng-ck-caption {
+  color: var(--ng-muted);
+}
+
+.ng-ck-pre,
+.ng-ck-line-text {
+  font-family: var(--ng-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ng-ck-pre {
+  margin: 0;
+  padding: 6px 8px;
+  background: var(--ng-input-bg);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  color: var(--ng-text);
+  font-size: var(--ng-font-caption);
+  line-height: 1.45;
+}
+
+.ng-ck-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ng-ck-line {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: var(--ng-target);
+  padding: 2px 8px;
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  background: var(--ng-input-bg);
+  color: var(--ng-text);
+  font-size: var(--ng-font-caption);
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ng-ck-line:hover {
+  border-color: var(--ng-blue);
+}
+
+.ng-ck-line:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}
+
+.ng-ck-line.is-on {
+  background: var(--ng-blue-bg);
+  border: 2px solid var(--ng-blue);
+}
+
+.ng-ck-line[aria-disabled="true"] {
+  cursor: default;
+}
+
+.ng-ck-none {
+  font-family: var(--ng-sans);
+}
+
+.ng-ck-none .ng-ck-line-text {
+  font-family: var(--ng-sans);
+}
+
+.ng-ck-claim-board {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Choices that answer at once (Options.jsx) ───────────── */
+
+.ng-ck-options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ng-ck-verdicts {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.ng-ck-verdicts > .ng-ck-option {
+  flex: 1 1 9em;
+}
+
+.ng-ck-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: var(--ng-target);
+  padding: 4px 34px 4px 10px;
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  background: var(--ng-input-bg);
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-small);
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ng-ck-option:hover {
+  border-color: var(--ng-blue);
+}
+
+.ng-ck-option:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}
+
+.ng-ck-option[aria-checked="true"] {
+  border: 2px solid var(--ng-blue);
+}
+
+.ng-ck-option.is-ok {
+  background: var(--ng-green-bg);
+  border-color: var(--ng-green);
+}
+
+.ng-ck-option.is-no {
+  background: var(--ng-amber-bg);
+  border-color: var(--ng-amber);
+}
+
+[aria-readonly="true"] > .ng-ck-option {
+  cursor: default;
+}
+
+.ng-ck-option-text {
+  overflow-wrap: anywhere;
+}
+
+.ng-ck-option-text.is-mono {
+  font-family: var(--ng-mono);
+}
+
+.ng-ck-mark {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-weight: 700;
+}
+
+.ng-ck-option.is-ok .ng-ck-mark { color: var(--ng-green); }
+.ng-ck-option.is-no .ng-ck-mark { color: var(--ng-amber); }
+
+/* ── C1's decisions and rungs ────────────────────────────── */
+
+.ng-ck-turn {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ng-ck-decide,
+.ng-ck-run {
+  min-height: var(--ng-target);
+  padding: 0 16px;
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  background: var(--ng-button-bg);
+  color: var(--ng-button-text);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ng-ck-decide.is-stop {
+  background: var(--ng-amber-bg);
+  border-color: var(--ng-amber);
+  color: var(--ng-text);
+}
+
+.ng-ck-decide.is-healthy {
+  background: var(--ng-green-bg);
+  border-color: var(--ng-green);
+  color: var(--ng-text);
+}
+
+.ng-ck-decide:focus-visible,
+.ng-ck-run:focus-visible,
+.ng-ck-rung:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}
+
+.ng-ck-stop,
+.ng-ck-choose {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ng-ck-stop-meaning {
+  color: var(--ng-muted);
+  font-size: var(--ng-font-caption);
+}
+
+/* Under «Стоп: тут», as its caption, on its own line. */
+.ng-ck-turn .ng-ck-stop-meaning {
+  flex: 1 1 100%;
+}
+
+.ng-ck-rung-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ng-ck-rung-title {
+  color: var(--ng-muted);
+  font-size: var(--ng-font-caption);
+}
+
+.ng-ck-rungs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ng-ck-rung {
+  min-height: var(--ng-target);
+  padding: 2px 10px;
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  background: var(--ng-input-bg);
+  color: var(--ng-text);
+  font-size: var(--ng-font-caption);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ng-ck-rung code {
+  font-family: var(--ng-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ng-ck-rung:hover {
+  border-color: var(--ng-blue);
+}
+
+.ng-ck-rung.is-pending {
+  border: 2px solid var(--ng-blue);
+  background: var(--ng-blue-bg);
+}
+
+.ng-ck-rung-field {
+  flex: 1 1 100%;
+  padding: 4px 0 6px;
+}
+
+.ng-ck-argument-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ng-ck-argument-row .ng-field-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--ng-mono);
+}
+
+.ng-ck-verb {
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+}
+
+.ng-ck-argument-error {
+  color: var(--ng-amber);
+  font-size: var(--ng-font-caption);
+}
+
+.ng-ck-next-folded {
+  margin-top: 4px;
+  color: var(--ng-muted);
+  font-size: var(--ng-font-caption);
+}
+
+/* A narrow window (about 1000 px): the bar's two choices keep to one row. */
+@media (min-width: 640px) and (max-width: 1100px) {
+  .ng-ck-controls .ng-segmented-option {
+    padding: 0 5px;
+    font-size: var(--ng-font-caption);
+  }
+}
+
+/* ── Round 6, the phone layer ────────────────────────────── */
+@media (max-width: 639.98px) {
+  /* Forty monospace characters fit a 390 px phone's column at 13 px. */
+  .ng-ck-pre,
+  .ng-ck-line {
+    font-size: 13px;
+  }
+
+  .ng-ck-pre {
+    padding: 6px;
+  }
+
+  .ng-ck-line {
+    padding: 2px 6px;
+  }
+
+  .ng-ck .ng-exercise-work {
+    padding: 12px;
+  }
+
+  /* The argument takes the whole row; the rest of the command around it, then «Виконати» under it. */
+  .ng-ck-argument-row {
+    flex-wrap: wrap;
+  }
+
+  .ng-ck-argument-row .ng-field-input {
+    flex: 1 1 100%;
+    order: 1;
+  }
+
+  .ng-ck-argument-row .ng-ck-verb {
+    order: 0;
+  }
+
+  .ng-ck-argument-row .ng-ck-verb + .ng-field-input + .ng-ck-verb {
+    order: 2;
+  }
+
+  .ng-ck-run {
+    flex: 1 1 100%;
+    order: 3;
+  }
+}

@@ -194,6 +194,8 @@ export const screen = {
     fullCondition: 'Уся умова',
     toRepair: 'До ремонту →', toCause: 'Причина →',
     checksTitle: 'Що показує ПК',
+    // Round 7: the link to «Перевірка мережі» («Де зламалось»).
+    checksLink: 'як це перевіряють на ПК →',
     lastChecked: 'після останньої перевірки',
     atStart: 'на початку',
     groups: { dhcp: 'DHCP-сервер', wan: 'WAN і NAT' },

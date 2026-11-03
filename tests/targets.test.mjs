@@ -62,7 +62,7 @@ test('targets: each manifest has its id, the window title and complete sections'
   }
 });
 
-test('targets: NetGym puts the start screen in front of the three IP screens (round 4 A7: what a learner needs first), routing, «DHCP і NAT» (round 6), the firewall, VLAN, and the setup drill last', async () => {
+test('targets: NetGym puts the start screen in front of the three IP screens (round 4 A7: what a learner needs first), routing, «DHCP і NAT» (round 6), «Перевірка мережі» (round 7), the firewall, VLAN, and the setup drill last', async () => {
   const { default: manifest, Root } = await load('netgym');
   assert.equal(manifest.only, undefined);
   assert.deepEqual(manifest.sections.map(({ id, title, blurb, legacy }) => ({ id, title, blurb, legacy })), [
@@ -71,6 +71,7 @@ test('targets: NetGym puts the start screen in front of the three IP screens (ro
     { id: 'ip-binary', title: 'IP-адреси: у бітах', blurb: 'адреса і маска по бітах: мережа і широкомовна', legacy: undefined },
     { id: 'routing', title: 'Маршрутизація', blurb: 'статичні маршрути: Cisco або MikroTik', legacy: undefined },
     { id: 'dhcp', title: 'DHCP і NAT', blurb: 'як ПК отримує адресу і як виходить в Інтернет', legacy: undefined },
+    { id: 'checks', title: 'Перевірка мережі', blurb: 'ipconfig, ping, tracert, nslookup: як довести, що мережа працює, і де зламалось', legacy: undefined },
     { id: 'firewall', title: 'Фаєрвол', blurb: 'як фільтр вирішує долю пакета: input і forward, порядок правил', legacy: undefined },
     { id: 'vlan', title: 'VLAN', blurb: 'порти доступу, транки й шлях широкомовного кадру', legacy: undefined },
     { id: 'setup', title: 'Налаштування з нуля', blurb: 'порядок команд: роутер і комутатор Cisco, роутер MikroTik', legacy: undefined },
@@ -80,7 +81,8 @@ test('targets: NetGym puts the start screen in front of the three IP screens (ro
   for (const file of ['src/app/Shell.jsx', 'src/app/StoreProvider.jsx', 'src/sections/routing/screens/RoutingScreen.jsx',
     'src/sections/ip/screens/CalculatorScreen.jsx', 'src/sections/ip/screens/MaskScreen.jsx', 'src/sections/ip/screens/BinaryScreen.jsx',
     'src/sections/ip/logic/calc.js', 'src/sections/ip/logic/binary.js', 'src/ui/useNav.js',
-    'src/sections/firewall/screens/FirewallScreen.jsx', 'src/sections/vlan/screens/VlanScreen.jsx', 'src/sections/setup/screens/SetupScreen.jsx']) {
+    'src/sections/firewall/screens/FirewallScreen.jsx', 'src/sections/vlan/screens/VlanScreen.jsx', 'src/sections/setup/screens/SetupScreen.jsx',
+    'src/sections/checks/screens/ChecksScreen.jsx']) {
     assert.ok(graph.includes(file), file);
   }
   // The IP screens link by these section ids (src/sections/ip/screens/links.js):

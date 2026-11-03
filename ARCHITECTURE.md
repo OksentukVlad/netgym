@@ -239,8 +239,11 @@ tools/           setup, build, test, browser checks
 
 - **Imports:**
   - `engine` imports only `engine`.
-  - Section `logic/` imports `engine`, never React, storage, browser APIs or
-    banks.
+  - Section `logic/` imports `engine` and its own section, never React, storage,
+    browser APIs or banks. One exception: the «Перевірка мережі» section's
+    logic (`checks`) reads three DHCP logic modules (`client.js`, `faults.js`,
+    `nat.js`), because it diagnoses those scenarios. Nothing else crosses
+    sections, and never in the other direction (`tests/imports.test.mjs`).
   - `ui` imports `engine`, never sections or banks.
   - Screens import their section's logic, `ui` (components and hooks) and
     `banks`, but never another section.

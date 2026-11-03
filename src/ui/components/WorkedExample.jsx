@@ -32,8 +32,11 @@ import { usePhone } from '../phone.js';
 import '../tokens.css';
 import './WorkedExample.css';
 
-/** The rows: arrays of cells as a table (with `head` as column labels), strings as lines. */
-function Rows({ head, rows }) {
+/** The rows: arrays of cells as a table (with `head` as column labels), strings as lines.
+ * `marks: false` (round 7, Fable 3): lines without a ✓ each, for an answer whose rows are
+ * evidence, not checked steps (a ladder that stops on a failed output, a claim's lines);
+ * `numbered`: those lines as a numbered list (the ladder's order). */
+function Rows({ head, rows, marks = true, numbered = false }) {
   // Round 6: under 640 px the table stacks and each value carries its column's name (data-label), so the
   // header row isn't rendered there (out of the tree rather than hidden: nothing in the example is hidden).
   const phone = usePhone();
@@ -57,6 +60,14 @@ function Rows({ head, rows }) {
       </table>
     );
   }
+  if (!marks) {
+    const List = numbered ? 'ol' : 'ul';
+    return (
+      <List className={`ng-wex-lines is-plain${numbered ? ' is-numbered' : ''}`}>
+        {rows.map((line, i) => <li key={i}><span className="ng-wex-value">{line}</span></li>)}
+      </List>
+    );
+  }
   return (
     <ul className="ng-wex-lines">
       {rows.map((line, i) => (
@@ -73,11 +84,13 @@ function Rows({ head, rows }) {
  *   rows?: Array<string|string[]>,    // the finished answer: lines, or rows of cells (a table)
  *   head?: string[],                  // column labels for rows of cells (the form's field names)
  *   note?: string,                    // optional, one sentence: why (the order, the mode)
+ *   marks?: boolean,                  // false: lines without a ✓ each (evidence rows, not checked steps)
+ *   numbered?: boolean,               // with marks false: the lines as a numbered list
  *   children?: any,                   // instead of rows: a static, read-only drawing (the mask's ruler)
  *   className?: string,
  * }} props
  */
-export default function WorkedExample({ taskKey, context, rows, head, note, children, className = '' }) {
+export default function WorkedExample({ taskKey, context, rows, head, note, children, marks = true, numbered = false, className = '' }) {
   // A new taskKey closes it during render (no effect, no flash), so going back to an earlier task finds it closed too.
   const [state, setState] = useState({ key: taskKey, open: false });
   if (!Object.is(state.key, taskKey)) setState({ key: taskKey, open: false });
@@ -112,7 +125,7 @@ export default function WorkedExample({ taskKey, context, rows, head, note, chil
           <div ref={card} className="ng-wex-card">
             <p className="ng-wex-tag">{uk.example.tag}</p>
             {context && <p className="ng-wex-context">{context}</p>}
-            {rows ? <Rows head={head} rows={rows} /> : children}
+            {rows ? <Rows head={head} rows={rows} marks={marks} numbered={numbered} /> : children}
             {note && <p className="ng-wex-note">{note}</p>}
           </div>
         )}

@@ -213,5 +213,47 @@ export const rangeProofs = [
       "0.0.0.0/32"
     ],
     "reason": "createFault delegates LAN placement to scenario.createTopology. All offsets are 1..254 in its private /24; wrong-range XORs only bit 8, preserving private /16 high bits. Upstream endpoints stay in TEST-NET-3, with the fixed remote probe 8.8.8.8 and default destination 0.0.0.0/0 (not an endpoint). faultExample is the deliberately separate R4 demonstration in reserved documentation networks, never a learner generator."
+  },
+  {
+    "file": "src/sections/checks/logic/probes.js",
+    "sha256": "1045c4b7fbd06b4a7b4742911e82534c78dcfeffcfe5658a660225fe82553b53",
+    "ranges": [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/16",
+      "203.0.113.0/24",
+      "8.8.8.8/32",
+      "169.254.23.57/32",
+      "0.0.0.0/32"
+    ],
+    "reason": "Learner createScenario delegates LAN placement and DHCP faults to the pinned E4 scenario/faults generators: aligned private /24s, offsets 1..254, and only bit 8 XOR for a wrong range. WAN and DNS stay in TEST-NET-3; remote 8.8.8.8, APIPA fallback 169.254.23.57, and default-route network 0.0.0.0 are fixed. makeRng selects fault identities only. example=true is the deliberately separate R4 documentation mapping; createRoutingScenario adapts caller-supplied existing routing-bank records without allocating addresses."
+  },
+  {
+    "file": "src/sections/checks/logic/claims.js",
+    "sha256": "d5820a22d2bd2d28add1bd10c7f5635e6839deebbe438fdf36e2e29f73e78066",
+    "ranges": [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/16",
+      "203.0.113.0/24",
+      "8.8.8.8/32",
+      "169.254.23.57/32",
+      "0.0.0.0/32"
+    ],
+    "reason": "Selects one of ten curated claim templates and its outcome. Values come from checks.createScenario with aligned private LAN renumbering; the only added address is the fixed APIPA fallback 169.254.23.57. No new pool, prefix or address arithmetic. claimExample/example=true explicitly select the separate R4 documentation mapping, never a learner task."
+  },
+  {
+    "file": "src/sections/checks/logic/proofs.js",
+    "sha256": "d876700de07528bbf0ae3209d53af3f6d2b36de03f1f149f0327d7ca67c2ed18",
+    "ranges": [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/16",
+      "203.0.113.0/24",
+      "8.8.8.8/32",
+      "169.254.23.57/32",
+      "0.0.0.0/32"
+    ],
+    "reason": "Selects and shuffles independent requirements/options. All address values come from checks.createScenario and E4 placement; no new address arithmetic or pools. proofExample/example=true explicitly use the separate R4 documentation network, never a learner task."
   }
 ];

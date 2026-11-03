@@ -49,7 +49,7 @@ try { results = JSON.parse(run.stdout.trim().split('\n').at(-1)).results; } catc
 
 test('mounted routing screen: runner bounds every mounted helper to 240 seconds', () => {
   const runner = readFileSync(new URL('../tools/test.sh', import.meta.url), 'utf8');
-  assert.match(runner, /mounted_helpers=\(routing firewall ip vlan vlan3 setup shared dhcp\)/);
+  assert.match(runner, /mounted_helpers=\(routing firewall ip vlan vlan3 setup shared dhcp checks\)/);
   assert.match(runner, /timeout --kill-after=5 240 node --import "\$project_root\/tools\/test-mounted-profile\.mjs" "tests\/helpers\/mounted-\$helper\.mjs"/);
   assert.match(runner, /mounted-results\.mjs/);
   assert.match(runner, /wait -n -p completed "\$\{pids\[@\]\}"/);

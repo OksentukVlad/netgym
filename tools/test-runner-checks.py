@@ -29,7 +29,7 @@ class RunnerChecks(unittest.TestCase):
             shutil.copy(ROOT / name, self.root / name)
         (self.root / 'deps/.bin/esbuild').write_text("#!/bin/sh\nprintf 'bundle\\n' >> bundle-calls\nexit 0\n")
         (self.root / 'deps/.bin/esbuild').chmod(0o755)
-        for helper in ['routing', 'firewall', 'ip', 'vlan', 'vlan3', 'setup', 'shared']:
+        for helper in ['routing', 'firewall', 'ip', 'vlan', 'vlan3', 'setup', 'shared', 'dhcp', 'checks']:
             (self.root / f'tests/helpers/mounted-{helper}.mjs').touch()
         for i in range(3):
             (self.root / f'tests/fixture-{i}.test.mjs').touch()
@@ -56,7 +56,7 @@ if args[0].startswith('tests/helpers/mounted-'):
     if fault == 'timeout': time.sleep(30)
     if fault == 'malformed': print('not JSON'); sys.exit(0)
     if fault == 'truncated': print('{"results":['); sys.exit(0)
-    counts = dict(routing=453, firewall=343, ip=179, vlan=288, vlan3=158, setup=480, shared=118)
+    counts = dict(routing=453, firewall=343, ip=179, vlan=288, vlan3=158, setup=509, shared=135, dhcp=138, checks=69)
     results = [dict(name=f'{name}-{i}', ok=True) for i in range(counts[name])]
     if fault == 'false': results[-1]['ok'] = False
     if fault == 'short': results.pop()
@@ -108,7 +108,7 @@ sys.exit(99)
         self.assertEqual(self.calls(), calls, 'invalid options must not start work')
 
     def test_every_helper_failure_and_cleanup(self):
-        for helper in ['routing', 'firewall', 'ip', 'vlan', 'vlan3', 'setup', 'shared']:
+        for helper in ['routing', 'firewall', 'ip', 'vlan', 'vlan3', 'setup', 'shared', 'dhcp', 'checks']:
             for fault in ['exit', 'timeout', 'malformed', 'truncated', 'false', 'short']:
                 with self.subTest(helper=helper, fault=fault):
                     start = time.monotonic()
@@ -181,9 +181,9 @@ sys.exit(99)
                              env=dict(self.env, HOLD='1'), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         try:
             deadline = time.monotonic() + 5
-            while len(list(self.root.glob('*.pid'))) < 7 and time.monotonic() < deadline:
+            while len(list(self.root.glob('*.pid'))) < 9 and time.monotonic() < deadline:
                 time.sleep(.02)
-            self.assertEqual(len(list(self.root.glob('*.pid'))), 7)  # one per registered mounted helper
+            self.assertEqual(len(list(self.root.glob('*.pid'))), 9)  # one per registered mounted helper
             before = self.calls()
             bundles = (self.root / 'bundle-calls').read_text()
             blocked = self.run_runner()

@@ -80,6 +80,8 @@ const canonical = {
   vlan: ['#/vlan?ex=predict&shape=p2&level=1&seed=12&syntax=cisco', '#/vlan?ex=ports&task=3&seed=7&syntax=routeros', '#/vlan?ex=route&task=4&seed=3&syntax=routeros',
     '#/vlan?ex=route&task=2&seed=9&syntax=cisco', '#/vlan?ex=faults&net=transit&level=3&seed=12&syntax=cisco', '#/vlan?ex=faults&net=two-switch&level=1&seed=5&syntax=routeros'],
   setup: ['#/setup?deck=router&seed=1', '#/setup?deck=switch&seed=1000000', '#/setup?deck=mikrotik&seed=5'],
+  checks: ['#/checks?ex=proof&seed=5&syntax=cisco', '#/checks?ex=proof&seed=999999&syntax=routeros', '#/checks?ex=ladder&level=1&seed=0&syntax=cisco',
+    '#/checks?ex=ladder&level=2&seed=4821&syntax=routeros', '#/checks?ex=claims&level=1&seed=77&syntax=cisco', '#/checks?ex=claims&level=2&seed=12&syntax=routeros'],
 };
 
 test('URL codecs: every section of the target has one, with its keys, scopes and vendor flag', () => {
@@ -87,7 +89,7 @@ test('URL codecs: every section of the target has one, with its keys, scopes and
   for (const s of target.sections) {
     assert.ok(s.url && Array.isArray(s.url.keys) && Array.isArray(s.url.scopes), s.id);
     assert.ok(!s.url.keys.includes('syntax'), `${s.id}: syntax is the shell's key`);
-    assert.equal(Boolean(s.url.syntax), ['routing', 'dhcp', 'vlan'].includes(s.id), `${s.id}: a vendor switch`);
+    assert.equal(Boolean(s.url.syntax), ['routing', 'dhcp', 'vlan', 'checks'].includes(s.id), `${s.id}: a vendor switch`);
   }
 });
 
@@ -126,6 +128,8 @@ function identity(id, place, store) {
     case 'firewall': return place.exercise ? place : { level: place.level, variantId: place.level === 2 ? place.variantId : null,
       seed: place.seeds?.[place.level === 1 ? 'chain' : place.variantId] };
     case 'setup': return { deck: place.deck, seed: place.seeds[place.deck] };
+    case 'checks': return place.exercise === 'proof' ? { exercise: place.exercise, seed: place.proof.seed }
+      : { exercise: place.exercise, level: place[place.exercise].level, seed: place[place.exercise].tasks[place[place.exercise].level].seed };
     default: return { level: place.level, seed: place.seeds?.[place.level] };
   }
 }
@@ -180,8 +184,22 @@ test('URL codecs: invalid values for each key fall back to the defaults', () => 
     ['#/dhcp?ex=nat&level=3&seed=1000000&other=yes&n=-2', s => s.places.dhcp.nat.level === 1 && s.places.dhcp.nat.tasks[1].other === false && s.places.dhcp.nat.tasks[1].seed < 100000],
     ['#/dhcp?ex=fault&level=4&seed=-3&other=2&n=5', s => s.places.dhcp.exercise === 'fault' && s.places.dhcp.fault.level === 1 && s.places.dhcp.fault.tasks[1].other === false
       && s.places.dhcp.fault.tasks[1].seed < 100000 && s.places.dhcp.fault.tasks[1].n === undefined],
+    // «Перевірка мережі»: an unknown exercise is C3; a level out of range is 1; C3 has no level.
+    ['#/checks?ex=zzz&level=9&seed=x', s => s.places.checks.exercise === 'proof' && s.places.checks.proof.seed < 100000],
+    ['#/checks?ex=ladder&level=3&seed=1000000', s => s.places.checks.exercise === 'ladder' && s.places.checks.ladder.level === 1 && s.places.checks.ladder.tasks[1].seed < 100000],
+    ['#/checks?ex=claims&level=0&seed=-1', s => s.places.checks.claims.level === 1 && s.places.checks.claims.tasks[1].seed < 100000],
+    ['#/checks?ex=proof&level=2&seed=8', s => s.places.checks.proof.seed === 8 && s.places.checks.ladder.level === 1],
   ];
   for (const [hash, ok, why = ''] of cases) assert.ok(ok(open(hash).store), `${hash} ${why}`);
+});
+
+test('URL codec «Перевірка мережі»: the links in open their exercise; C3 writes no level', () => {
+  assert.match(encoded(open('#/checks?ex=ladder').store, 'checks'), /^#\/checks\?ex=ladder&level=1&seed=\d+&syntax=cisco$/);
+  assert.match(encoded(open('#/checks?ex=proof&level=2').store, 'checks'), /^#\/checks\?ex=proof&seed=\d+&syntax=cisco$/);
+  // The other exercise's level and task are kept as remembered.
+  const first = open('#/checks?ex=claims&level=2&seed=41').store;
+  const then = open('#/checks?ex=ladder&level=2&seed=7', first).store;
+  assert.equal(then.places.checks.claims.level, 2); assert.equal(then.places.checks.claims.tasks[2].seed, 41);
 });
 
 test('URL codecs: a task the logic can\'t build from the link is replaced by one it builds, never passed to the screen', async () => {

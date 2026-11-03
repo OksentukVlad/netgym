@@ -117,6 +117,16 @@
   gap: 8px;
 }
 
+/* Round 7: plain lines (no ✓), and the numbered ladder; numbers in the lines' muted look. */
+.ng-wex-lines.is-numbered {
+  padding-left: 1.6em;
+  list-style: decimal;
+}
+
+.ng-wex-lines.is-numbered li {
+  display: list-item;
+}
+
 .ng-wex-mark {
   flex: none;
   width: 1em;
