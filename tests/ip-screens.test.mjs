@@ -294,7 +294,7 @@ test('binary walk leak gate: planted leaks in rendered markup are caught', () =>
   for (const planted of [
     html.replace('<h1', `<h1 aria-label="${reference[2].octets.join(' ')}"`),
     html.replace('</h1>', `<span class="ng-sr-only">${reference[3].octets.join('')}</span></h1>`),
-    html.replace('>Далі<', `>Далі ${decimal(reference[2].octets)}<`),
+    html.replace('>Пропустити<', `>Пропустити ${decimal(reference[2].octets)}<`),
   ]) assert.throws(() => gate(task, 2, planted, { draft, parts }), assert.AssertionError);
   // The learner's own draft may repeat reference octets (it is theirs).
   assert.ok(draft.slice(0, 3).every((octet, i) => octet === reference[2].octets[i]));

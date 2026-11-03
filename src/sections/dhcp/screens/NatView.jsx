@@ -31,6 +31,7 @@ import { SheetChoice } from '../../../ui/BarSlot.jsx';
 import { actions, examples, labels, modes, natNotes, screen } from '../uk.js';
 import Options, { useNewCard } from './Options.jsx';
 import Picture from './Picture.jsx';
+import { nextSeed } from './seeds.js';
 
 /** The exercises for useExercise: level 1's round, level 2's task. */
 export const natRound = {
@@ -106,7 +107,7 @@ function NatRound({ vendor, place, setPlace, controls }) {
   useEffect(() => { if (stepping) bringIntoView([replayRef.current]); }, [stepping, at]);
   const toLevel2 = () => setPlace({ nat: { ...place.nat, level: 2 } });
   // Another round (renumbered after the first), from the round's end.
-  const newRound = () => setPlace({ nat: { ...place.nat, tasks: { ...place.nat.tasks, 1: { seed: seed + 1, other: true } } } });
+  const newRound = () => setPlace({ nat: { ...place.nat, tasks: { ...place.nat.tasks, 1: { seed: nextSeed(seed), other: true } } } });
 
   const highlight = stepping ? walk.steps[at].highlight : result?.highlight ?? null;
   const verdict = result ? {
@@ -152,7 +153,7 @@ function NatRound({ vendor, place, setPlace, controls }) {
         primary={done ? 'next' : step === 'done' ? 'continue' : 'none'}
         verdict={verdict}
         continueAction={step === 'done' && !done ? { label: screen.nextCard, onClick: onNext } : done ? { label: screen.newRound, onClick: newRound } : null}
-        next={done ? { onNext: toLevel2, label: screen.nextLevel } : null}
+        next={done ? { onNext: toLevel2, label: screen.nextLevel, ready: true } : null}
       />}
     />
   );
@@ -186,7 +187,7 @@ function NatRules({ vendor, place, setPlace, controls }) {
     ex.check({ picks: next }, { result: { ok: r.ok, complete: r.ok && step === 'rule' } });
     ex.setView({ picks: next, checks: (view.checks ?? 0) + 1 });
   }
-  const another = () => setPlace({ nat: { ...place.nat, tasks: { ...place.nat.tasks, 2: { seed: seed + 1, other: true, n: n + 1 } } } });
+  const another = () => setPlace({ nat: { ...place.nat, tasks: { ...place.nat.tasks, 2: { seed: nextSeed(seed), other: true, n: nextSeed(n) } } } });
 
   const note = step === 'done' ? (cisco ? natNotes.acl : natNotes.masquerade) : null;
   const verdict = result ? {

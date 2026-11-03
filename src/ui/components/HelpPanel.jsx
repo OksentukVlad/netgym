@@ -6,7 +6,9 @@
 // has moved here.
 //
 // Row: [Перевірити] [💡 Підказка n з N] [continueAction] [Далі →], then
-//      «Показати відповідь» on its own line. When the hint button goes, an
+//      «Показати відповідь» on its own line. Round 6: before the task is
+//      passed or revealed, «Далі →» is not in the row: it is the quiet
+//      link «Пропустити →» on that line, after «Показати відповідь». When the hint button goes, an
 //      invisible copy holds its place until the next check press or a new
 //      task: no button ever slides under the pointer.
 //   - exactly one primary button (the `primary` rule below);
@@ -132,7 +134,8 @@ export function primaryOf({ primary, check, verdict, reveal, next, continueActio
   const done = isSuccess(verdict) || Boolean(reveal?.revealed);
   if (live && !done) return 'check';
   if (continueAction) return 'continue';
-  if (next) return 'next';
+  // A skip («Пропустити →», before the task is done) is a quiet link, never the primary button.
+  if (next && (done || next.ready)) return 'next';
   return check ? 'check' : null;   // a disabled check (nothing chosen yet) still looks like the next step
 }
 
@@ -232,7 +235,8 @@ export function bringPanelIntoView(row, current, evidence, behavior = 'auto', { 
  *   hints?: { texts: string[], shown: number, onMore: Function } | null,
  *   reveal?: { revealed: boolean, onReveal: Function, render: Function, applied?: string,
  *              label?: string, heading?: string } | null,
- *   next?: { label?: string, onNext: Function, destination?: string } | null,
+ *   next?: { label?: string, onNext: Function, destination?: string, ready?: boolean } | null,
+ *                                       // before a pass or reveal a quiet «Пропустити →» link; `ready`: the screen's own round is over
  *   continueAction?: { label: string, onClick: Function } | null,
  *   primary?: 'check'|'continue'|'next'|'none',
  *   evidence?: Function,                // brings the referenced input/evidence into view first
@@ -458,6 +462,18 @@ export default function HelpPanel(props) {
   // ran) or a new task, so no button slides under the pointer. One rule, every screen.
   const holdHint = !hintOpen && total > 0 && (hintHold.current || hintWasOpen.current) && !(mem.event === 'verdict' && pressed.current !== 'hint');
   const revealOpen = reveal && !revealed && !success;
+  // Round 6 (Vlad lost an answer to «Далі →» beside «Перевірити»): before the task is passed or
+  // revealed, «next» is a skip: a quiet link «Пропустити →» on the secondary line, after «Показати
+  // відповідь», never in the check row. After a pass or a reveal (or when the screen says its own
+  // round is over: `next.ready`) it is the «Далі →» button.
+  const skip = Boolean(next) && !done && !next.ready;
+  // With no «Перевірити» and no «Показати відповідь» (a committed card: «Наступний пакет →»), the skip
+  // shares the row, after the continue button, rather than taking a line of its own.
+  const skipInRow = skip && !check && !revealOpen;
+  const nextWords = <>
+    {next?.label ? next.label : <>{skip ? uk.help.skip : uk.nextName}<span aria-hidden="true"> →</span></>}
+    {next?.destination && <span className="ng-sr-only">, {next.destination}</span>}
+  </>;
 
   const row = (
     <div className="ng-help-row" data-help="row" ref={rowRef}>
@@ -474,16 +490,15 @@ export default function HelpPanel(props) {
       {continueAction && (
         <Button ref={keep('continue')} variant={variant('continue')} className="ng-help-continue" onClick={press('continue', continueAction.onClick)}>{continueAction.label}</Button>
       )}
-      {next && (
-        <Button ref={keep('next')} variant={variant('next')} className="ng-help-next" onClick={press('next', next.onNext)}>
-          {next.label ? next.label : <>{uk.nextName}<span aria-hidden="true"> →</span></>}
-          {next.destination && <span className="ng-sr-only">, {next.destination}</span>}
-        </Button>
+      {next && !skip && (
+        <Button ref={keep('next')} variant={variant('next')} className="ng-help-next" onClick={press('next', next.onNext)}>{nextWords}</Button>
       )}
-      {/* Its own line, so it never slides under the pointer when the hint button goes. */}
-      {revealOpen && (
+      {skipInRow && <Button ref={keep('next')} variant="quiet" className="ng-help-next is-skip" onClick={press('next', next.onNext)}>{nextWords}</Button>}
+      {/* Its own line, so it never slides under the pointer when the hint button goes; a skip after it. */}
+      {(revealOpen || (skip && !skipInRow)) && (
         <div className="ng-help-row-link">
-          <Button ref={keep('reveal')} variant="quiet" className="ng-help-reveal-link" onClick={press('reveal', reveal.onReveal)}>{reveal.label ?? uk.showAnswer}</Button>
+          {revealOpen && <Button ref={keep('reveal')} variant="quiet" className="ng-help-reveal-link" onClick={press('reveal', reveal.onReveal)}>{reveal.label ?? uk.showAnswer}</Button>}
+          {skip && !skipInRow && <Button ref={keep('next')} variant="quiet" className="ng-help-next is-skip" onClick={press('next', next.onNext)}>{nextWords}</Button>}
         </div>
       )}
     </div>

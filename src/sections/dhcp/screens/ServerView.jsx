@@ -42,6 +42,7 @@ import { SheetChoice } from '../../../ui/BarSlot.jsx';
 import { uk } from '../../../ui/uk.js';
 import { actions, dora, labels, modes, screen } from '../uk.js';
 import TextField from './TextField.jsx';
+import { nextSeed } from './seeds.js';
 
 /** The aside's store place (folded at first: spec v1 E2 «folded»). */
 export const ASIDES = 'dhcp.server';
@@ -149,7 +150,7 @@ export default function ServerView({ vendor, place, setPlace }) {
     ex.reveal();
     ex.setView({ draft: shown, step: form === 'wizard' ? undefined : 'options' });
   }
-  const another = () => setPlace({ server: { ...place.server, tasks: { ...place.server.tasks, [level]: { seed: seed + 1, other: true } } } });
+  const another = () => setPlace({ server: { ...place.server, tasks: { ...place.server.tasks, [level]: { seed: nextSeed(seed), other: true } } } });
   const chooseLevel = next => setPlace({ server: { ...place.server, level: next } });
 
   const tone = r => (r.ok ? 'ok' : r.kind === 'info' ? 'info' : 'no');

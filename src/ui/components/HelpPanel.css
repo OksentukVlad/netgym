@@ -25,15 +25,21 @@
 
 /* «Показати відповідь»: a quiet link on its own line under the buttons, the
    same in every screen; it never takes the place of a button that goes. */
+/* Round 6: «Пропустити →» (next before the task is passed or revealed) after it on the same
+   line, never beside «Перевірити»; each link stays whole, the second wraps under the first. */
 .ng-help-row-link {
   flex-basis: 100%;
   display: flex;
+  flex-wrap: wrap;
+  column-gap: 12px;
   margin-top: -6px;
 }
 
-.ng-help-reveal-link {
+.ng-help-reveal-link,
+.ng-help-next.is-skip {
   width: fit-content;
   padding: 0 6px;
+  white-space: nowrap;
 }
 
 .ng-help-message {

@@ -299,7 +299,7 @@ const styleFor = wrap => el => ({ overflowY: el === wrap ? 'auto' : 'visible', s
       check('an edit (stale verdict): the panel anchors right after the edited row, check row included', q('.ng-help-host')?.previousSibling === q('.row-7')
         && q('.ng-help-host').className.includes('is-anchored') && current()?.hasAttribute('data-help-stale') && q('.ng-help-host').contains(row()));
       check('…without scrolling the page', wrap.calls.length === calls, wrap.calls);
-      click([...all('button', row())].find(b => /Далі/.test(text(b))));
+      click([...all('button', row())].find(b => /Далі|Пропустити/.test(text(b))));
       check('«Далі» (a new task): back home, before the board', q('.ng-help-host')?.nextSibling === q('.board') && !q('.ng-help-host').className.includes('is-anchored'));
     });
   } catch (e) { check('stale anchoring: ran', false, e.stack.split('\n').slice(0, 4).join(' | ')); }

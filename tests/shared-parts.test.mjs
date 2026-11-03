@@ -58,8 +58,11 @@ test('HelpPanel primary: one rule (check, else continue, else next), and the ove
   assert.equal(h.primaryOf({ check, verdict: part, next }), 'check', 'a right row is not a done task');
   assert.equal(h.primaryOf({ check, verdict: ok, next }), 'next', 'after success: «Далі →»');
   assert.equal(h.primaryOf({ check, reveal: { revealed: true }, next }), 'next', 'after a reveal: «Далі →»');
-  assert.equal(h.primaryOf({ check: null, next }), 'next', 'no check (a committed prediction)');
-  assert.equal(h.primaryOf({ check: { onCheck() {}, disabled: true }, next }), 'next');
+  // Round 6: before a pass or a reveal «next» is a skip (a quiet link), never the primary button;
+  // a screen whose own round is over says so (`ready`).
+  assert.equal(h.primaryOf({ check: null, next }), null, 'no check, task not done: the skip is no primary');
+  assert.equal(h.primaryOf({ check: null, next: { ...next, ready: true } }), 'next', 'a round over (a committed prediction): «Далі →»');
+  assert.equal(h.primaryOf({ check: { onCheck() {}, disabled: true }, next }), 'check', 'nothing chosen yet: the check keeps the primary look, not the skip');
   assert.equal(h.primaryOf({ check: null, continueAction: cont, next }), 'continue', 'in a round: the step button');
   assert.equal(h.primaryOf({ check, verdict: ok, continueAction: cont, next }), 'continue');
   assert.equal(h.primaryOf({ check, primary: 'continue', continueAction: cont }), 'continue', 'the override wins');
@@ -94,8 +97,29 @@ test('HelpPanel markup: a reveal replaces the verdict; hints fold; an applied re
   assert.ok(html.includes('class="ng-button ng-button-primary ng-help-next">Далі<span aria-hidden="true"> →</span>'), '«Далі →» primary, its arrow aria-hidden');
   const applied = unescape(h.renderPlain(el(h.HelpPanel, { ...base, reveal: { revealed: true, onReveal() {}, render: () => 'не тут', applied: uk.help.applied } })));
   assert.ok(applied.includes(`<p class="ng-help-applied-text" tabindex="-1">${uk.help.applied}</p>`) && !applied.includes('не тут'));
-  const dest = unescape(h.renderPlain(el(h.HelpPanel, { taskKey: 't', next: { onNext() {}, destination: 'наступний раунд' } })));
+  const dest = unescape(h.renderPlain(el(h.HelpPanel, { taskKey: 't', next: { onNext() {}, destination: 'наступний раунд', ready: true } })));
   assert.ok(dest.includes('Далі<span aria-hidden="true"> →</span><span class="ng-sr-only">, наступний раунд</span>'), 'a destination joins the name when several continuations coexist');
+});
+
+test('HelpPanel: before a pass or a reveal «next» is the quiet «Пропустити →» after «Показати відповідь», never beside «Перевірити» (round 6)', () => {
+  const base = { taskKey: 't', check: { onCheck() {} }, hints: { texts: ['а'], shown: 0, onMore() {} }, reveal: { revealed: false, onReveal() {}, render: () => 'x' }, next: { onNext() {}, destination: 'наступна задача' } };
+  for (const verdict of [null, { tone: 'no', summary: 'Ні.', stamp: 1 }, { tone: 'ok', scope: 'part', summary: 'Так.', stamp: 1 }]) {
+    const html = unescape(h.renderPlain(el(h.HelpPanel, { ...base, verdict })));
+    const [checkRow, linkRow] = [html.split('<div class="ng-help-row-link">')[0], html.split('<div class="ng-help-row-link">')[1].split('</div>')[0]];
+    assert.ok(checkRow.includes('>Перевірити</button>') && !checkRow.includes('ng-help-next'), `${verdict?.tone ?? 'first view'}: no next button in the check row`);
+    assert.match(linkRow, /ng-help-reveal-link">Показати відповідь<\/button><button type="button" class="ng-button ng-button-quiet ng-help-next is-skip">Пропустити<span aria-hidden="true"> →<\/span><span class="ng-sr-only">, наступна задача<\/span><\/button>$/, 'the skip after «Показати відповідь», its destination kept');
+  }
+  const passed = unescape(h.renderPlain(el(h.HelpPanel, { ...base, check: null, verdict: { tone: 'ok', summary: 'Так.', stamp: 1 } })));
+  assert.ok(passed.includes('class="ng-button ng-button-primary ng-help-next">Далі<span aria-hidden="true"> →</span>') && !passed.includes('is-skip'), 'after a pass: the «Далі →» button');
+  const revealed = unescape(h.renderPlain(el(h.HelpPanel, { ...base, reveal: { ...base.reveal, revealed: true } })));
+  assert.ok(revealed.includes('ng-help-next">Далі') && !revealed.includes('is-skip'), 'after a reveal: the «Далі →» button');
+  const noReveal = unescape(h.renderPlain(el(h.HelpPanel, { taskKey: 't', check: { onCheck() {} }, next: { onNext() {} } })));
+  assert.match(noReveal, /<div class="ng-help-row-link"><button type="button" class="ng-button ng-button-quiet ng-help-next is-skip">Пропустити/, 'without a reveal the skip has the line to itself');
+  const committed = unescape(h.renderPlain(el(h.HelpPanel, { taskKey: 't', check: null, continueAction: { label: 'Наступний пакет →', onClick() {} }, next: { onNext() {} } })));
+  assert.match(committed, /ng-help-continue">Наступний пакет →<\/button><button type="button" class="ng-button ng-button-quiet ng-help-next is-skip">Пропустити/, 'no check and no reveal: the skip shares the row after the continue button');
+  assert.ok(!committed.includes('ng-help-row-link'), 'and takes no line of its own');
+  const own = unescape(h.renderPlain(el(h.HelpPanel, { taskKey: 't', check: null, next: { onNext() {}, label: 'Новий раунд', ready: true } })));
+  assert.ok(own.includes('ng-help-next">Новий раунд</button>') && !own.includes('is-skip'), 'a screen\'s own label, its round over: the button as before');
 });
 
 test('useZoomBar: shown only when the fitted text is too small or the learner zoomed; width decides, height never', () => {

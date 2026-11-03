@@ -143,7 +143,7 @@ export function instanceKeys(bank) {
 // The variant each round 1 app showed as task 3 and 8: opening the task picks
 // it for the active syntax, and the choice then stays with the task.
 const ROUND1_VARIANT = { cisco: { 'routing.task-03': 'defaults', 'routing.task-08': 'stub-defaults' } };
-const round1Variant = (record, syntax) => ROUND1_VARIANT[syntax]?.[record.id] ?? record.variants[0].id;
+export const round1Variant = (record, syntax) => ROUND1_VARIANT[syntax]?.[record.id] ?? record.variants[0].id;
 
 /** A task's short code, or null where the bank has no letter (logic/codes.js). */
 export function codeOf(task) {
@@ -766,7 +766,7 @@ function TasksView({ bank, exerciseSwitch = null }) {
       hints={{ texts: hintTexts, shown: Math.min(hintIndex, hintTexts.length), onMore: moreHint }}
       reveal={{ revealed, onReveal: () => { ex.reveal(); setShownView({ mine: false }); }, render: () => null, applied: ui.shared.applied }}
       // «Далі →» once the task is done (solved or revealed); before that ◀ ▶ and the list move between tasks.
-      next={nextRecord && (presented?.ok || revealed) ? { onNext: goNext } : null}
+      next={nextRecord && (presented?.ok || revealed) ? { onNext: goNext, ready: true } : null}
     />
   );
   // The action line (and the worked example under it): while the learner's own rows are shown and there is a route to fill.

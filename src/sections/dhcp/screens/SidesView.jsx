@@ -23,6 +23,7 @@ import WorkedExample from '../../../ui/components/WorkedExample.jsx';
 import { actions, labels, modes, screen, verdicts } from '../uk.js';
 import Options, { useNewCard } from './Options.jsx';
 import Picture from './Picture.jsx';
+import { nextSeed } from './seeds.js';
 
 /** The exercise for useExercise: a round of six cards on its own topology. */
 export const sidesExercise = {
@@ -62,7 +63,7 @@ export default function SidesView({ vendor, place, setPlace }) {
     ex.setView({ tries: next, checks: (view.checks ?? 0) + 1 });
   }
   const onNext = () => { cardFocus.current = true; ex.setView({ position: position + 1 }); };
-  const newRound = () => setPlace({ sides: { seed: seed + 1, other: true } });
+  const newRound = () => setPlace({ sides: { seed: nextSeed(seed), other: true } });
 
   const verdict = result ? {
     tone: result.ok ? 'ok' : 'no',
@@ -99,7 +100,7 @@ export default function SidesView({ vendor, place, setPlace }) {
         primary={done ? 'next' : right ? 'continue' : 'none'}
         verdict={verdict}
         continueAction={right && !done ? { label: screen.nextCard, onClick: onNext } : null}
-        next={done ? { onNext: newRound, label: labels.newRound } : null}
+        next={done ? { onNext: newRound, label: labels.newRound, ready: true } : null}
       />}
     />
   );

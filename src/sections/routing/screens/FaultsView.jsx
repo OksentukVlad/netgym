@@ -531,7 +531,7 @@ function FaultsWork({ bank, record, slot, syntax, layout, root, building, onAgai
       stale={stale}
       hints={{ texts: hintTexts, shown: Math.min(rf.hintRung, hintTexts.length), onMore: moreHint }}
       reveal={{ revealed: Boolean(rf.reveal), onReveal, render: () => <FaultReveal reveal={rf.reveal} syntax={syntax} /> }}
-      next={{ onNext: onAgain, label: building ? faultsUi.preparing : undefined }}
+      next={{ onNext: onAgain, ready: done, label: building ? faultsUi.preparing : undefined }}
     />
   );
 

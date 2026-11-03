@@ -9,7 +9,8 @@
 // «радимо спершу: …» (`advice`, each section's comprehension.recommendedFirst):
 // advice, still no locks.
 // Each section's screen brings its own strings and shares the shell's app
-// store. A section's `bank` is the task bank its screen gets (targets choose
+// store. Round 6 (spec URL v2.1): each section's `url` is its URL codec
+// (screens/url.js): which of its place goes into the address, and back. A section's `bank` is the task bank its screen gets (targets choose
 // banks; routing's also carries RF-1's «Знайди несправність» record as
 // `faults`). The IP screens link to each other by these section ids
 // (src/sections/ip/screens/links.js).
@@ -38,19 +39,25 @@ import { records as vlanFaults } from '../banks/vlan/faults.js';
 import SetupScreen from '../sections/setup/screens/SetupScreen.jsx';
 import { comprehension as setupWords, section as setupSection } from '../sections/setup/uk.js';
 import setupBank from '../banks/setup/index.js';
+import { url as routingUrl } from '../sections/routing/screens/url.js';
+import { binaryUrl, calculatorUrl, maskUrl } from '../sections/ip/screens/url.js';
+import { url as dhcpUrl } from '../sections/dhcp/screens/url.js';
+import { url as firewallUrl } from '../sections/firewall/screens/url.js';
+import { url as vlanUrl } from '../sections/vlan/screens/url.js';
+import { url as setupUrl } from '../sections/setup/screens/url.js';
 
 const target = {
   id: 'netgym',
   title: uk.appName,
   sections: [
-    { id: 'ip-calculator', ...ip.calculator, Screen: CalculatorScreen },
-    { id: 'ip-mask', ...ip.mask, Screen: MaskScreen },
-    { id: 'ip-binary', ...ip.binary, Screen: BinaryScreen },
-    { id: 'routing', ...routingSection, advice: routingWords.recommendedFirst, Screen: RoutingScreen, bank: { ...routingBank, faults: routingFaults } },
-    { id: 'dhcp', ...dhcpSection, Screen: DhcpScreen },
-    { id: 'firewall', ...firewallSection, advice: firewallWords.recommendedFirst, Screen: FirewallScreen, bank: firewallBank },
-    { id: 'vlan', ...vlanSection, advice: vlanWords.recommendedFirst, Screen: VlanScreen, bank: { predict: vlanPredict, ports: vlanPorts, route: vlanRoute, faults: vlanFaults } },
-    { id: 'setup', ...setupSection, advice: setupWords.recommendedFirst, Screen: SetupScreen, bank: setupBank },
+    { id: 'ip-calculator', ...ip.calculator, Screen: CalculatorScreen, url: calculatorUrl },
+    { id: 'ip-mask', ...ip.mask, Screen: MaskScreen, url: maskUrl },
+    { id: 'ip-binary', ...ip.binary, Screen: BinaryScreen, url: binaryUrl },
+    { id: 'routing', ...routingSection, advice: routingWords.recommendedFirst, Screen: RoutingScreen, bank: { ...routingBank, faults: routingFaults }, url: routingUrl },
+    { id: 'dhcp', ...dhcpSection, Screen: DhcpScreen, url: dhcpUrl },
+    { id: 'firewall', ...firewallSection, advice: firewallWords.recommendedFirst, Screen: FirewallScreen, bank: firewallBank, url: firewallUrl },
+    { id: 'vlan', ...vlanSection, advice: vlanWords.recommendedFirst, Screen: VlanScreen, bank: { predict: vlanPredict, ports: vlanPorts, route: vlanRoute, faults: vlanFaults }, url: vlanUrl },
+    { id: 'setup', ...setupSection, advice: setupWords.recommendedFirst, Screen: SetupScreen, bank: setupBank, url: setupUrl },
   ],
 };
 

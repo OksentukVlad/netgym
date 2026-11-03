@@ -556,7 +556,7 @@ function PredictView({ bank }) {
             // The round's end is said with the applied line when the last card was revealed.
             applied: `${(draft.hook || draft.decidedBy) ? uk.help.applied : ui.appliedPlain}${roundState.complete ? ` ${ui.roundEnd}` : ''}` }}
           continueAction={committed && !roundState.complete ? { label: ui.next, onClick: onNext } : null}
-          next={{ onNext: onAgain, ...(committed && !roundState.complete ? { destination: level === 1 ? ui.toLevel2 : ui.newRound } : {}) }}
+          next={{ onNext: onAgain, ready: roundState.complete, ...(committed && !roundState.complete ? { destination: level === 1 ? ui.toLevel2 : ui.newRound } : {}) }}
         />
         <div ref={moreHost} className="ng-fw-more-host" />
       </section>

@@ -27,6 +27,30 @@ start screen still says the web version is meant for a computer.
 Tasks can be shared by short codes such as `A3b-4821` (a task, its variant
 and its addresses).
 
+## Where you are, in the address
+
+The web version keeps where you are in the address after `#`, for example
+`…/netgym/#/dhcp?ex=server&level=2&seed=4821&syntax=routeros` or
+`…/netgym/#/routing?code=A3b-4821&syntax=cisco`. So a bookmark or a link
+opens that section, exercise, level, task and vendor, and Back and Forward
+move between the start screen and the sections you opened.
+
+**A refresh keeps** the section, the exercise, its level, the task (its seed
+or share code) and the vendor (Cisco or MikroTik). **A refresh clears** your
+answers and drafts, the hints you opened, ✓ marks, «Показати відповідь», and
+whatever you typed in the IP calculator: those stay in the page's memory
+only, so after a refresh the same task starts again empty. This is on
+purpose, not a bug. The theme and the routing mode («Із готовими рядками»)
+are settings, not places, and are not in the address either.
+
+A link's vendor becomes the vendor for the whole session. A link with
+values NetGym doesn't know (`#/dhcp?ex=zzz&level=99`) opens the section at
+its start, with your own vendor; an unknown section opens the start screen.
+Opening a link puts the start screen behind it, so Back (or «← Розділи»)
+reaches the start screen. The Windows app runs the same code: it has no
+address bar or refresh, and «←» and the mouse back button work as before.
+Each section's keys are listed in its `src/sections/<id>/screens/url.js`.
+
 ## Layout
 
 - `src/targets/<id>.js`: one manifest per build (`netgym`, and `routing` for

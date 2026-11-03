@@ -30,6 +30,7 @@ export const uk = {
     myAnswer: 'Моя відповідь',
     shown: 'показано',
     longCue: 'Решта — нижче, прокрути сторінку.',
+    skip: 'Пропустити',   // round 6: «next» before the task is passed or revealed (a quiet link, not beside «Перевірити»)
   },
   // DoneMark (A5): a quiet ✓ on a task, variant or level solved without a reveal.
   solved: 'розв’язано',

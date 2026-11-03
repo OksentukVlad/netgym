@@ -1327,7 +1327,7 @@ class Driver {
     if (vlanTabs[baseOf(e.id)]) await this.radio(vlanTabs[baseOf(e.id)], `Choose ${vlanTabs[baseOf(e.id)]}`);
     if (e.shape) await this.click(this.page.getByRole('radiogroup', { name: 'Мережа', exact: true }).getByRole('radio', { name: new RegExp(`^${e.shape}`) }), `Choose the network «${e.shape}»`);
     if (e.task) await this.click(this.page.getByRole('radiogroup', { name: 'Задача', exact: true }).getByRole('radio', { name: new RegExp(`^${e.task} ·`) }), `Choose task ${e.task}`);
-    for (let n = 1; n < (e.level ?? 1); n++) await this.click(this.button(/^Далі/).first(), 'Skip to the next level («Далі →»)');
+    for (let n = 1; n < (e.level ?? 1); n++) await this.click(this.button(/^(?:Далі|Пропустити)/).first(), 'Skip to the next level («Пропустити →» before a pass)');
     // «DHCP і NAT»: the exercise (in the bar; on a phone in the «⋯» sheet), then its level.
     const dhcpTabs = { 'dhcp-sides': 'WAN чи LAN', 'dhcp-server': 'DHCP-сервер', 'dhcp-nat': 'Що бачить сайт' };
     if (dhcpTabs[baseOf(e.id)]) {
@@ -2310,7 +2310,7 @@ async function setupExtra(exercise, withDriver) {
     await recallLine(d, reference, 1); await d.shot('recall-solved');
   });
   await withDriver('recall-done', async d => { await solved(d); await d.reveal(); await d.shot('recall-done'); });
-  await withDriver('recall-skip', async d => { await solved(d); await d.press(/^Далі/u, 'Skip recall with «Далі →»'); await d.shot('recall-skip'); });
+  await withDriver('recall-skip', async d => { await solved(d); await d.press(/^(?:Далі|Пропустити)/u, 'Skip recall with «Пропустити →»'); await d.shot('recall-skip'); });
 }
 
 async function maskMistake(d, choices = false) {
@@ -2395,7 +2395,7 @@ async function maskChoiceShots(exercise, withDriver) {
   // Level 2's fit task (one field). The seed decides which kind level 2 draws: try a few «Далі».
   await withDriver('fit', async d => {
     await d.open(); await d.radio(/^2 ·/, 'Choose level 2 (/28–/30 and network size)');
-    for (let i = 0; i < 12 && !await d.page.getByRole('textbox', { name: 'Маска', exact: true }).count(); i++) await d.press(/^Далі/, 'Next task, until a network-size task');
+    for (let i = 0; i < 12 && !await d.page.getByRole('textbox', { name: 'Маска', exact: true }).count(); i++) await d.press(/^(?:Далі|Пропустити)/, 'Next task, until a network-size task («Пропустити →» before a pass)');
     if (!await d.page.getByRole('textbox', { name: 'Маска', exact: true }).count()) throw new Error('No network-size task within 12 tasks');
     await d.shot('fit-first');
     await fill(d, d.page.getByRole('textbox', { name: 'Маска', exact: true }), '/24');

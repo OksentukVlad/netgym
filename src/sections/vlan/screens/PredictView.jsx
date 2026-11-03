@@ -305,7 +305,7 @@ export default function PredictView({ record, syntax, place, setPlace, head, ski
           primary={committed ? undefined : 'check'}
           verdict={verdict}
           continueAction={committed && !complete ? { label: ui.next, onClick: onNext } : null}
-          next={{ onNext: onAgain, ...(committed && !complete ? { destination: ui.newRounds } : {}) }}
+          next={{ onNext: onAgain, ready: complete, ...(committed && !complete ? { destination: ui.newRounds } : {}) }}
         />
         {steps.length > 0 && <WalkWords title={ui.walkTitle} steps={after ? [...steps, ui.received({ hosts: received })] : steps} />}
         {legend.length > 0 && (

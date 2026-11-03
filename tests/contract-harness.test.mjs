@@ -69,8 +69,8 @@ test('contract harness: the mask screen is the second consumer of the same hook,
   assert.ok(html.includes(`Адреса ${task.ip}, маска /${task.prefix} = `), 'the task from create(null, { seed })');
   assert.ok(html.includes('>Адреса мережі</label>') && html.includes('>Широкомовна адреса</label>'));
   assert.ok(html.includes('Обрати з варіантів'), 'options() offers choose mode');
-  assert.ok(html.includes('class="ng-button ng-help-next">Далі<span aria-hidden="true"> →</span>') && html.includes('class="ng-button ng-button-primary ng-help-check">Перевірити<'),
-    'round 4 (Q6): «Перевірити» primary, «Далі →» secondary before completion');
+  assert.ok(html.includes('class="ng-button ng-button-quiet ng-help-next is-skip">Пропустити<span aria-hidden="true"> →</span>') && html.includes('class="ng-button ng-button-primary ng-help-check">Перевірити<'),
+    'round 4 (Q6): «Перевірити» primary; round 6: before completion «next» is the quiet «Пропустити →», not a button beside it');
   const solution = h.mask.solution(task);
   assert.ok(!html.includes(solution.network) || task.ip === solution.network, 'no answer before the reveal');
 

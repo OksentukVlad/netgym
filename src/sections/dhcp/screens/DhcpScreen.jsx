@@ -14,21 +14,21 @@ import { modes, screen } from '../uk.js';
 import SidesView from './SidesView.jsx';
 import ServerView from './ServerView.jsx';
 import NatView from './NatView.jsx';
+import { newSeed } from './seeds.js';
 import '../../../ui/tokens.css';
 import './dhcp.css';
 
-const EXERCISES = ['sides', 'server', 'nat'];
+export const EXERCISES = ['sides', 'server', 'nat'];
 const SYNTAXES = ['cisco', 'routeros'];
-const newSeed = () => Math.floor(Math.random() * 100000);
-const fresh = () => ({ seed: newSeed(), other: false });
+const fresh = random => ({ seed: newSeed(random), other: false });
 
 /** The section's first place: the first exercise, level 1 everywhere, a seed per task. */
-export function firstPlace() {
+export function firstPlace(random = Math.random) {
   return {
     exercise: 'sides',
-    sides: fresh(),
-    server: { level: 1, tasks: { 1: fresh(), 2: fresh(), 3: fresh() } },
-    nat: { level: 1, tasks: { 1: fresh(), 2: fresh() } },
+    sides: fresh(random),
+    server: { level: 1, tasks: { 1: fresh(random), 2: fresh(random), 3: fresh(random) } },
+    nat: { level: 1, tasks: { 1: fresh(random), 2: fresh(random) } },
   };
 }
 

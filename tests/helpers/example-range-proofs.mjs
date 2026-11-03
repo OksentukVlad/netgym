@@ -200,5 +200,18 @@ export const rangeProofs = [
       "203.0.113.0/24"
     ],
     "reason": "Delegates placement to scenario.createTopology. Additional /24 networks XOR only bits 8 or 9, preserving all private-pool high bits. WAN, ISP and remote endpoints stay in TEST-NET-3."
+  },
+  {
+    "file": "src/sections/dhcp/logic/faults.js",
+    "sha256": "1fb98cf1992f4ad206c8d231a0aaa2ce6c3f2b6a642f81958ba5d9184322dc8d",
+    "ranges": [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/16",
+      "203.0.113.0/24",
+      "8.8.8.8/32",
+      "0.0.0.0/32"
+    ],
+    "reason": "createFault delegates LAN placement to scenario.createTopology. All offsets are 1..254 in its private /24; wrong-range XORs only bit 8, preserving private /16 high bits. Upstream endpoints stay in TEST-NET-3, with the fixed remote probe 8.8.8.8 and default destination 0.0.0.0/0 (not an endpoint). faultExample is the deliberately separate R4 demonstration in reserved documentation networks, never a learner generator."
   }
 ];

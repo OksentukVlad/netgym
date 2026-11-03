@@ -17,9 +17,9 @@ import { initialInstance, instanceReducer } from '../ui/exercise-state.js';
 
 export const defaultPrefs = Object.freeze({ syntax: 'cisco', theme: 'dark', inputMode: 'type', mode: 'guided' });
 
-/** @param {Partial<typeof defaultPrefs>} [prefs] */
-export function initialStore(prefs = {}) {
-  return { prefs: { ...defaultPrefs, ...prefs }, instances: {}, places: {} };
+/** @param {Partial<typeof defaultPrefs>} [prefs] @param {object} [places] the places a link set (Shell.jsx, before the first render) */
+export function initialStore(prefs = {}, places = {}) {
+  return { prefs: { ...defaultPrefs, ...prefs }, instances: {}, places: { ...places } };
 }
 
 /**
@@ -28,6 +28,9 @@ export function initialStore(prefs = {}) {
  *   { type: 'instance', key, action }       an exercise-state action for one instance
  *   { type: 'instances', keys, action }     the same action for several (the score's «↺»)
  *   { type: 'place', scope, patch }         shallow merge into places[scope]
+ *   { type: 'hydrate', places, prefs }      a URL's location (Shell.jsx, app/url.js): each
+ *                                           scope in `places` replaced by its complete place,
+ *                                           `prefs` (known names only) set; instances kept
  */
 export function storeReducer(state, action) {
   switch (action.type) {
@@ -50,6 +53,16 @@ export function storeReducer(state, action) {
     }
     case 'place':
       return { ...state, places: { ...state.places, [action.scope]: { ...state.places[action.scope], ...action.patch } } };
+    case 'hydrate': {
+      const prefs = Object.entries(action.prefs ?? {}).filter(([name]) => name in defaultPrefs);
+      const places = Object.keys(action.places ?? {});
+      if (!prefs.length && !places.length) return state;
+      return {
+        ...state,
+        prefs: prefs.length ? { ...state.prefs, ...Object.fromEntries(prefs) } : state.prefs,
+        places: places.length ? { ...state.places, ...action.places } : state.places,
+      };
+    }
     default:
       throw new Error(`unknown store action: ${action.type}`);
   }

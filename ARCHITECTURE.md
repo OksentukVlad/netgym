@@ -35,7 +35,8 @@ with the parts still planned marked as such.
    marks the task as assisted.
 4. **Nothing depends on saved state or the URL.** Navigation is in memory,
    and persistence is optional and best effort. Every task can be reached by
-   a short code.
+   a short code. (Round 6: the shell mirrors where you are into the URL's
+   hash and reads it back on load; with no hash the app starts as before.)
 5. **Explicit over clever.** Registration is by plain imports in target
    manifests: no plugin loader, no discovery. Task data says what it means;
    nothing is inferred from interface notes or names.
@@ -260,8 +261,14 @@ tools/           setup, build, test, browser checks
   is planned, not built.)
 - **Navigation:** `{section, screen, params}` on an in-memory stack with
   `go`, `back` and `home`.
-  - It is mirrored with `try { history.pushState({ng: route}, '') } catch {}`,
-    with no URL argument, and `popstate` restores the route.
+  - It is mirrored into the browser history. Round 6 (spec URL v2.1): each
+    entry carries a hash, `#/<section>?<key>=<value>&…` (`src/app/url.js`
+    and each section's codec, `src/sections/<id>/screens/url.js`), with the
+    section's current task identity only (never answers or marks). The hash
+    is decoded and hydrated into the store before the first render; section
+    navigation pushes, place changes replace, and `popstate` or a typed hash
+    restores both the place and the route. Where there is no URL (a server
+    render, the tests' mini DOM) entries are pushed without one, as before.
   - The in-app «←» is the main way back.
   - After every navigation, focus moves to the new screen's heading.
 - **Header:** «← Розділи», the app's caption, the
@@ -521,4 +528,6 @@ in the contract (§3), with section policy kept local.
 - the look changing too much for people who already use the app
   (before/after screenshots);
 - `pushState` without a URL being untested in phone viewers (the in-app «←»
-  doesn't depend on it).
+  doesn't depend on it). Round 6: entries carry a hash now; «←» goes back
+  through the history to the start screen's entry where there is one, and
+  navigates home otherwise.

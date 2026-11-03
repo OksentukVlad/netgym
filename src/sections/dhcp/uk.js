@@ -186,3 +186,55 @@ export const screen = {
   // «По кроках» (ui/components/WalkStepper.jsx) for the NAT replay.
   steps: { steps: 'По кроках', stepsGroup: 'Крок перекладу', stepBack: 'Крок назад', stepForward: 'Крок уперед', stepOf: ({ n, total }) => `крок ${n} з ${total}` },
 };
+
+// E4: stable keys are also the row/form/cause contract for the screen.
+export const fault = {
+  task: pc => `${pc} не має мережі.`,
+  actions: ['Подивись, що показує ПК і що показує R1.', 'Виправ R1 і натисни «Перевірити».', 'Що було не так?'],
+  assumptions: 'WAN і провайдер працюють; ICMP і пересилання дозволені; у провайдера немає зворотного маршруту до LAN. DNS — сервер провайдера; кешу немає; іншого виходу й DNS-проксі немає.',
+  linkLocal: 'ПК не отримав адресу від DHCP і призначив собі адресу 169.254… — з нею він бачить лише сусідів у цьому сегменті.',
+  rows: { address: 'Адреса ПК', gateway: 'Шлюз, який отримав ПК; пінг шлюзу', remote: ip => `пінг ${ip}`, dns: 'ім’я → адреса' },
+  none: 'немає', enabled: 'так', disabled: 'ні', evidenceTitle: 'Що показує R1',
+  fields: {
+    enabled: 'Сервер увімкнено', interface: 'Інтерфейс сервера', ranges: 'Діапазон', exclusions: 'Виключення',
+    poolNetwork: 'Мережа пулу', poolPrefix: 'Маска мережі пулу', gateway: 'Шлюз для ПК', dns: 'DNS для ПК',
+    natEnabled: 'NAT увімкнено', outInterface: 'Вихідний інтерфейс NAT', acl: 'Мережа і wildcard ACL для NAT',
+    roles: 'Ролі інтерфейсів NAT', dhcpDefault: 'Маршрут за замовчуванням від WAN DHCP', staticDefault: 'Статичний шлюз за замовчуванням',
+  },
+  evidence: {
+    server: 'DHCP-сервер', interface: 'Інтерфейс і сегмент LAN', allocation: 'Діапазон і мережа пулу',
+    gateway: 'Опція шлюзу', dns: 'Опція DNS', leases: 'Оренди', nat: 'WAN і NAT', routes: 'Таблиця маршрутів',
+    router: ip => `R1 сам (з WAN-адреси): пінг ${ip}`,
+    bridge: ports => `порти bridge: ${ports.join(', ')}`,
+    lease: (pc, ip) => `${pc}: ${ip ?? 'немає оренди'}`,
+    dnsNone: 'dns-none=yes; без резервного DNS',
+    route: (net, prefix, gateway, source, iface) => `${net}/${prefix} → ${gateway} · ${source} · ${iface}`,
+    sources: { connected: 'підключено', static: 'статичний', dhcp: 'WAN DHCP' },
+  },
+  causes: {
+    'no-server': 'DHCP-сервер не працював на боці LAN.',
+    'wrong-range': 'Діапазон або мережа DHCP-пулу не відповідали LAN.',
+    gateway: 'DHCP не передавав шлюз або передавав неправильний.',
+    dns: 'DHCP не передавав DNS або передавав неправильний.',
+    exhausted: 'Усі адреси діапазону вже були зайняті орендами.',
+    nat: 'NAT не перекладав адреси ПК на WAN.',
+    route: 'У R1 не було чинного маршруту до зовнішніх адрес.',
+  },
+  stops: {
+    addressOk: 'ПК отримав адресу своєї LAN від DHCP.',
+    wrongNetwork: 'ПК отримав адресу поза своєю LAN, тому не може дістатися шлюзу.',
+    gatewayOk: 'Шлюз, який отримав ПК, відповідає в LAN.',
+    noGateway: 'ПК не отримав шлюзу, тому не має шляху за межі LAN.',
+    wrongGateway: 'Шлюз, який отримав ПК, не відповідає в його LAN.',
+    route: 'Пакет дійшов до R1, але в R1 немає чинного шляху до цієї адреси.',
+    nat: 'Пакет вийшов через WAN без перекладу адреси, тому відповідь не повертається до ПК.',
+    remoteOk: 'Пакет пройшов через R1, а відповідь повернулася до ПК.',
+    noDns: 'ПК не отримав адреси DNS-сервера, тому не може знайти адресу за ім’ям.',
+    wrongDns: 'Вказана адреса не є DNS-сервером із цієї умови.',
+    dnsOk: 'DNS провайдера відповів адресою сайту.',
+  },
+  repairFailed: 'Перевір налаштування за показами ПК і R1.',
+  safety: 'Налаштування мають бути безпечними для всієї LAN і чинних оренд.',
+  exampleContext: 'Інша мережа: ПК не отримав DNS від DHCP.',
+  exampleNote: 'Після зміни DNS ПК знову отримує параметри DHCP; усі чотири перевірки проходять.',
+};
