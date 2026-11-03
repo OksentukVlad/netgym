@@ -167,13 +167,41 @@ function safeNat(task, config) {
   for (let offset = 1; offset < hostMask; offset++) if (!acl.some(a => aclMatches(at(task, offset), a))) return false;
   return true;
 }
+/** Feedback is probe-first (screen repair v1, Astra Q3-Q4, Fable 2): while a check fails, the verdict is
+ * the four checks («не проходять N із 4»), pointing at the first failing row, unless a field the learner
+ * changed from the given configuration has E2's finding (it corrects their own edit, a malformed one
+ * included); a planted fault is never named by its field. When all four pass but capacity, the options or
+ * safety fail, the verdict says so («Перевірки проходять, але …») with that field.
+ * `target` is `{ row }` or `{ field }` (a repairFields id), or null on success. */
 export function checkRepair(task, config) {
   const result = evaluate(config, task), allocation = checkAllocation(task, config?.dhcp ?? {}), options = checkOptions(task, config?.dhcp ?? {});
-  const safety = { ok: !!config?.nat?.enabled && safeNat(task, config)
-    && task.leases.every(l => evaluate(config, task, { clientId: l.clientId }).ok), code: 'safety', text: words.safety };
+  const natOk = !!config?.nat?.enabled && safeNat(task, config), leasesOk = task.leases.every(l => evaluate(config, task, { clientId: l.clientId }).ok);
+  const safety = { ok: natOk && leasesOk, code: 'safety', text: words.safety };
   const ok = result.ok && allocation.ok && options.ok && safety.ok;
-  return { ok, kind: 'verdict', code: ok ? 'repair-ok' : !allocation.ok ? allocation.code : !options.ok ? options.code : !safety.ok ? 'safety' : 'probes',
-    text: ok ? null : !allocation.ok ? allocation.text : !options.ok ? options.text : !safety.ok ? safety.text : words.repairFailed,
+  const rangeField = task.vendor === 'cisco' && task.level === 3 ? 'exclusions' : 'ranges';
+  const changed = path => JSON.stringify(path.reduce((v, k) => v?.[k], config)) !== JSON.stringify(path.reduce((v, k) => v?.[k], task.config));
+  const findings = [
+    !allocation.ok && { ...allocation, field: rangeField, path: ['dhcp', rangeField] },
+    !options.ok && options.field && { ...options, path: ['dhcp', options.field] },
+  ].filter(Boolean);
+  const failing = result.rows.filter(r => !r.ok);
+  let verdict;
+  if (ok) verdict = { code: 'repair-ok', text: null, target: null };
+  else {
+    // A cleared gateway or DNS is a missing option, not a malformed value: the four checks speak for it.
+    const empty = path => { const v = path.reduce((x, k) => x?.[k], config); return v === '' || v == null || (Array.isArray(v) && v.every(x => !String(x ?? '').trim())); };
+    const own = findings.find(f => changed(f.path) && !(['gateway', 'dns'].includes(f.field) && empty(f.path)));
+    if (failing.length && own) verdict = { code: own.code, kind: own.kind, text: own.text, target: { field: own.field } };
+    else if (failing.length) verdict = { code: 'probes', text: words.probesFailing(failing.length, result.rows.length), target: { row: failing[0].id } };
+    else {
+      const first = findings[0];
+      const natField = !config?.nat?.enabled ? 'natEnabled' : task.vendor === 'cisco' ? 'acl' : 'outInterface';
+      verdict = first
+        ? { code: first.code, kind: first.kind, text: words.probesPassBut(first.text), target: { field: first.field } }
+        : { code: 'safety', text: words.probesPassBut(safety.text), target: { field: natOk ? rangeField : natField } };
+    }
+  }
+  return { ok, kind: verdict.kind === 'info' ? 'info' : 'verdict', code: verdict.code, text: verdict.text, target: verdict.target,
     lease: result.lease, rows: result.rows, router: result.router, clientId: result.clientId, allocation, options, safety, evidence: evidence(task, config, result) };
 }
 export function checkCause(task, causeId) {

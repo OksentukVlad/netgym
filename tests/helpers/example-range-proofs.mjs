@@ -203,7 +203,7 @@ export const rangeProofs = [
   },
   {
     "file": "src/sections/dhcp/logic/faults.js",
-    "sha256": "1fb98cf1992f4ad206c8d231a0aaa2ce6c3f2b6a642f81958ba5d9184322dc8d",
+    "sha256": "8bafc77721a90f00708207b2486bb34e9003c87efa1070a85358f7a41bf023d1",
     "ranges": [
       "10.0.0.0/8",
       "172.16.0.0/12",

@@ -12,11 +12,12 @@ import DhcpScreen from '../../src/sections/dhcp/screens/DhcpScreen.jsx';
 import * as sides from '../../src/sections/dhcp/logic/sides.js';
 import * as server from '../../src/sections/dhcp/logic/server.js';
 import * as nat from '../../src/sections/dhcp/logic/nat.js';
+import * as faults from '../../src/sections/dhcp/logic/faults.js';
 import { createTopology } from '../../src/sections/dhcp/logic/scenario.js';
 import * as words from '../../src/sections/dhcp/uk.js';
 import { answerOf, draftOf } from '../../src/sections/dhcp/screens/ServerView.jsx';
 
-export { act, sides, server, nat, createTopology, words, answerOf, draftOf };
+export { act, sides, server, nat, faults, createTopology, words, answerOf, draftOf };
 
 function Expose({ into }) {
   Object.assign(into, useStore());

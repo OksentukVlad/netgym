@@ -3,7 +3,7 @@
 // timers, events. Test-only, and only as much DOM as the routing screen and
 // React DOM 18 use:
 //   - nodes: elements (HTML and SVG), text; append/insert/remove,
-//     attributes, `style`, `textContent`, `contains`, `closest`,
+//     attributes, `style`, `textContent`, `contains`, `compareDocumentPosition`, `closest`,
 //     `querySelector(All)` for simple selectors (tag, #id, .class,
 //     [attr] and [attr="value"], chained, and the descendant combinator),
 //     `outerHTML`;
@@ -42,6 +42,19 @@ class MiniNode {
   }
   removeChild(child) { const i = this.childNodes.indexOf(child); if (i >= 0) this.childNodes.splice(i, 1); child.parentNode = null; return child; }
   contains(node) { for (let n = node; n; n = n.parentNode) if (n === this) return true; return false; }
+  /** Document order only (HelpPanel asks whether evidence lies before its board): 2 preceding, 4 following, 8/16 ancestor/descendant. */
+  compareDocumentPosition(other) {
+    if (other === this) return 0;
+    if (other.contains(this)) return 2 | 8;
+    if (this.contains(other)) return 4 | 16;
+    const path = n => { const out = []; for (; n; n = n.parentNode) out.unshift(n); return out; };
+    const a = path(this), b = path(other);
+    let i = 0;
+    while (a[i] === b[i]) i++;
+    if (i === 0) return 1;
+    const kids = a[i - 1].childNodes;
+    return kids.indexOf(b[i]) > kids.indexOf(a[i]) ? 4 : 2;
+  }
   get textContent() { return this.childNodes.map(c => c.textContent).join(''); }
   set textContent(value) {
     for (const c of this.childNodes) c.parentNode = null;

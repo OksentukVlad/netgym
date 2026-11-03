@@ -1,8 +1,9 @@
-// «DHCP і NAT» (round 6, spec v1 with v2, v2.1): three exercises, switched in
+// «DHCP і NAT» (round 6, spec v1 with v2, v2.1): four exercises, switched in
 // the top bar with the vendor (on a phone both are in the bar's «⋯» sheet):
 //   - «WAN чи LAN» (E1, SidesView.jsx): which side of R1 a setting is on;
 //   - «DHCP-сервер» (E2, ServerView.jsx): the range, gateway and DNS R1 gives out;
-//   - «Що бачить сайт» (E3, NatView.jsx): what NAT changes, and the rule that does it.
+//   - «Що бачить сайт» (E3, NatView.jsx): what NAT changes, and the rule that does it;
+//   - «ПК без мережі» (E4, FaultView.jsx): find R1's one fault from what the PC and R1 show, fix it, name it.
 // The logic (logic/*.js) decides every verdict; the screens render its data.
 // The place `dhcp` keeps the exercise, the levels and each task's seed (a
 // first task on the base addresses, later ones on renumbered ones: the
@@ -14,11 +15,12 @@ import { modes, screen } from '../uk.js';
 import SidesView from './SidesView.jsx';
 import ServerView from './ServerView.jsx';
 import NatView from './NatView.jsx';
+import FaultView from './FaultView.jsx';
 import { newSeed } from './seeds.js';
 import '../../../ui/tokens.css';
 import './dhcp.css';
 
-export const EXERCISES = ['sides', 'server', 'nat'];
+export const EXERCISES = ['sides', 'server', 'nat', 'fault'];
 const SYNTAXES = ['cisco', 'routeros'];
 const fresh = random => ({ seed: newSeed(random), other: false });
 
@@ -29,6 +31,7 @@ export function firstPlace(random = Math.random) {
     sides: fresh(random),
     server: { level: 1, tasks: { 1: fresh(random), 2: fresh(random), 3: fresh(random) } },
     nat: { level: 1, tasks: { 1: fresh(random), 2: fresh(random) } },
+    fault: { level: 1, tasks: { 1: fresh(random), 2: fresh(random), 3: fresh(random) } },
   };
 }
 
@@ -54,6 +57,7 @@ export default function DhcpScreen() {
       {exercise === 'sides' && <SidesView {...props} />}
       {exercise === 'server' && <ServerView {...props} />}
       {exercise === 'nat' && <NatView {...props} />}
+      {exercise === 'fault' && <FaultView {...props} />}
     </div>
   );
 }

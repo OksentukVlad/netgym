@@ -411,10 +411,266 @@
   color: var(--ng-green);
 }
 
-/* A narrow window (about 1000 px): the bar's two choices keep to one row (as the firewall's header). */
+/* ── E4 «ПК без мережі»: the steps, the rows, R1's lines, the repair form ── */
+
+.ng-dh-fault-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ng-dh-steps ol {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ng-dh-steps li {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ng-dh-step {
+  width: 100%;
+  min-height: var(--ng-target);
+  padding: 0 6px;
+  white-space: nowrap;
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  background: var(--ng-input-bg);
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-caption);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ng-dh-step:hover { border-color: var(--ng-blue); }
+.ng-dh-step.is-current { background: var(--ng-blue-bg); border: 2px solid var(--ng-blue); }
+.ng-dh-step[aria-disabled="true"] { opacity: 0.6; cursor: default; }
+.ng-dh-step[aria-disabled="true"]:hover { border-color: var(--ng-stroke); }
+
+.ng-dh-step:focus-visible,
+.ng-dh-probe:focus-visible {
+  outline: var(--ng-focus-width) solid var(--ng-focus);
+  outline-offset: 2px;
+}
+
+.ng-dh-step-n {
+  display: inline-block;
+  min-width: 1.4em;
+  margin-right: 2px;
+  border-radius: 50%;
+  background: var(--ng-surf);
+  font-family: var(--ng-mono);
+  text-align: center;
+}
+
+.ng-dh-locked {
+  margin-top: 4px;
+  color: var(--ng-muted);
+  font-size: var(--ng-font-caption);
+}
+
+.ng-dh-fault-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.ng-dh-checks,
+.ng-dh-evidence {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ng-dh-checks-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 8px;
+}
+
+.ng-dh-block-title {
+  margin: 0;
+  color: var(--ng-text);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+}
+
+.ng-dh-checks-state {
+  color: var(--ng-muted);
+  font-size: var(--ng-font-caption);
+}
+
+.ng-dh-probes {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ng-dh-probe {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0 8px;
+  width: 100%;
+  min-height: var(--ng-target);
+  padding: 6px 10px;
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  background: var(--ng-input-bg);
+  color: var(--ng-text);
+  font-family: var(--ng-sans);
+  font-size: var(--ng-font-small);
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ng-dh-probe:hover { border-color: var(--ng-blue); }
+.ng-dh-probe[aria-pressed="true"] { border: 2px solid var(--ng-blue); }
+.ng-dh-probe.is-no { border-left: 4px solid var(--ng-amber); }
+.ng-dh-probe.is-ok { border-left: 4px solid var(--ng-green); }
+
+.ng-dh-probe-mark {
+  font-weight: 700;
+}
+
+.ng-dh-probe.is-ok .ng-dh-probe-mark { color: var(--ng-green); }
+.ng-dh-probe.is-no .ng-dh-probe-mark { color: var(--ng-amber); }
+
+.ng-dh-probe-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0 8px;
+  min-width: 0;
+}
+
+.ng-dh-probe-value {
+  font-family: var(--ng-mono);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.ng-dh-why {
+  font-size: var(--ng-font-small);
+}
+
+.ng-dh-why:empty {
+  display: none;
+}
+
+.ng-dh-evidence-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 6px 10px;
+  background: var(--ng-input-bg);
+  border: 1px solid var(--ng-stroke);
+  border-radius: var(--ng-radius);
+  font-size: var(--ng-font-small);
+  line-height: 1.35;
+}
+
+.ng-dh-evidence-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 6px;
+}
+
+.ng-dh-evidence-line dt {
+  color: var(--ng-muted);
+}
+
+.ng-dh-evidence-line dt::after {
+  content: ":";
+}
+
+.ng-dh-evidence-part {
+  display: block;
+}
+
+.ng-dh-evidence-line dd {
+  margin: 0;
+  font-family: var(--ng-mono);
+  overflow-wrap: anywhere;
+}
+
+.ng-dh-repair,
+.ng-dh-fgroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ng-dh-repair {
+  gap: 14px;
+}
+
+.ng-dh-fgroup[role="group"] + .ng-dh-fgroup[role="group"] {
+  padding-top: 10px;
+  border-top: 1px dashed var(--ng-stroke);
+}
+
+.ng-dh-fgroup-title {
+  color: var(--ng-text);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+}
+
+.ng-dh-ffield {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ng-dh-ffield[data-term] .ng-segmented-label,
+.ng-dh-ffield[data-term] .ng-field-label {
+  font-family: var(--ng-mono);
+}
+
+.ng-dh-frows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ng-dh-fchoice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.ng-dh-froles {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ng-dh-causes .ng-dh-option-text {
+  line-height: 1.35;
+}
+
+/* A narrow window (about 1000 px): the bar's two choices keep to one row (as the firewall's header),
+   with E4's fourth exercise too. */
 @media (min-width: 640px) and (max-width: 1100px) {
   .ng-dh-controls .ng-segmented-option {
-    padding: 0 8px;
+    padding: 0 5px;
     font-size: var(--ng-font-caption);
   }
 }

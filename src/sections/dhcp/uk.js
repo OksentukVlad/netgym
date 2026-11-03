@@ -4,7 +4,7 @@ export const section = {
   blurb: 'як ПК отримує адресу і як виходить в Інтернет',
   advice: 'радимо спершу: IP-адреси',
 };
-export const modes = { sides: 'WAN чи LAN', server: 'DHCP-сервер', nat: 'Що бачить сайт' };
+export const modes = { sides: 'WAN чи LAN', server: 'DHCP-сервер', nat: 'Що бачить сайт', fault: 'ПК без мережі' };
 export const actions = {
   sides: 'Обери, якого боку стосується налаштування.',
   range: 'Впиши діапазон, який роутер може роздавати.',
@@ -185,6 +185,35 @@ export const screen = {
   },
   // «По кроках» (ui/components/WalkStepper.jsx) for the NAT replay.
   steps: { steps: 'По кроках', stepsGroup: 'Крок перекладу', stepBack: 'Крок назад', stepForward: 'Крок уперед', stepOf: ({ n, total }) => `крок ${n} з ${total}` },
+  // E4 «ПК без мережі»: the steps, the rows' frame, the form's groups and the round's words
+  // (the rows, the evidence, the fields and the causes are the logic's: `fault` below).
+  fault: {
+    stages: { checks: 'Перевірки', repair: 'Ремонт', cause: 'Причина' },
+    stagesLabel: 'Кроки задачі',
+    causeLocked: 'Відкриється, коли ремонт пройде перевірку',
+    fullCondition: 'Уся умова',
+    toRepair: 'До ремонту →', toCause: 'Причина →',
+    checksTitle: 'Що показує ПК',
+    lastChecked: 'після останньої перевірки',
+    atStart: 'на початку',
+    groups: { dhcp: 'DHCP-сервер', wan: 'WAN і NAT' },
+    yes: 'так', no: 'ні',
+    none: 'порожньо — немає',
+    dnsHint: 'одна адреса або кілька через пробіл',
+    prefixHint: 'маска: /24 або 255.255.255.0',
+    addRow: '+ ще один рядок',
+    removeRow: n => `Прибрати рядок ${n}`,
+    network: 'мережа', wildcard: 'wildcard',
+    roleOf: iface => `Роль ${iface}`,
+    repairOk: 'Ремонт працює: усі чотири перевірки проходять.',
+    wrongCause: 'Ні. Причина — у рядку R1, який довелося змінити.',
+    revealApplied: (cause, lines, kept) => `${kept ? '' : 'Відповідь вписано у форму. '}Причина: ${cause} Рядок R1: ${lines.join(', ')}.`,
+    needs: (clients, statics) => `У мережі до ${clients} ПК і телефонів; ${statics.map(d => `${d.name} має сталу адресу ${d.address}`).join(', ')} — її не роздавати.`,
+    textPc: (name, ip, port) => `${name} ${ip} — у LAN, за портом ${port} роутера R1`,
+    exampleHead: ['Що', 'Було', 'Стало'],
+    exampleChecks: 'Перевірки',
+    passedOf: (n, total) => `${n} з ${total} ✓`,
+  },
 };
 
 // E4: stable keys are also the row/form/cause contract for the screen.
@@ -193,7 +222,7 @@ export const fault = {
   actions: ['Подивись, що показує ПК і що показує R1.', 'Виправ R1 і натисни «Перевірити».', 'Що було не так?'],
   assumptions: 'WAN і провайдер працюють; ICMP і пересилання дозволені; у провайдера немає зворотного маршруту до LAN. DNS — сервер провайдера; кешу немає; іншого виходу й DNS-проксі немає.',
   linkLocal: 'ПК не отримав адресу від DHCP і призначив собі адресу 169.254… — з нею він бачить лише сусідів у цьому сегменті.',
-  rows: { address: 'Адреса ПК', gateway: 'Шлюз, який отримав ПК; пінг шлюзу', remote: ip => `пінг ${ip}`, dns: 'ім’я → адреса' },
+  rows: { address: 'Адреса ПК', gateway: 'Шлюз ПК і пінг до нього', remote: ip => `пінг ${ip}`, dns: 'ім’я → адреса' },
   none: 'немає', enabled: 'так', disabled: 'ні', evidenceTitle: 'Що показує R1',
   fields: {
     enabled: 'Сервер увімкнено', interface: 'Інтерфейс сервера', ranges: 'Діапазон', exclusions: 'Виключення',
@@ -234,6 +263,8 @@ export const fault = {
     dnsOk: 'DNS провайдера відповів адресою сайту.',
   },
   repairFailed: 'Перевір налаштування за показами ПК і R1.',
+  probesFailing: (n, total) => `Ще не працює: ${n === 1 ? 'не проходить' : 'не проходять'} ${n} із ${total} перевірок.`,
+  probesPassBut: text => `Перевірки проходять, але ${text.charAt(0).toLowerCase()}${text.slice(1)}`,
   safety: 'Налаштування мають бути безпечними для всієї LAN і чинних оренд.',
   exampleContext: 'Інша мережа: ПК не отримав DNS від DHCP.',
   exampleNote: 'Після зміни DNS ПК знову отримує параметри DHCP; усі чотири перевірки проходять.',

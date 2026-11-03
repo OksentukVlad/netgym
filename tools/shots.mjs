@@ -84,6 +84,15 @@ const exercises = [
   { id: 'dhcp-nat', section: 'dhcp', title: 'Що бачить сайт · рівень 1', dlevel: 1, states: ['first', 'wrong', 'step2', 'replay', 'l1-card2', 'done'] },
   { id: 'dhcp-nat2', base: 'dhcp-nat', section: 'dhcp', title: 'Що бачить сайт · рівень 2 · Cisco', dlevel: 2, states: ['first', 'wrong', 'step2', 'done'] },
   { id: 'dhcp-nat2-mt', base: 'dhcp-nat', section: 'dhcp', title: 'Що бачить сайт · рівень 2 · MikroTik', dlevel: 2, syntax: 'routeros', states: ['first', 'wrong', 'done'] },
+  // E4 «ПК без мережі» (spec E4 v2.1): every step («Перевірки», a row's explanation, «Ремонт», a failing
+  // and a passing repair, «Причина», a wrong and the right cause, the reveal) at level 1; each level's form
+  // for both vendors. The recipe repairs from the screen's own words (the task, R1's lines, the drawing).
+  { id: 'dhcp-fault', section: 'dhcp', title: 'ПК без мережі · рівень 1 · Cisco', dlevel: 1, states: ['first', 'row', 'repair', 'wrong', 'step2', 'cause', 'wrong-cause', 'done', 'reveal'] },
+  { id: 'dhcp-fault-mt', base: 'dhcp-fault', section: 'dhcp', title: 'ПК без мережі · рівень 1 · MikroTik', dlevel: 1, syntax: 'routeros', states: ['first', 'repair', 'wrong', 'step2', 'done'] },
+  { id: 'dhcp-fault2', base: 'dhcp-fault', section: 'dhcp', title: 'ПК без мережі · рівень 2 · Cisco', dlevel: 2, states: ['first', 'repair', 'wrong', 'step2', 'cause', 'done'] },
+  { id: 'dhcp-fault2-mt', base: 'dhcp-fault', section: 'dhcp', title: 'ПК без мережі · рівень 2 · MikroTik', dlevel: 2, syntax: 'routeros', states: ['first', 'repair', 'wrong', 'cause', 'done', 'reveal'] },
+  { id: 'dhcp-fault3', base: 'dhcp-fault', section: 'dhcp', title: 'ПК без мережі · рівень 3 · Cisco', dlevel: 3, states: ['first', 'repair', 'wrong', 'done'] },
+  { id: 'dhcp-fault3-mt', base: 'dhcp-fault', section: 'dhcp', title: 'ПК без мережі · рівень 3 · MikroTik', dlevel: 3, syntax: 'routeros', states: ['first', 'repair', 'wrong', 'done'] },
 ].map(e => ({ states: standard, ...e }));
 const mistakes = new Set(['rt-guided', 'rt-free', 'rt-mikrotik', 'rt-fault', 'mask-type', 'binary', 'vl-ports', 'vl-route', 'vl-fault', 'setup-router', 'setup-switch', 'setup-mikrotik']);
 const replays = new Set(['rt-hard', 'rt-fault', 'fw-order1', 'fw-order2', 'vl-ports', 'vl-route', 'vl-fault', 'setup-router', 'setup-switch', 'setup-mikrotik']);
@@ -167,6 +176,20 @@ export function expectedTargets(id, raw) {
   }
   // The old «вибір» reveal (spec R v3 map): «choices-done» is the reveal with chips; «choices-solved» the chips' success.
   if (id === 'mask-type' && raw === 'choices-done') return { kind: 'reveal', row: true, evidence: [] };
+  // E4: a row's explanation is a view the learner asks for (it grades nothing): its sentence is the target.
+  if (id === 'dhcp-fault' && raw === 'row') {
+    return { kind: null, row: false, evidence: [], targets: ['.ng-dh-why'], waive: {
+      evidence: 'a tap on a row explains where its check stops: a view toggle, not a check; its declared target is the sentence (full checks)',
+      message: 'a row\'s explanation is not an event of the help panel: nothing scrolls to a message',
+    } };
+  }
+  // E4: «Ремонт» and «Причина» opened by their button are a step's first view (no new message; the step's top comes into view).
+  if (id === 'dhcp-fault' && ['repair', 'cause'].includes(raw)) {
+    return { kind: null, row: false, evidence: [], waive: {
+      evidence: 'a step opened by its button is that step\'s first view: no verdict is current, so no evidence is checked (its essentials are)',
+      message: 'opening a step is not an event of the help panel: its top comes into view, not a message',
+    } };
+  }
   // Restore (leave and come back) must not scroll or move focus to help; it has no visibility target.
   // A stage opened by a tap (vl-fault «Ремонт» from a failing check) shows no new message: like a first view.
   // Round 5: the binary walk's level 1 in text mode (`l1-text`) is a first view too.
@@ -179,7 +202,7 @@ export function expectedTargets(id, raw) {
   let kind = 'verdict';
   // vl-fault «Ремонт» is opened by a tap after a check and a hint: the hint is current (Astra 4).
   if (['hint', 'hint2', 'hints-all'].includes(state) || (id === 'vl-fault' && state === 'repair')) kind = 'hint';
-  if (state === 'reveal' || (state === 'done' && !['rt-guided', 'rt-free', 'rt-mikrotik', 'mask-type', 'binary', 'fw-predict', 'vl-predict', 'dhcp-sides', 'dhcp-server', 'dhcp-nat'].includes(id))) kind = 'reveal';
+  if (state === 'reveal' || (state === 'done' && !['rt-guided', 'rt-free', 'rt-mikrotik', 'mask-type', 'binary', 'fw-predict', 'vl-predict', 'dhcp-sides', 'dhcp-server', 'dhcp-nat', 'dhcp-fault'].includes(id))) kind = 'reveal';
   if (state === 'reveal-next') kind = 'empty';
   const evidence = [];
   if (['verdict', 'hint'].includes(kind) || state === 'device-tab' || (kind === 'reveal' && ['fw-predict', 'vl-fault', 'rt-fault'].includes(id))) {
@@ -478,10 +501,25 @@ export function dhcpEssentials(raw) {
     { sel: '.ng-dh-card .ng-dh-task', count: 1 }, dhAction, { sel: '.ng-dh-options .ng-dh-option', count: 3 },
     allOf(`${dhSvg} .ng-fw-box-ip`, '.ng-dh-picture', 'hosts'), { sel: `${dhSvg} .ng-fw-address`, count: 2 },
   ];
+  if (raw.startsWith('dhcp-fault')) return dhcpFaultEssentials(raw);
   return null;
 }
+// E4 (spec v2.1), per step. The level and vendor (the raw id) set the counts: R1's lines (6 at level 1, 9
+// with WAN and NAT), the form's lines (Cisco 7 / 12, MikroTik 5 / 9), the causes (4 / 7).
+const dhFaultTask = { sel: '.ng-dh-fault-intro .ng-dh-task', count: 1 };
+export function dhcpFaultEssentials(raw, state = 'first') {
+  const level = Number(/^dhcp-fault(\d)?/.exec(raw)[1] ?? 1), cisco = !raw.endsWith('-mt');
+  if (state === 'repair') return [dhFaultTask, dhAction, { sel: '.ng-dh-repair [data-field]', count: level === 1 ? (cisco ? 7 : 5) : (cisco ? 12 : 9), first: 1 },
+    { sel: '.ng-dh .ng-help-check', count: 1, reach: true }];
+  if (state === 'cause') return [dhFaultTask, dhAction, { sel: '.ng-dh-causes .ng-dh-option', count: level === 1 ? 4 : 7, first: 1 }];
+  // «Перевірки»: the four rows; R1's lines under them, never folded, reachable (the column scrolls to them);
+  // the drawing's PC, ISP gateway and website addresses and R1's two.
+  return [dhFaultTask, dhAction, { sel: '.ng-dh-probes .ng-dh-probe', count: 4 },
+    { sel: '.ng-dh-evidence .ng-dh-evidence-line', count: level === 1 ? 6 : 9, reach: true },
+    allOf(`${dhSvg} .ng-fw-box-ip`, '.ng-dh-picture', 'hosts'), { sel: `${dhSvg} .ng-fw-address`, count: 2 }];
+}
 /** Recipes whose first views must declare essentials (a first view without them fails). */
-export const essentialRecipes = new Set(['fw-predict', 'fw-order2', 'setup-router', 'setup-switch', 'setup-mikrotik', 'rt-guided', 'rt-hard', 'rt-free', 'rt-mikrotik', 'rt-fault', 'binary', ...Object.keys(vlEssentials), 'dhcp-sides', 'dhcp-server', 'dhcp-nat']);
+export const essentialRecipes = new Set(['fw-predict', 'fw-order2', 'setup-router', 'setup-switch', 'setup-mikrotik', 'rt-guided', 'rt-hard', 'rt-free', 'rt-mikrotik', 'rt-fault', 'binary', ...Object.keys(vlEssentials), 'dhcp-sides', 'dhcp-server', 'dhcp-nat', 'dhcp-fault']);
 /** Gate-only first views of later cards: each destination's card is measured fresh (level 1 and level 2). */
 const laterCard = /^l[12]-card\d$/;
 /** The first views of a recipe. */
@@ -489,6 +527,8 @@ export const isFirstView = state => ['first', 'l1-first'].includes(state) || lat
 /** A state's declared essentials (selectors or { sel, count }), or null. */
 export function essentialsOf(id, state) {
   if (id.startsWith('dhcp-') && isFirstView(state)) return dhcpEssentials(id);
+  // E4's later steps are first views of their own (opened by their button).
+  if (id.startsWith('dhcp-fault') && ['repair', 'cause'].includes(state)) return dhcpFaultEssentials(id, state);
   id = baseOf(id);
   if (id === 'fw-predict' && (state === 'first' || /^l2-card\d$/.test(state))) return fwPredictEssentials(2);
   if (id === 'fw-predict' && (state === 'l1-first' || /^l1-card\d$/.test(state))) return fwPredictEssentials(1);
@@ -548,6 +588,11 @@ function phoneFirstView(id, state, raw = id) {
     return [{ sel: '.ng-dh-intro .ng-dh-task', count: 1 }, dhAction, { ...control, first: 1 }];
   }
   if (id === 'dhcp-nat') return [{ sel: '.ng-dh-card .ng-dh-task', count: 1 }, dhAction, { sel: '.ng-dh-options .ng-dh-option', count: raw === 'dhcp-nat2' ? 2 : 3, first: 1 }];
+  // E4: the task, the action line and the step's first control (a row, a field, a cause).
+  if (id === 'dhcp-fault') {
+    const control = dhcpFaultEssentials(raw, ['repair', 'cause'].includes(state) ? state : 'first')[2];
+    return [dhFaultTask, dhAction, { ...control, first: 1 }];
+  }
   return [];
 }
 /** A phone's essentials for a state (the desktop list, re-cast), or null. */
@@ -610,7 +655,7 @@ export function declaredEssentials(id, state, phone = false) {
 //     over), separately from the declared essentials, which are measured
 //     with the folded row in place.
 /** Recipes whose screens carry a worked example (the section writers add theirs). */
-export const exampleRecipes = new Set(['setup-router', 'setup-switch', 'setup-mikrotik', 'rt-guided', 'rt-hard', 'rt-free', 'rt-mikrotik', 'mask-type', 'fw-order1', 'fw-order2', 'vl-ports', 'vl-route', 'dhcp-sides', 'dhcp-server', 'dhcp-nat']);
+export const exampleRecipes = new Set(['setup-router', 'setup-switch', 'setup-mikrotik', 'rt-guided', 'rt-hard', 'rt-free', 'rt-mikrotik', 'mask-type', 'fw-order1', 'fw-order2', 'vl-ports', 'vl-route', 'dhcp-sides', 'dhcp-server', 'dhcp-nat', 'dhcp-fault']);
 /** The folded row's words (measured on first views). */
 export const EXAMPLE_LABEL = '[data-worked-example] > .ng-wex-toggle .ng-wex-label';
 /** What `exampleRow` checks on a state: 'first' (a first view), 'open' (example-open) or 'closed' (any other). */
@@ -1000,7 +1045,7 @@ export function measureEssentials({ essentials, minFont }) {
 /** Round 6: the phone's own gate-only views (phoneGates), at phone sizes only. */
 export const phoneStates = ['sheet-open', 'diagram-full', 'keyboard'];
 /** Recipes with a diagram (its «Розгорнути схему») and with a text field on the first view (the keyboard). */
-const hasDiagram = id => /^(?:(?:rt|fw|vl)-|dhcp-(?:sides|nat))/.test(id);
+const hasDiagram = id => /^(?:(?:rt|fw|vl)-|dhcp-(?:sides|nat|fault))/.test(id);
 const keyboardRecipes = new Set(['rt-guided', 'rt-hard', 'rt-free', 'rt-mikrotik', 'rt-fault', 'calc', 'mask-type', 'vl-ports', 'dhcp-server', 'dhcp-server3', 'dhcp-server3-mt']);
 /** The phone views a recipe gets: the sheet on every section screen, the diagram where there is one, the keyboard where a field is. */
 export const phoneStatesOf = exercise => phoneStates.filter(state => (state === 'sheet-open' ? exercise.id !== 'home'
@@ -1329,7 +1374,7 @@ class Driver {
     if (e.task) await this.click(this.page.getByRole('radiogroup', { name: 'Задача', exact: true }).getByRole('radio', { name: new RegExp(`^${e.task} ·`) }), `Choose task ${e.task}`);
     for (let n = 1; n < (e.level ?? 1); n++) await this.click(this.button(/^(?:Далі|Пропустити)/).first(), 'Skip to the next level («Пропустити →» before a pass)');
     // «DHCP і NAT»: the exercise (in the bar; on a phone in the «⋯» sheet), then its level.
-    const dhcpTabs = { 'dhcp-sides': 'WAN чи LAN', 'dhcp-server': 'DHCP-сервер', 'dhcp-nat': 'Що бачить сайт' };
+    const dhcpTabs = { 'dhcp-sides': 'WAN чи LAN', 'dhcp-server': 'DHCP-сервер', 'dhcp-nat': 'Що бачить сайт', 'dhcp-fault': 'ПК без мережі' };
     if (dhcpTabs[baseOf(e.id)]) {
       await this.radio(dhcpTabs[baseOf(e.id)], `Choose ${dhcpTabs[baseOf(e.id)]}`);
       if ((e.dlevel ?? 1) > 1) await this.radio(new RegExp(`^Рівень ${e.dlevel}`), `Choose level ${e.dlevel}`);
@@ -1808,6 +1853,7 @@ const dhcpOption = (d, text) => d.page.locator('.ng-dh-options .ng-dh-option').f
 const dhcpVerdict = (d, tone) => d.page.locator(`[data-help-current][data-help-tone="${tone}"]`).count();
 async function dhcpShots(d) {
   const id = d.exercise.id, base = baseOf(id), want = state => d.exercise.states.includes(state);
+  if (base === 'dhcp-fault') return dhcpFaultShots(d);
   if (base === 'dhcp-sides') {
     let wrong = false;
     for (let i = 0; i < 6; i++) {
@@ -1895,6 +1941,91 @@ async function dhcpShots(d) {
   await d.click(dhcpOption(d, cisco ? 'перекладати точно задані LAN' : 'змінити відправника на WAN'), cisco ? 'Choose the ACL that selects exactly the LANs' : 'Choose masquerade out of the WAN list');
   await d.shot('done');
 }
+// E4. The repair is read from the screen: R1's LAN port, address and prefix (R1's «Інтерфейс і сегмент LAN»
+// line), the provider's DNS (the task), the WAN port (R1's addresses on the drawing) and the ISP gateway (its
+// box). Every line of the form is set to a working value; the line the given configuration had wrong names
+// the cause (matched by the cause's own words).
+const dhcpCauses = { 'no-server': 'DHCP-сервер не працював', 'wrong-range': 'Діапазон або мережа', gateway: 'DHCP не передавав шлюз',
+  dns: 'DHCP не передавав DNS', exhausted: 'Усі адреси діапазону', nat: 'NAT не перекладав', route: 'У R1 не було' };
+async function dhcpFaultFacts(d) {
+  const iface = clean(await d.page.locator('.ng-dh-evidence-line[data-line="interface"] dd').innerText());
+  const [, lan, router, prefix] = iface.match(/LAN (\S+) (\d+\.\d+\.\d+\.\d+)\/(\d+)/);
+  const base = router.split('.').slice(0, 3).join('.');
+  const dns = clean(await d.page.locator('.ng-dh-fault-intro').innerText()).match(/DNS провайдера: (\d+\.\d+\.\d+\.\d+)/)[1];
+  const wan = clean(await d.page.locator('.ng-dh .ng-fw-svg .ng-fw-address').first().textContent()).split(' · ')[0];
+  const isp = clean(await d.page.locator('.ng-dh .ng-fw-svg .ng-fw-isp .ng-fw-box-ip').textContent());
+  return { lan, wan, router, prefix: Number(prefix), base, network: `${base}.0`, dns, isp, cisco: d.exercise.syntax !== 'routeros' };
+}
+async function dhcpFaultRepair(d, f) {
+  const box = id => d.page.locator(`.ng-dh-repair [data-field="${id}"]`);
+  const has = async id => (await box(id).count()) > 0;
+  const chosen = async (root = null) => clean(await (root ?? d.page).locator('[role="radio"][aria-checked="true"]').first().innerText());
+  const choose = async (id, label, root = null) => {
+    const radio = (root ?? box(id)).getByRole('radio', { name: label, exact: true });
+    if (await radio.getAttribute('aria-checked') !== 'true') await d.click(radio, `«${id}»: ${label}`);
+  };
+  const native = async () => (await box('enabled').getByRole('radio', { name: 'no', exact: true }).count()) > 0;
+  const rows = async (id, wanted) => {
+    while (await box(id).locator('.ng-dh-row-fields').count() > wanted.length) await d.click(box(id).locator('.ng-dh-remove').last(), `«${id}»: remove a row`);
+    while (await box(id).locator('.ng-dh-row-fields').count() < wanted.length) await d.click(box(id).locator('.ng-dh-add'), `«${id}»: add a row`);
+    for (const [i, pair] of wanted.entries()) {
+      const inputs = box(id).locator('.ng-dh-row-fields').nth(i).locator('input');
+      for (const k of [0, 1]) await fill(d, inputs.nth(k), pair[k]);
+    }
+  };
+  const given = async id => (await box(id).locator('input').count() ? (await box(id).locator('input').first().inputValue()).trim() : await chosen(box(id)));
+  // What the given configuration had wrong: its first line that differs from a working one.
+  let cause = null;
+  const yes = (await native()) ? 'no' : 'так';
+  if (await given('enabled') !== yes || await given('interface') !== f.lan) cause = 'no-server';
+  else if (await has('poolNetwork') && await given('poolNetwork') !== f.network) cause = 'wrong-range';
+  else if (await has('ranges') && !(await given('ranges')).startsWith(`${f.base}.`)) cause = 'wrong-range';
+  else if (await given('gateway') !== f.router) cause = 'gateway';
+  else if (await given('dns') !== f.dns && !(await given('dns')).split(/\s+/).includes(f.dns)) cause = 'dns';
+  else if (await has('natEnabled') && (await given('natEnabled') !== 'так' || (await has('outInterface') && await given('outInterface') !== f.wan)
+    || (await has('acl') && await box('acl').locator('input').first().inputValue() !== f.network)
+    || (await has('roles') && await chosen(box('roles').getByRole('radiogroup', { name: `Роль ${f.lan}` })) !== 'inside'))) cause = 'nat';
+  else if (await has('dhcpDefault') && await given('dhcpDefault') === 'ні' && !await given('staticDefault')) cause = 'route';
+  else cause = 'exhausted';
+  await choose('enabled', yes); await choose('interface', f.lan);
+  if (await has('poolNetwork')) { await fill(d, box('poolNetwork').locator('input'), f.network); await fill(d, box('poolPrefix').locator('input'), `/${f.prefix}`); }
+  if (await has('ranges')) await rows('ranges', [[`${f.base}.50`, `${f.base}.99`]]);
+  if (await has('exclusions')) await rows('exclusions', [[`${f.base}.1`, `${f.base}.49`], [`${f.base}.100`, `${f.base}.254`]]);
+  await fill(d, box('gateway').locator('input'), f.router);
+  await fill(d, box('dns').locator('input'), f.dns);
+  if (await has('natEnabled')) {
+    await choose('natEnabled', 'так');
+    if (await has('outInterface')) await choose('outInterface', f.wan);
+    if (await has('acl')) await rows('acl', [[f.network, '0.0.0.255']]);
+    if (await has('roles')) {
+      await choose('roles', 'inside', box('roles').getByRole('radiogroup', { name: `Роль ${f.lan}` }));
+      await choose('roles', 'outside', box('roles').getByRole('radiogroup', { name: `Роль ${f.wan}` }));
+    }
+    await choose('dhcpDefault', f.cisco ? 'ні' : 'так');
+    await fill(d, box('staticDefault').locator('input'), f.cisco ? f.isp : '');
+  }
+  return cause;
+}
+async function dhcpFaultShots(d) {
+  const want = state => d.exercise.states.includes(state);
+  const tone = async (tones, what) => { if (!(await Promise.all(tones.map(t => dhcpVerdict(d, t)))).some(Boolean)) throw new Error(`Expected a «${tones.join('» or «')}» verdict: ${what}`); };
+  if (want('row')) { await d.click(d.page.locator('.ng-dh-probe.is-no').first(), 'Tap the first failing row: where its check stops, outlined on the drawing'); await d.shot('row'); }
+  const facts = await dhcpFaultFacts(d);
+  await d.press('До ремонту →', 'Open «Ремонт»'); await d.shot('repair');
+  await d.press('Перевірити', 'Check R1 as given'); await d.feedback(); await tone(['no', 'info'], 'R1 as given'); await d.shot('wrong');
+  const cause = await dhcpFaultRepair(d, facts);
+  await d.press('Перевірити', 'Check the repair'); await d.feedback(); await tone(['ok'], 'the repair');
+  if (want('step2')) await d.shot('step2');
+  await d.press('Причина →', 'Open «Причина»');
+  if (want('cause')) await d.shot('cause');
+  if (want('wrong-cause')) {
+    const other = Object.keys(dhcpCauses).find(id => id !== cause);
+    await d.click(dhcpOption(d, dhcpCauses[other]), `Choose another cause (${other})`); await tone(['no'], 'a wrong cause'); await d.shot('wrong-cause');
+  }
+  await d.click(dhcpOption(d, dhcpCauses[cause]), `Choose the cause the repair changed (${cause})`); await tone(['ok'], 'the cause'); await d.shot('done');
+  if (want('reveal')) { await d.open(); await d.reveal(); await d.shot('reveal'); }
+}
+
 /** E2's numbers from its words: the network, the router and devices (the strip's text), the largest free gap. */
 async function dhcpServerFacts(d) {
   const task = clean(await d.page.locator('.ng-dh-intro .ng-dh-task').innerText());

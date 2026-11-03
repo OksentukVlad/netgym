@@ -205,3 +205,59 @@ test('E4: a self-assigned address lies in 169.254.1.0–169.254.254.255 (RFC 392
     assert.ok(a === 169 && b === 254 && c >= 1 && c <= 254, `${vendor}: ${address}`);
   }
 });
+
+test('E4 feedback is probe-first (screen repair v1): the given configuration is answered by its checks, never by the planted field', () => {
+  const uk = words;
+  for (const v of vendors) for (const level of [1, 2, 3]) for (let seed = 0; seed < 40; seed++) {
+    const t = createFault(level, v, seed), r = checkRepair(t, t.config);
+    const failing = r.rows.filter(row => !row.ok);
+    assert.equal(r.code, 'probes', `${v} L${level} ${seed} ${t.faultId}: ${r.code}`);
+    assert.equal(r.text, uk.probesFailing(failing.length, 4));
+    assert.deepEqual(r.target, { row: failing[0].id });
+    assert.ok(!r.text.includes('IPv4'));
+  }
+  // A missing gateway or DNS option: a broken configuration, not a syntax error.
+  for (const id of ['gateway', 'dns']) {
+    let seed = 0, t;
+    do t = createFault(1, 'cisco', seed++, { faultId: id }); while ((id === 'gateway' ? t.config.dhcp.gateway : t.config.dhcp.dns.length) !== (id === 'gateway' ? '' : 0));
+    const r = checkRepair(t, t.config);
+    assert.equal(r.code, 'probes'); assert.equal(r.kind, 'verdict');
+    // The learner's own malformed edit keeps its specific message, on that field.
+    const c = structuredClone(t.config); c.dhcp[id] = id === 'gateway' ? '192.168.88' : 'x';
+    const own = checkRepair(t, c);
+    assert.equal(own.kind, 'info'); assert.deepEqual(own.target, { field: id });
+  }
+  assert.equal(words.probesFailing(1, 4), 'Ще не працює: не проходить 1 із 4 перевірок.');
+});
+
+test('E4 all four checks pass but capacity or safety rejects: the verdict says so, with the field', () => {
+  for (const v of vendors) for (const level of [1, 2, 3]) {
+    const t = createFault(level, v, 5), c = referenceRepair(t);
+    c.dhcp.ranges = [{ from: ip(t, 50), to: ip(t, 50) }];
+    c.dhcp.exclusions = [{ from: ip(t, 2), to: ip(t, 49) }, { from: ip(t, 51), to: ip(t, 254) }];
+    const r = checkRepair(t, c);
+    assert.equal(evaluate(c, t).ok, true); assert.equal(r.code, 'capacity');
+    assert.match(r.text, /^Перевірки проходять, але доступно 1 адрес/);
+    assert.deepEqual(r.target, { field: v === 'cisco' && level === 3 ? 'exclusions' : 'ranges' });
+    if (v === 'cisco' && level > 1) {
+      const broad = referenceRepair(t); broad.nat.acl = [{ network: '0.0.0.0', wildcard: '255.255.255.255' }];
+      const s = checkRepair(t, broad);
+      assert.equal(s.code, 'safety'); assert.match(s.text, /^Перевірки проходять, але налаштування/); assert.deepEqual(s.target, { field: 'acl' });
+    }
+  }
+});
+
+test('E4 repair feedback: a cleared gateway or DNS is a missing option (the checks speak), not the IPv4 syntax message', () => {
+  for (const vendor of ['cisco', 'mikrotik']) {
+    const task = createFault(1, vendor, 0, { faultId: 'no-server' });
+    for (const [field, value] of [['gateway', ''], ['dns', []]]) {
+      const config = referenceRepair(task);
+      config.dhcp[field] = value;
+      const r = checkRepair(task, config);
+      assert.equal(r.ok, false, `${vendor} ${field}`);
+      assert.equal(r.code, 'probes', `${vendor} ${field}: ${r.text}`);
+      assert.doesNotMatch(r.text, /IPv4/, `${vendor} ${field}`);
+      assert.ok(r.target?.row, `${vendor} ${field}: points at a failing row`);
+    }
+  }
+});

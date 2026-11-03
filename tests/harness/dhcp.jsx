@@ -11,8 +11,11 @@ import { drawingTopology, textSections } from '../../src/sections/dhcp/screens/d
 import { answerOf, draftOf, formOf, stripProps } from '../../src/sections/dhcp/screens/ServerView.jsx';
 import { screen } from '../../src/sections/dhcp/uk.js';
 import { tooLong } from '../../src/ui/components/Purpose.jsx';
+import { drawnPcs, exampleRows, probeHighlight, rowValue } from '../../src/sections/dhcp/screens/FaultView.jsx';
+import { dnsText, groupsOf, prefixText, prefixValue, setAt } from '../../src/sections/dhcp/screens/RepairForm.jsx';
 
-export { initialStore, storeReducer, firstPlace, drawingTopology, textSections, answerOf, draftOf, formOf, stripProps, pinLabels, tooLong };
+export { initialStore, storeReducer, firstPlace, drawingTopology, textSections, answerOf, draftOf, formOf, stripProps, pinLabels, tooLong,
+  drawnPcs, exampleRows, probeHighlight, rowValue, dnsText, groupsOf, prefixText, prefixValue, setAt };
 
 /** The section as it renders from `state` (an app store state). */
 export function renderSection(state) {
@@ -21,8 +24,8 @@ export function renderSection(state) {
 }
 
 /** The shared drawing in its DHCP view for a DHCP topology. */
-export const renderDrawing = (topology, vendor, { server = false, highlight = null } = {}) =>
-  renderToStaticMarkup(<RouterSvg view="dhcp" words={screen.drawing} topology={drawingTopology(topology, vendor, { server })} size={{ width: 600 }} highlight={highlight} />);
+export const renderDrawing = (topology, vendor, { server = false, highlight = null, pcs = null } = {}) =>
+  renderToStaticMarkup(<RouterSvg view="dhcp" words={screen.drawing} topology={drawingTopology(topology, vendor, { server, pcs })} size={{ width: 600 }} highlight={highlight} />);
 
 /** The shared ruler with any props. */
 export const renderRuler = props => renderToStaticMarkup(<AddressRuler {...props} />);

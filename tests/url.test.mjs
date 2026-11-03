@@ -74,7 +74,8 @@ const canonical = {
   routing: ['#/routing?code=A1&syntax=cisco', '#/routing?code=A3b-0042&syntax=cisco', '#/routing?code=A8&syntax=routeros', '#/routing?code=A15-0007&syntax=routeros',
     '#/routing?view=fault&level=2&seed=77&syntax=cisco', '#/routing?view=fault&level=3&seed=4000&syntax=routeros'],
   dhcp: ['#/dhcp?ex=sides&seed=5&syntax=cisco', '#/dhcp?ex=sides&seed=6&other=1&syntax=routeros', '#/dhcp?ex=server&level=3&seed=42&other=1&syntax=routeros',
-    '#/dhcp?ex=server&level=1&seed=0&syntax=cisco', '#/dhcp?ex=nat&level=1&seed=99999&syntax=cisco', '#/dhcp?ex=nat&level=2&seed=10&other=1&n=3&syntax=cisco'],
+    '#/dhcp?ex=server&level=1&seed=0&syntax=cisco', '#/dhcp?ex=nat&level=1&seed=99999&syntax=cisco', '#/dhcp?ex=nat&level=2&seed=10&other=1&n=3&syntax=cisco',
+    '#/dhcp?ex=fault&level=1&seed=4&syntax=cisco', '#/dhcp?ex=fault&level=2&seed=77&syntax=routeros', '#/dhcp?ex=fault&level=3&seed=999999&other=1&syntax=cisco'],
   firewall: ['#/firewall?ex=predict&level=1&seed=1', '#/firewall?ex=predict&level=2&variant=drop-above&seed=999999', '#/firewall?ex=order&variant=all&seed=5', '#/firewall?ex=order&variant=input&seed=77'],
   vlan: ['#/vlan?ex=predict&shape=p2&level=1&seed=12&syntax=cisco', '#/vlan?ex=ports&task=3&seed=7&syntax=routeros', '#/vlan?ex=route&task=4&seed=3&syntax=routeros',
     '#/vlan?ex=route&task=2&seed=9&syntax=cisco', '#/vlan?ex=faults&net=transit&level=3&seed=12&syntax=cisco', '#/vlan?ex=faults&net=two-switch&level=1&seed=5&syntax=routeros'],
@@ -177,6 +178,8 @@ test('URL codecs: invalid values for each key fall back to the defaults', () => 
     ['#/vlan?ex=faults&level=0&net=nowhere&seed=0', s => s.places.vlan.faults.cisco.level === 1 && s.places.vlan.faults.cisco.seed >= 1],
     ['#/setup?deck=dr-2&seed=0', s => s.places.setup.deck === 'dr-1' && s.places.setup.seeds['dr-1'] >= 1],
     ['#/dhcp?ex=nat&level=3&seed=1000000&other=yes&n=-2', s => s.places.dhcp.nat.level === 1 && s.places.dhcp.nat.tasks[1].other === false && s.places.dhcp.nat.tasks[1].seed < 100000],
+    ['#/dhcp?ex=fault&level=4&seed=-3&other=2&n=5', s => s.places.dhcp.exercise === 'fault' && s.places.dhcp.fault.level === 1 && s.places.dhcp.fault.tasks[1].other === false
+      && s.places.dhcp.fault.tasks[1].seed < 100000 && s.places.dhcp.fault.tasks[1].n === undefined],
   ];
   for (const [hash, ok, why = ''] of cases) assert.ok(ok(open(hash).store), `${hash} ${why}`);
 });
@@ -324,4 +327,23 @@ test('URL: the other sections\' new and next seeds stay within their codecs\' ra
   const stuck = () => 0.9999999999;
   assert.equal(setupNextSeed(setupFirstSeed(stuck), stuck), 1000001);
   assert.ok(1000001 <= setupMax);
+});
+
+test('URL «ПК без мережі» (E4): ex=fault&level=N&seed=…; the other levels\' tasks are kept; a place remembered before E4 gets its slot', () => {
+  let store = open('#/dhcp?ex=fault&level=3&seed=42&other=1').store;
+  assert.deepEqual(store.places.dhcp.fault.tasks[3], { seed: 42, other: true });
+  const kept = store.places.dhcp.fault.tasks[1];
+  store = open('#/dhcp?ex=fault&level=2&seed=8', store).store;
+  assert.equal(store.places.dhcp.fault.level, 2);
+  assert.deepEqual(store.places.dhcp.fault.tasks[2], { seed: 8, other: false });
+  assert.deepEqual(store.places.dhcp.fault.tasks[3], { seed: 42, other: true }, 'level 3\'s task kept');
+  assert.deepEqual(store.places.dhcp.fault.tasks[1], kept);
+  assert.equal(encoded(store, 'dhcp'), '#/dhcp?ex=fault&level=2&seed=8&syntax=cisco');
+  // A remembered place without `fault` (as before E4): the link still builds the exercise's slot.
+  const old = storeReducer(initialStore(), { type: 'place', scope: 'dhcp', patch: { exercise: 'nat', sides: { seed: 1, other: false },
+    server: { level: 1, tasks: { 1: { seed: 2, other: false } } }, nat: { level: 1, tasks: { 1: { seed: 3, other: false } } } } });
+  const next = open('#/dhcp?ex=fault&level=2&seed=9', old).store;
+  assert.deepEqual(next.places.dhcp.fault.tasks[2], { seed: 9, other: false });
+  assert.equal(next.places.dhcp.fault.level, 2);
+  assert.deepEqual(next.places.dhcp.nat, old.places.dhcp.nat);
 });

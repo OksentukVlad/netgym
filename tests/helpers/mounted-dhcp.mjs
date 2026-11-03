@@ -16,6 +16,14 @@
 //   - E3: the website card's two choices, the replay (four captions, each
 //     outlining its address, the remembered pair), the LAN server only on
 //     its card; level 2 for both vendors (Cisco's inside step first);
+//   - E4: the failing PC's four rows and R1's lines from the start (never
+//     folded), a row tap that explains and outlines without grading, the
+//     repair form pre-filled from R1's configuration, rows that change only
+//     on «Перевірити» (an edit leaves the verdict «до змін»), a passing
+//     repair that locks the form and opens «Причина», the whole cause list in
+//     its order, a wrong cause marked, the right one finishing the task,
+//     «Далі →» on renumbered addresses; the exhausted pool with ПК2 drawn
+//     beside ПК1 and the reveal path;
 //   - the worked example closed on every exercise; no React warnings.
 import { installDom } from './mini-dom.mjs';
 
@@ -27,7 +35,7 @@ console.error = (...args) => warnings.push(args.map(String).join(' ').slice(0, 4
 console.warn = console.error;
 
 const h = await import('../../.test-bundles/harness/mounted-dhcp.mjs');
-const { act, sides, server, nat, createTopology, words, answerOf } = h;
+const { act, sides, server, nat, faults, createTopology, words, answerOf } = h;
 const results = [];
 const check = (name, ok, detail = '') => results.push({ name, ok: Boolean(ok), detail: typeof detail === 'string' ? detail : JSON.stringify(detail) });
 
@@ -300,6 +308,218 @@ scenario('E3 L2', m => {
   check('E3 L2 MikroTik: WAN membership given, three complete rules, no inside step', text(q('.ng-dh-card')).includes(words.natNotes.wanMembership) && all('.ng-dh-option').length === 3 && all('.ng-dh-command').every(el => text(el).startsWith('/ip firewall nat add chain=srcnat action=masquerade')));
   click(option('змінити відправника на WAN'));
   check('E3 L2 MikroTik: masquerade out of WAN: ✓ and the masquerade note', tone() === 'ok' && text(q('.ng-dh-after')) === words.natNotes.masquerade);
+});
+
+// ── E4 «ПК без мережі» ──
+
+/** Write a field's value through its control (the descriptor's type), as a learner does. */
+function setField(field, value) {
+  const box = q(`[data-field="${field.id}"]`);
+  const pickIn = (root, label) => click(all('[role="radio"]', root).find(el => text(el) === label));
+  if (field.type === 'boolean') {
+    const native = field.native === 'disabled';
+    return pickIn(box, native ? (value ? 'no' : 'yes') : (value ? words.screen.fault.yes : words.screen.fault.no));
+  }
+  if (field.type === 'select') return pickIn(box, value);
+  if (field.type === 'roles') {
+    for (const [iface, role] of Object.entries(value)) pickIn(q(`[aria-label="${words.screen.fault.roleOf(iface)}"]`, box), role);
+    return undefined;
+  }
+  if (field.type === 'intervals' || field.type === 'acl') {
+    const keys = field.type === 'acl' ? ['network', 'wildcard'] : ['from', 'to'];
+    while (all('.ng-dh-row-fields', box).length < value.length) click(all('.ng-dh-add', box)[0]);
+    while (all('.ng-dh-row-fields', box).length > value.length) click(all('.ng-dh-remove', box).at(-1));
+    value.forEach((row, i) => keys.forEach((key, k) => type(all('input', all('.ng-dh-row-fields', box)[i])[k], row[key])));
+    return undefined;
+  }
+  const input = q('input', box);
+  return type(input, field.type === 'prefix' ? `/${value}` : field.type === 'dns' ? [].concat(value).join(' ') : value ?? '');
+}
+const rowsNow = () => all('.ng-dh-probe').map(el => ({ id: el.getAttribute('data-row'), ok: el.className.includes('is-ok'), text: text(el) }));
+const placeFault = (m, level, seed, other = false) => act(() => m.store.dispatch({ type: 'place', scope: 'dhcp',
+  patch: { exercise: 'fault', fault: { ...placeOf(m).fault, level, tasks: { ...placeOf(m).fault.tasks, [level]: { seed, other } } } } }));
+
+scenario('E4 L1', m => {
+  click(radio('ПК без мережі'));
+  const { seed, other } = placeOf(m).fault.tasks[1];
+  const task = faults.createFault(1, 'cisco', seed, { otherAddresses: other });
+  const start = faults.evaluate(task.config, task);
+  const fw = words.fault, sw = words.screen.fault;
+  check('E4: the task names the failing PC; the provider\'s DNS; «Уся умова» folded', text(q('.ng-dh-fault-intro .ng-dh-task')) === task.task
+    && text(q('.ng-dh-fault-intro')).includes(words.labels.providerDns(task.providerDns)) && q('.ng-dh-fault-intro .ng-aside-q')?.getAttribute('aria-expanded') === 'false');
+  check('E4: «Перевірки» first, its action line, «Причина» locked', q('.ng-dh-step.is-current') && text(q('.ng-dh-step.is-current')).includes(sw.stages.checks)
+    && text(q('#ng-dh-action')) === fw.actions[0] && all('.ng-dh-step')[2].getAttribute('aria-disabled') === 'true');
+  check('E4: four rows, the logic\'s, in order, ✓/✗ with their values', rowsNow().map(r => `${r.id}:${r.ok}`).join('|') === start.rows.map(r => `${r.id}:${r.ok}`).join('|')
+    && start.rows.every((r, i) => rowsNow()[i].text.includes(r.label)), rowsNow());
+  check('E4: «Що показує R1» under the rows: the level\'s six lines, in the logic\'s order', all('.ng-dh-evidence-line').map(el => el.getAttribute('data-line')).join('|') === faults.evidence(task).map(l => l.id).join('|'));
+  check('E4: the worked example folded, no verdict', q('[data-worked-example] .ng-wex-toggle')?.getAttribute('aria-expanded') === 'false' && !q('[data-help-current][data-help-tone]'));
+  const failing = start.rows.find(r => !r.ok);
+  click(q(`.ng-dh-probe[data-row="${failing.id}"]`));
+  check('E4: a tap explains where the check stops, in the logic\'s words', text(q('.ng-dh-why')).includes(failing.explanation) && q(`.ng-dh-probe[data-row="${failing.id}"]`).getAttribute('aria-pressed') === 'true', text(q('.ng-dh-why')));
+  check('E4: …and outlines its place on the drawing, grading nothing', lit().length > 0 && !q('[data-help-current][data-help-tone]'), lit());
+  click(q(`.ng-dh-probe[data-row="${failing.id}"]`));
+  check('E4: a second tap clears it', !text(q('.ng-dh-why')) && lit().length === 0);
+  click(all('.ng-dh-step')[2]);
+  check('E4: the locked «Причина» does nothing', text(q('#ng-dh-action')) === fw.actions[0]);
+  click(button(sw.toRepair));
+  const fields = faults.repairFields(task);
+  check('E4: «Ремонт»: its action line, one form with the level\'s lines, pre-filled with R1\'s configuration', text(q('#ng-dh-action')) === fw.actions[1]
+    && all('[data-field]').map(el => el.getAttribute('data-field')).join('|') === fields.map(f => f.id).join('|')
+    && q('[data-field="gateway"] input').value === (task.config.dhcp.gateway ?? ''), all('[data-field]').map(el => el.getAttribute('data-field')));
+  check('E4: the rows stay in view under the panel in «Ремонт»', all('.ng-exercise-tools .ng-dh-probe').length === 4 && all('.ng-exercise-tools .ng-dh-evidence-line').length === 6);
+  click(q('.ng-help-check'));
+  const first = faults.checkRepair(task, task.config);
+  const failingRows = start.rows.filter(r => !r.ok);
+  check('E4: the given configuration fails probe-first: «Ще не працює: не проходять N із 4», the first failing row marked, no field', tone() === 'no'
+    && status().includes(`Ще не працює: ${failingRows.length === 1 ? 'не проходить' : 'не проходять'} ${failingRows.length} із 4 перевірок.`)
+    && q('.ng-dh-probe[data-evidence="current"]')?.getAttribute('data-row') === failingRows[0].id
+    && !q('.ng-dh-repair [data-evidence]') && !q('.ng-dh-repair [aria-invalid="true"]'), [status(), first.code]);
+  const before = rowsNow().map(r => r.text).join('|');
+  const ref = faults.referenceRepair(task);
+  const target = faults.repairFields(task, ref);
+  const changed = target.find(f => JSON.stringify(f.value) !== JSON.stringify(fields.find(g => g.id === f.id).value));
+  setField(changed, changed.value);
+  check('E4: an edit leaves the verdict «до змін» and the rows as checked', q('[data-help-stale]') !== null && rowsNow().map(r => r.text).join('|') === before);
+  for (const f of target) setField(f, f.value);
+  click(q('.ng-help-check'));
+  check('E4: the repair passes: ✓ (a part), the rows turn ✓ in place', tone() === 'ok' && q('[data-help-current]').getAttribute('data-help-scope') === 'part'
+    && status().includes(sw.repairOk) && rowsNow().every(r => r.ok) && text(q('.ng-dh-checks-state')) === sw.lastChecked, [status(), rowsNow()]);
+  check('E4: the form locks, the action line is committed, «Причина →» is next', all('.ng-dh-repair input').every(el => el.hasAttribute('readonly'))
+    && text(q('#ng-dh-action')) === words.actions.committed && text(q('.ng-help-continue')) === sw.toCause && all('.ng-dh-step')[2].getAttribute('aria-disabled') !== 'true');
+  click(q('.ng-help-continue'));
+  const causes = faults.causesForLevel(1);
+  check('E4: «Причина»: «Що було не так?» and the level\'s four causes in their order', text(q('#ng-dh-action')) === fw.actions[2]
+    && all('.ng-dh-causes .ng-dh-option').map(text).join('|') === causes.map(c => c.text).join('|') && q('.ng-dh-causes').getAttribute('aria-labelledby') === 'ng-dh-action');
+  const wrong = causes.find(c => c.id !== task.faultId);
+  click(option(wrong.text));
+  check('E4: a wrong cause: «Ще ні», marked ✗, the list still open', tone() === 'no' && option(wrong.text).className.includes('is-no') && !q('.ng-dh-causes[aria-readonly="true"]'));
+  click(option(fw.causes[task.faultId]));
+  check('E4: the right cause finishes the task: a task-scope ✓, locked, committed', tone() === 'ok' && q('[data-help-current]').getAttribute('data-help-scope') === 'task'
+    && q('.ng-dh-causes').getAttribute('aria-readonly') === 'true' && text(q('#ng-dh-action')) === words.actions.committed);
+  check('E4: the level shows its ✓', text(radio('Рівень 1')).includes('✓') || q('.ng-dh-levels .ng-done') !== null);
+  click(q('.ng-help-next'));
+  const next = placeOf(m).fault.tasks[1];
+  check('E4: «Далі →» gives the next seed on renumbered addresses, back at «Перевірки»', next.seed === seed + 1 && next.other === true
+    && text(q('#ng-dh-action')) === fw.actions[0] && !q('[data-help-current][data-help-tone]'), next);
+});
+
+scenario('E4 L2 exhausted', m => {
+  click(radio('ПК без мережі')); click(radio('MikroTik'));
+  let seed = 0;
+  while (faults.createFault(2, 'mikrotik', seed).faultId !== 'exhausted') seed++;
+  placeFault(m, 2, seed);
+  const task = faults.createFault(2, 'mikrotik', seed);
+  check('E4 exhausted: the task names ПК2', text(q('.ng-dh-fault-intro .ng-dh-task')) === task.task && task.task.startsWith('ПК2'));
+  check('E4 exhausted: ПК1 and ПК2 on the drawing, ПК2 at 169.254…', all('.ng-fw-box-name').map(text).includes('ПК1') && all('.ng-fw-box-name').map(text).includes('ПК2')
+    && all('.ng-fw-box-ip').map(text).some(t => t.startsWith('169.254.')));
+  check('E4 L2: nine lines, the leases full, R1\'s own ping', all('.ng-dh-evidence-line').length === 9 && text(q('[data-line="leases"]')).includes('ПК3')
+    && text(q('[data-line="router"]')).includes(words.fault.evidence.router(task.remoteIp)));
+  check('E4 L2: every row fails for ПК2 (no lease)', rowsNow().every(r => !r.ok));
+  click(q('.ng-dh-probe[data-row="address"]'));
+  check('E4: 169.254 is explained as «no lease», and ПК2\'s label outlined', text(q('.ng-dh-why')).includes(words.fault.linkLocal) && lit().some(f => f.split(' ').includes('label:fw-label-pc2-address')), lit());
+  click(button(words.screen.fault.toRepair));
+  check('E4 L2: the form in two groups, DHCP then «WAN і NAT»', all('.ng-dh-fgroup').map(el => el.getAttribute('aria-label')).join('|') === 'DHCP-сервер|WAN і NAT');
+  click(q('.ng-help-reveal-link'));
+  check('E4 reveal: the form holds the reference, read-only; the rows turn ✓; the cause named', all('.ng-dh-repair input').every(el => el.hasAttribute('readonly'))
+    && rowsNow().every(r => r.ok) && status().includes(words.fault.causes.exhausted) && q('.ng-dh-shown') !== null, status());
+  check('E4 reveal: no «Перевірити»; «Далі →» primary', !q('.ng-help-check') && q('.ng-help-next') && !q('.ng-help-next').className.includes('is-skip'));
+  click(all('.ng-dh-step')[2]);
+  check('E4 reveal: «Причина» shows the right cause marked, the list locked, all seven in order', all('.ng-dh-causes .ng-dh-option').length === 7
+    && text(q('.ng-dh-option.is-ok')).startsWith(words.fault.causes.exhausted) && q('.ng-dh-causes').getAttribute('aria-readonly') === 'true');
+  // The worked example: its own network.
+  click(q('[data-worked-example] .ng-wex-toggle'));
+  check('E4 example: the DNS option before and after, on 198.51.100.x', all('[data-worked-example] .ng-wex-value').map(text).some(t => /^198\.51\.100\./.test(t))
+    && !text(q('[data-worked-example]')).includes('192.168.'));
+});
+
+// ── E4 repair feedback (screen repair v1): probe-first, a learner's own edit, all four passing but rejected ──
+const seedFor = (level, vendor, ok) => { let s = 0; while (!ok(faults.createFault(level, vendor, s))) s++; return s; };
+const repairTo = (task, config) => { for (const f of faults.repairFields(task, config)) setField(f, f.value); };
+
+scenario('E4 missing gateway', m => {
+  click(radio('ПК без мережі'));
+  const seed = seedFor(1, 'cisco', t => t.faultId === 'gateway' && t.config.dhcp.gateway === '');
+  placeFault(m, 1, seed);
+  const task = faults.createFault(1, 'cisco', seed);
+  check('E4 gateway: the task shows what the repair must keep (clients, the printer\'s address)',
+    text(q('.ng-dh-needs')) === words.screen.fault.needs(task.clients, task.statics) && text(q('.ng-dh-needs')).includes(task.statics[0].address));
+  check('E4 gateway: the row reads «Шлюз ПК і пінг до нього» with «немає»', text(q('.ng-dh-probe[data-row="gateway"]')).includes('Шлюз ПК і пінг до нього')
+    && text(q('.ng-dh-probe[data-row="gateway"] .ng-dh-probe-value')) === 'немає');
+  click(button(words.screen.fault.toRepair));
+  click(q('.ng-help-check'));
+  check('E4 gateway: a missing option is a broken configuration, not a syntax error: the three failing checks, no IPv4 message', tone() === 'no'
+    && status().includes('Ще не працює: не проходять 3 із 4 перевірок.') && !status().includes(words.findings.syntax), status());
+  check('E4 gateway: the gateway row is the evidence; the untouched gateway field is not marked', q('.ng-dh-probe[data-evidence="current"]')?.getAttribute('data-row') === 'gateway'
+    && !q('[data-field="gateway"] .is-invalid') && !q('[data-field="gateway"][data-evidence]'));
+  type(q('[data-field="gateway"] input'), '192.168.88');
+  click(q('.ng-help-check'));
+  check('E4 gateway: a malformed edit of the learner\'s own keeps its specific message, on that field', tone() === 'info' && status().includes(words.findings.syntax)
+    && q('[data-field="gateway"]').getAttribute('data-evidence') === 'current' && q('[data-field="gateway"] .is-invalid'), status());
+  type(q('[data-field="gateway"] input'), task.statics[0].address);
+  click(q('.ng-help-check'));
+  check('E4 gateway: a wrong gateway the learner typed: E2\'s finding for that field', status().includes(words.findings.gateway(task.router)), status());
+});
+
+scenario('E4 all four pass, rejected', m => {
+  click(radio('ПК без мережі')); click(radio('Рівень 2'));
+  const seed = seedFor(2, 'cisco', t => !['exhausted'].includes(t.faultId));
+  placeFault(m, 2, seed);
+  const task = faults.createFault(2, 'cisco', seed);
+  const base = task.router.split('.').slice(0, 3).join('.');
+  click(button(words.screen.fault.toRepair));
+  const small = faults.referenceRepair(task);
+  small.dhcp.ranges = [{ from: `${base}.50`, to: `${base}.52` }];
+  repairTo(task, small);
+  click(q('.ng-help-check'));
+  const capacity = words.findings.capacity(3, task.clients);
+  check('E4 capacity: all four checks pass, and the verdict says the range is still too small', rowsNow().every(r => r.ok) && tone() === 'no'
+    && status().includes(`Перевірки проходять, але ${capacity.charAt(0).toLowerCase()}${capacity.slice(1)}`)
+    && q('[data-field="ranges"]').getAttribute('data-evidence') === 'current', [status(), rowsNow()]);
+  const broad = faults.referenceRepair(task);
+  broad.nat.acl = [{ network: '0.0.0.0', wildcard: '255.255.255.255' }];
+  repairTo(task, broad);
+  click(q('.ng-help-check'));
+  check('E4 safety: all four pass, the verdict says the NAT ACL is too broad, at its field', rowsNow().every(r => r.ok) && tone() === 'no'
+    && status().includes(`Перевірки проходять, але ${words.fault.safety.charAt(0).toLowerCase()}`) && q('[data-field="acl"]').getAttribute('data-evidence') === 'current', status());
+});
+
+scenario('E4 equivalent repair, reveal after a pass', m => {
+  click(radio('ПК без мережі'));
+  const { seed, other } = placeOf(m).fault.tasks[1];
+  const task = faults.createFault(1, 'cisco', seed, { otherAddresses: other });
+  const base = task.router.split('.').slice(0, 3).join('.');
+  click(button(words.screen.fault.toRepair));
+  const mine = faults.referenceRepair(task);
+  mine.dhcp.ranges = [{ from: `${base}.120`, to: `${base}.200` }];
+  mine.dhcp.dns = [task.providerDns[1]];
+  repairTo(task, mine);
+  click(q('.ng-help-check'));
+  check('E4 equivalent: another range and the second provider DNS pass', tone() === 'ok' && rowsNow().every(r => r.ok), status());
+  check('E4 after a pass «Ремонт» offers only «Причина →» (no reveal)', !q('.ng-help-reveal-link') && text(q('.ng-help-continue')) === words.screen.fault.toCause);
+  click(q('.ng-help-continue'));
+  check('E4 «Причина» shows the rows as they were at the start', text(q('.ng-dh-checks-state')) === words.screen.fault.atStart && rowsNow().some(r => !r.ok));
+  click(q('.ng-help-reveal-link'));
+  check('E4 reveal after a pass: the step stays «Причина», the right cause marked, the line named', text(q('.ng-dh-step.is-current')).includes('Причина')
+    && text(q('.ng-dh-option.is-ok')).startsWith(words.fault.causes[task.faultId]) && status().includes(`Причина: ${words.fault.causes[task.faultId]}`)
+    && status().includes('Рядок R1:') && !status().includes('Відповідь вписано'), status());
+  click(all('.ng-dh-step')[1]);
+  check('E4 reveal after a pass keeps the learner\'s own repair', all('input', q('[data-field="ranges"]'))[0].value === `${base}.120`
+    && q('[data-field="dns"] input').value === task.providerDns[1]);
+});
+
+scenario('E4 wrong cause, locked step', m => {
+  click(radio('ПК без мережі'));
+  click(all('.ng-dh-step')[2]);
+  check('E4 a tap on the locked «Причина» says why under the steps', text(q('#ng-dh-locked')) === words.screen.fault.causeLocked
+    && all('.ng-dh-step')[2].getAttribute('aria-describedby') === 'ng-dh-locked');
+  const { seed, other } = placeOf(m).fault.tasks[1];
+  const task = faults.createFault(1, 'cisco', seed, { otherAddresses: other });
+  click(button(words.screen.fault.toRepair));
+  check('E4 the reason goes with the step change', !q('#ng-dh-locked'));
+  repairTo(task, faults.referenceRepair(task));
+  click(q('.ng-help-check')); click(q('.ng-help-continue'));
+  click(option(faults.causesForLevel(1).find(c => c.id !== task.faultId).text));
+  check('E4 a wrong cause: «Ні. Причина — у рядку R1, який довелося змінити.»', status().includes('Ні. Причина — у рядку R1, який довелося змінити.'), status());
 });
 
 check('no React warnings', warnings.length === 0, warnings.slice(0, 3));

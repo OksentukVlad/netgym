@@ -13,10 +13,15 @@ export const portsOf = (topology, vendor) => topology.ports[vendor === 'cisco' ?
 
 /**
  * The drawing's topology for a DHCP topology. `server`: E3's LAN-server card
- * (spec v2.1: the server shows on that card only).
+ * (spec v2.1: the server shows on that card only). `pcs` (E4): the PCs as
+ * the last check left them, [{ id, name, address }]: the first in the PC's
+ * place, a second (the exhausted pool's ПК2) in the server's.
  */
-export function drawingTopology(t, vendor, { server = false } = {}) {
+export function drawingTopology(t, vendor, { server = false, pcs = null } = {}) {
   const ports = portsOf(t, vendor);
+  const lan = pcs
+    ? pcs.slice(0, 2).map((pc, i) => ({ id: pc.id, role: i ? 'web-server' : 'pc', address: pc.address }))
+    : [{ id: 'pc', role: 'pc', address: t.pc }, ...(server ? [{ id: 'server', role: 'web-server', address: t.server }] : [])];
   return {
     router: {
       interfaces: [{ id: ports.wan, address: t.wan, prefix: t.wanPrefix, showPrefix: true }, { id: ports.lan, address: t.router }],
@@ -24,22 +29,18 @@ export function drawingTopology(t, vendor, { server = false } = {}) {
       lists: { WAN: ['ether1'], LAN: ['bridge'] },
       portNames: { ether1: ports.wan, bridge: ports.lan },
     },
-    hosts: [
-      { id: 'pc', role: 'pc', address: t.pc },
-      { id: 'internet', role: 'internet', address: t.website },
-      ...(server ? [{ id: 'server', role: 'web-server', address: t.server }] : []),
-    ],
+    hosts: [lan[0], { id: 'internet', role: 'internet', address: t.website }, ...lan.slice(1)],
   };
 }
 
 /** «Текстом»: what the drawing shows, in words (TextEquivalent sections). */
-export function textSections(t, vendor, { server = false } = {}) {
+export function textSections(t, vendor, { server = false, pcs = null } = {}) {
   const ports = portsOf(t, vendor), w = screen.text;
   return [{
     heading: w.heading,
     items: [
-      w.pc(t.pc, ports.lan),
-      ...(server ? [w.server(t.server, ports.lan)] : []),
+      ...(pcs ? pcs.slice(0, 2).map(pc => screen.fault.textPc(pc.name, pc.address, ports.lan)) : [w.pc(t.pc, ports.lan)]),
+      ...(server && !pcs ? [w.server(t.server, ports.lan)] : []),
       w.lan(ports.lan, t.router, t.prefix),
       w.wan(ports.wan, t.wan, t.wanPrefix),
       w.isp(t.ispGateway),

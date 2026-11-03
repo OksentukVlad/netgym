@@ -1,10 +1,11 @@
 // «DHCP і NAT»'s URL codec (spec URL v2.1; the contract is in ui/url-params.js).
 //
-//   ex     sides | server | nat            → dhcp.exercise          (default sides)
-//   level  server 1–3, nat 1–2             → dhcp.server.level / dhcp.nat.level (default 1)
+//   ex     sides | server | nat | fault    → dhcp.exercise          (default sides)
+//   level  server 1–3, nat 1–2, fault 1–3  → dhcp.server.level / dhcp.nat.level / dhcp.fault.level (default 1)
 //   seed   0–999 999                       → that exercise's (and level's) current task:
 //                                            dhcp.sides.seed, dhcp.server.tasks[level].seed,
-//                                            dhcp.nat.tasks[level].seed (default: a new seed)
+//                                            dhcp.nat.tasks[level].seed, dhcp.fault.tasks[level].seed
+//                                            (default: a new seed)
 //   other  1                               → the same task's `other` (renumbered addresses; default false)
 //   n      nat level 2 only, 0–999 999     → dhcp.nat.tasks[2].n (its round count: Cisco's
 //                                            two-LAN task on odd rounds; default 0)
@@ -17,7 +18,7 @@ import { EXERCISES, firstPlace } from './DhcpScreen.jsx';
 import { MAX_SEED, newSeed } from './seeds.js';
 
 export { MAX_SEED };
-const LEVELS = { server: 3, nat: 2 };
+const LEVELS = { server: 3, nat: 2, fault: 3 };
 
 const seedOf = value => (Number.isInteger(value) && value >= 0 && value <= MAX_SEED ? value : null);
 
@@ -33,7 +34,8 @@ export const url = Object.freeze({
     if (exercise === 'sides') return { dhcp: { ...base, exercise, sides: { seed, other } } };
     const level = int(p.level, 1, LEVELS[exercise]) ?? 1;
     const task = exercise === 'nat' && level === 2 ? { seed, other, n: int(p.n, 0, MAX_SEED) ?? 0 } : { seed, other };
-    const slot = base[exercise];
+    // A place remembered before E4 existed has no `fault` slot: the first place's.
+    const slot = base[exercise] ?? firstPlace(random)[exercise];
     return { dhcp: { ...base, exercise, [exercise]: { ...slot, level, tasks: { ...slot.tasks, [level]: task } } } };
   },
   encode({ places }) {

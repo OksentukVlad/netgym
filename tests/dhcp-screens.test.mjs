@@ -11,7 +11,8 @@ import assert from 'node:assert/strict';
 import { createTopology } from '../src/sections/dhcp/logic/scenario.js';
 import * as server from '../src/sections/dhcp/logic/server.js';
 import * as nat from '../src/sections/dhcp/logic/nat.js';
-import { actions, labels, modes, screen } from '../src/sections/dhcp/uk.js';
+import * as faults from '../src/sections/dhcp/logic/faults.js';
+import { actions, fault, labels, modes, screen } from '../src/sections/dhcp/uk.js';
 
 const h = await import('../.test-bundles/harness/dhcp.mjs');
 const { tooLong } = h;
@@ -131,17 +132,102 @@ test('E2 and E3: every purpose is one line (48 characters at most)', () => {
 });
 
 test('first views: each exercise\'s heading, its action line with the worked example folded right under it, no verdict and no reference', () => {
-  for (const exercise of ['sides', 'server', 'nat']) for (const syntax of ['cisco', 'routeros']) {
+  for (const exercise of ['sides', 'server', 'nat', 'fault']) for (const syntax of ['cisco', 'routeros']) {
     let state = h.initialStore({ syntax });
     state = h.storeReducer(state, { type: 'place', scope: 'dhcp', patch: { ...h.firstPlace(), exercise } });
     const html = h.renderSection(state);
     assert.match(html, new RegExp(`<h1[^>]*>${modes[exercise]}</h1>`));
-    const action = exercise === 'sides' ? actions.sides : exercise === 'server' ? actions.range : null;
+    const action = exercise === 'sides' ? actions.sides : exercise === 'server' ? actions.range : exercise === 'fault' ? fault.actions[0] : null;
     const line = html.match(/<p id="ng-dh-action" class="ng-action-line" data-action-line="">([^<]*)<\/p>(<div[^>]*data-worked-example)/);
     assert.ok(line, `${exercise}: the action line, then the worked example`);
     if (action) assert.equal(line[1], action);
     assert.match(html, /aria-expanded="false"[^>]*>.*?Приклад/s, `${exercise}: the example folded`);
     assert.doesNotMatch(html, /data-help-current/, `${exercise}: no verdict on the first view`);
     assert.doesNotMatch(html, /ng-dh-client|ng-dh-native-lines/, `${exercise}: nothing after a pass`);
+  }
+});
+
+// ── E4 «ПК без мережі» ──
+
+const faultState = (level, syntax, seed, other = false) => {
+  let state = h.initialStore({ syntax });
+  const place = h.firstPlace();
+  return h.storeReducer(state, { type: 'place', scope: 'dhcp', patch: { ...place, exercise: 'fault', fault: { level, tasks: { ...place.fault.tasks, [level]: { seed, other } } } } });
+};
+const strip = html => html.replace(/<[^>]+>/g, ' ').replace(/&#x27;|&#39;/g, '\'').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&').replace(/\s+/g, ' ');
+
+test('E4 first view: the task, the provider\'s DNS, the stepper (Причина locked), the four rows and every line R1 shows, for each level and vendor', () => {
+  for (const level of [1, 2, 3]) for (const syntax of ['cisco', 'routeros']) for (const seed of [0, 7, 31]) {
+    const html = h.renderSection(faultState(level, syntax, seed));
+    const task = faults.createFault(level, syntax, seed);
+    const start = faults.evaluate(task.config, task);
+    const text = strip(html);
+    assert.ok(text.includes(task.task) && text.includes(labels.providerDns(task.providerDns)), `L${level} ${syntax} ${seed}: the task and the DNS`);
+    assert.equal([...html.matchAll(/class="ng-dh-step[" ]/g)].length, 3);
+    assert.match(html, /aria-disabled="true"[^>]*>.{0,80}Причина/s, 'Причина locked before a passing repair');
+    assert.equal([...html.matchAll(/class="ng-dh-probe /g)].length, 4, 'four rows');
+    for (const row of start.rows) assert.ok(text.includes(row.label), row.label);
+    assert.equal([...html.matchAll(/class="ng-dh-evidence-line"/g)].length, level === 1 ? 6 : 9, 'the level\'s lines, none filtered');
+    assert.ok(!/<details[^>]*>(?:(?!<\/details>).)*ng-dh-evidence/s.test(html), 'R1\'s lines are never folded');
+    // Nothing names the fault before the reveal: no cause text, no fault id, no reference.
+    for (const c of faults.causesForLevel(level)) assert.ok(!text.includes(c.text), `no cause on the first view: ${c.id}`);
+    // The rows', lines' and fields' own ids (gateway, dns) aside, no attribute carries a cause id.
+    const attrs = html.replace(/ data-(?:row|line|field)="[^"]*"/g, '');
+    for (const c of faults.causesForLevel(3)) assert.ok(!attrs.includes(`="${c.id}"`), `no attribute names ${c.id}`);
+    assert.doesNotMatch(html, /data-help-current/);
+  }
+});
+
+test('E4 rows and drawing: every row\'s highlight is a fact the drawing carries; the PCs are drawn at their evaluated addresses (ПК2 when the pool is exhausted)', () => {
+  let exhausted = 0;
+  for (let seed = 0; seed < 60; seed++) for (const level of [1, 2, 3]) for (const vendor of ['cisco', 'mikrotik']) {
+    const task = faults.createFault(level, vendor, seed, { otherAddresses: seed % 2 === 1 });
+    const result = faults.evaluate(task.config, task);
+    const pcs = h.drawnPcs(task, task.config, result);
+    assert.deepEqual(pcs.map(pc => pc.name), task.pcs.map(pc => pc.name));
+    assert.equal(pcs.find(pc => pc.id === task.failingPc).address, result.lease.address, 'the failing PC at its lease (or 169.254)');
+    if (task.pcs.length === 2) exhausted++;
+    const fixed = faults.checkRepair(task, faults.referenceRepair(task));
+    for (const rows of [result.rows, fixed.rows]) for (const row of rows) {
+      const hl = h.probeHighlight(row, task);
+      const html = h.renderDrawing(task.topology, vendor, { pcs, highlight: hl });
+      assert.match(html, /data-highlight=""/, `seed ${seed} L${level} ${vendor} ${row.id}/${row.stop}: ${JSON.stringify(hl)} outlines a label`);
+    }
+    assert.equal(h.rowValue(result.rows[2]), null, 'the 8.8.8.8 ping says its address in its label');
+    assert.ok(h.rowValue(result.rows[3]).startsWith('DNS: '));
+  }
+  assert.ok(exhausted > 0, 'some tasks have two PCs');
+});
+
+test('E4 form helpers: a path write leaves the rest of the configuration shared; masks as /n or dotted; fields grouped DHCP then WAN', () => {
+  const task = faults.createFault(2, 'cisco', 3);
+  const next = h.setAt(task.config, ['dhcp', 'ranges', 0, 'to'], '192.168.88.150');
+  assert.equal(next.dhcp.ranges[0].to, '192.168.88.150');
+  assert.equal(task.config.dhcp.ranges[0].to !== '192.168.88.150', true, 'the given configuration is untouched');
+  assert.equal(next.nat, task.config.nat, 'other branches shared');
+  assert.ok(Array.isArray(next.dhcp.ranges));
+  assert.equal(h.prefixValue('/24'), 24); assert.equal(h.prefixValue('255.255.255.0'), 24); assert.equal(h.prefixValue('26'), 26);
+  assert.equal(h.prefixValue('/33'), '/33'); assert.equal(h.prefixValue('255.0.255.0'), '255.0.255.0');
+  assert.equal(h.prefixText(24), '/24'); assert.equal(h.prefixText('/2'), '/2');
+  assert.equal(h.dnsText(['203.0.113.53', '203.0.113.54']), '203.0.113.53 203.0.113.54'); assert.equal(h.dnsText('1.1.1.1 '), '1.1.1.1 ');
+  for (const level of [1, 2, 3]) for (const vendor of ['cisco', 'mikrotik']) {
+    const groups = h.groupsOf(faults.repairFields(faults.createFault(level, vendor, 1)));
+    assert.deepEqual(groups.map(g => g.group), level === 1 ? ['dhcp'] : ['dhcp', 'wan']);
+  }
+  // The reference written through the form's paths is the reference.
+  for (const level of [1, 2, 3]) for (const vendor of ['cisco', 'mikrotik']) for (let seed = 0; seed < 20; seed++) {
+    const t = faults.createFault(level, vendor, seed), ref = faults.referenceRepair(t);
+    const filled = faults.repairFields(t, ref).reduce((config, f) => h.setAt(config, f.path, f.value), t.config);
+    assert.equal(faults.checkRepair(t, filled).ok, true, `L${level} ${vendor} ${seed}`);
+  }
+});
+
+test('E4 worked example: its own network only (192.0.2.0/24, 198.51.100.0/24), the DNS option before and after and the checks', () => {
+  for (const level of [1, 2, 3]) for (const vendor of ['cisco', 'mikrotik']) {
+    const rows = h.exampleRows(faults.faultExample({ level, vendor }));
+    assert.deepEqual(rows.map(r => r[0]), [fault.fields.dns, screen.fault.exampleChecks]);
+    assert.equal(rows[0][1], fault.none);
+    assert.match(rows[0][2], /^198\.51\.100\./);
+    assert.deepEqual(rows[1].slice(1), ['3 з 4 ✓', '4 з 4 ✓']);
   }
 });
