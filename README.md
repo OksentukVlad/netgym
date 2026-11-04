@@ -37,12 +37,9 @@ opens that section, exercise, level, task and vendor, and Back and Forward
 move between the start screen and the sections you opened.
 
 **A refresh keeps** the section, the exercise, its level, the task (its seed
-or share code) and the vendor (Cisco or MikroTik). **A refresh clears** your
-answers and drafts, the hints you opened, ✓ marks, «Показати відповідь», and
-whatever you typed in the IP calculator: those stay in the page's memory
-only, so after a refresh the same task starts again empty. This is on
-purpose, not a bug. The theme and the routing mode («Із готовими рядками»)
-are settings, not places, and are not in the address either.
+or share code) and the vendor (Cisco or MikroTik): those are in the address.
+Your work is kept separately, on the device (next section). The Windows app
+keeps it only until it closes.
 
 A link's vendor becomes the vendor for the whole session. A link with
 values NetGym doesn't know (`#/dhcp?ex=zzz&level=99`) opens the section at
@@ -52,12 +49,53 @@ reaches the start screen. The Windows app runs the same code: it has no
 address bar or refresh, and «←» and the mouse back button work as before.
 Each section's keys are listed in its `src/sections/<id>/screens/url.js`.
 
+## What is saved, and where
+
+The web version keeps your progress in this browser's `localStorage`, on this
+device only. Nothing leaves the browser: there are no accounts and no sync,
+and another browser or phone starts empty.
+
+- **Saved:** answers, typed text not yet checked, checks and verdicts, hints
+  used, reveals and ✓ marks, per task; the theme, the vendor, the routing mode
+  and the input mode; where each section was, so it opens at your last task.
+- **What comes back:** the same screen, including a wrong verdict. A task you
+  revealed comes back revealed and earns nothing; a ✓ earned before the reveal
+  stays. Folds and open menus are not saved.
+- **The first view:** the plain address still opens the start screen. A link
+  wins over what's saved: it opens its own task, and a link without a vendor
+  keeps yours.
+- **Limits:** about 1 MB. Past that, unfinished tasks you touched longest ago
+  go first, then finished tasks shrink to their ✓ (at most 5,000 kept). The
+  task you're on is spared until then; it goes only if that still isn't
+  enough, and after it the oldest ✓. A checked VLAN task can take up to
+  200 KB, so only a handful of those are kept whole. Private mode or a full
+  storage means no saving, silently; the app works as it would without it.
+- **When:** about half a second after a change, and when the page is hidden
+  or closed. A browser that kills a tab without warning can lose the last
+  half second.
+- **«Почати спочатку»:** at the bottom of the start screen, once there is
+  something to clear. After a confirmation it erases answers, marks and places
+  on this device, in every open tab; settings stay.
+- **If a section fails to open:** it says so in one line, with a way back to
+  the sections and, on the web, «Почати спочатку». The bar above stays usable.
+- **Windows app:** saves nothing. Its storage in WebView2 is a separate
+  decision; if it ever saves, the clear control moves with it.
+
+The keys are `netgym.v1` (the data) and `netgym.gen` (the reset generation).
+A saved task comes back only if its identity still matches the current bank
+revision, record and generator version and its contents pass its section's
+check (`src/sections/<id>/screens/saved.js`). Anything else is dropped alone
+and that task starts fresh. Change `VERSION` and `KEY` in `src/app/saved.js`
+whenever what's saved changes meaning. A bumped generator version, bank
+revision or record version already retires its saved tasks by itself.
+
 ## Layout
 
 - `src/targets/<id>.js`: one manifest per build (`netgym`, and `routing` for
   routing alone). `tools/targets.tsv` maps each target to its `.exe` name and
   window title.
-- `src/app/`: the shell (start screen, top bar, in-memory navigation), the
+- `src/app/`: the shell (start screen, top bar, in-memory navigation), saving
+  (`saved.js`, web only), the
   app store and its provider.
 - `src/ui/`: generic components, design tokens, `useExercise`, session state.
 - `src/engine/`: pure logic (IP maths, forwarding, vendor syntax, VLANs,

@@ -64,6 +64,8 @@ const useIsoLayoutEffect = typeof window === 'undefined' ? useEffect : useLayout
 const lastOctet = ip => String(ip).split('/')[0].split('.').pop();
 /** The frame's padding (routing.css .ng-dg-frame), kept clear of the drawing. */
 const FRAME_PAD = 8;
+/** Round 8: a phone's short overview (`preview`): the whole drawing in a 190 px frame, as the pannable preview's. */
+const PREVIEW_HEIGHT = 190 - 2 * FRAME_PAD;
 /** Ctrl + wheel: zoom factor per wheel pixel (a 100 px notch ≈ one «+» step). */
 const WHEEL_ZOOM = 0.0023;
 
@@ -121,7 +123,7 @@ function drawingOrigin(frame, svg) {
 /**
  * @param {{ topo: object, activeRouter: string|null, setActiveRouter: Function,
  *   fitHeight?: boolean, zoom?: undefined|'all'|number, onZoom?: Function, viewKey?: string,
- *   tools?: any, overlays?: any, covered?: boolean, underlay?: any, overlay?: any, fit?: boolean, children?: any,
+ *   tools?: any, overlays?: any, covered?: boolean, underlay?: any, overlay?: any, fit?: boolean, children?: any, preview?: boolean,
  *   highlight?: { kind: 'address'|'port', value: string }|null }} props
  * `highlight` (round 5, R3): outlines the labels showing that fact (an
  * address or network on a link or an endpoint, a port name); labels only.
@@ -132,7 +134,7 @@ function drawingOrigin(frame, svg) {
  */
 const TopologyMap = forwardRef(function TopologyMap({
   topo, activeRouter, setActiveRouter, fitHeight = true, zoom, onZoom = () => {}, viewKey,
-  tools = null, overlays = null, covered = false, underlay = null, overlay = null, fit = false, children, highlight = null,
+  tools = null, overlays = null, covered = false, underlay = null, overlay = null, fit = false, children, highlight = null, preview = false,
 }, ref) {
   const routerNames = Object.keys(topo.routers);
   // One router: no router row (nothing to choose); the children go to the tool row.
@@ -145,7 +147,7 @@ const TopologyMap = forwardRef(function TopologyMap({
   const frame = useFrameSize(frameRef);
   const pan = usePan(frameRef);
   const vb = geo.viewBox;
-  const inner = frame && frame.w > 0 ? { width: frame.w - 2 * FRAME_PAD, height: fitHeight ? frame.h - 2 * FRAME_PAD : Infinity } : null;
+  const inner = frame && frame.w > 0 ? { width: frame.w - 2 * FRAME_PAD, height: fitHeight ? frame.h - 2 * FRAME_PAD : preview ? PREVIEW_HEIGHT : Infinity } : null;
   // Repair v1 (Fable 1): a drawing that doesn't fit its frame at 12 px text starts as fitted as it can
   // while every address label (a link's network and ends, an endpoint's address) keeps 12 px; the
   // prefixes and port names may go smaller, and the zoom bar (shown then) brings 12 px back.

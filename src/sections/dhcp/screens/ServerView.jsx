@@ -49,7 +49,7 @@ export const ASIDES = 'dhcp.server';
 
 /** The exercise for useExercise (logic/server.js; the reference only on reveal). */
 export const serverExercise = {
-  id: server.id, version: server.version,
+  id: server.id, version: server.version, generatorVersion: server.generatorVersion,
   create: (_, { seed, level, vendor, other }) => server.generateScenario({ seed, level, vendor, otherAddresses: other }),
   check: (task, answer) => server.check(task, answer),
   solution: task => server.referenceAnswer(task),

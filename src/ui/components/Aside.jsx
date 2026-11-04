@@ -8,7 +8,7 @@
 // legends. A given fact, a requirement or an assumption the decision needs
 // stays visible on the screen (specs R, F, S name each screen's asides).
 //
-// State, in the store's places (in memory): `places[screen].asides[id]` is the
+// State, in the store's places: `places[screen].asides[id]` is the
 // learner's explicit choice (true open, false folded); `places[screen].started`
 // is set by useAsideFold's `fold()` on the first check or «Далі». Open =
 // the explicit choice, else not started (round 6: and not a phone, where

@@ -18,7 +18,7 @@
 // Cisco's worked example is the whole configuration, not the ACL alone.
 import { useEffect, useMemo, useRef } from 'react';
 import { bringIntoView } from '../../../ui/components/HelpPanel.jsx';
-import { checkCard, checkL2, createL2, createRound, id as natId, replay as replayOf, version as natVersion } from '../logic/nat.js';
+import { checkCard, checkL2, createL2, createRound, generatorVersion as natGenerator, id as natId, replay as replayOf, version as natVersion } from '../logic/nat.js';
 import { natExample } from '../logic/examples.js';
 import { useExercise } from '../../../ui/useExercise.js';
 import { useStore } from '../../../ui/useStore.js';
@@ -35,13 +35,13 @@ import { nextSeed } from './seeds.js';
 
 /** The exercises for useExercise: level 1's round, level 2's task. */
 export const natRound = {
-  id: natId, version: natVersion,
+  id: natId, version: natVersion, generatorVersion: natGenerator,
   create: (_, { seed, vendor, other }) => ({ level: 1, cards: createRound(seed, { vendor, otherAddresses: other }) }),
   check: () => ({ ok: false, complete: false }),
   solution: () => null,
 };
 export const natRules = {
-  id: `${natId}-l2`, version: natVersion,
+  id: `${natId}-l2`, version: natVersion, generatorVersion: natGenerator,
   create: (_, { seed, vendor, other, twoLans }) => ({ level: 2, ...createL2(seed, { vendor, otherAddresses: other, twoLans }) }),
   check: () => ({ ok: false, complete: false }),
   solution: () => null,

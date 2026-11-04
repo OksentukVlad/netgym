@@ -41,7 +41,7 @@ test('web build: with the web flag the start screen shows the note and links the
     const html = h.renderStart();
     assert.ok(html.includes(`role="note">${uk.webNotice.replace(/'/g, '&#x27;')}</p>`), html.slice(0, 600));
     assert.ok(html.includes(`<a href="${uk.noticesHref}">${uk.noticesLink}</a>`));
-    assert.equal(uk.webNotice, 'Перегляд у браузері: розраховано на комп\'ютер; на телефоні поки незручно.');
+    assert.equal(uk.webNotice, 'На телефоні працює; схеми зручніше дивитися на весь екран.');
   });
 });
 

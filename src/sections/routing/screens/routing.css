@@ -1612,4 +1612,32 @@ button.ng-rt-checkline-body:hover,
   .ng-rt .ng-dg-frame.is-pan:not(.is-fit) {
     max-height: 190px;
   }
+
+  /* Round 8: the page shows no zoom bar on a phone, so no row is held for it (the dialog keeps its row). */
+  .ng-dx:not(.is-open) .ng-dg-tools:not(:has(> :not(.ng-dg-zoom))) {
+    display: none;
+  }
+
+  /* Round 8: a task with «Уся умова»: «Розгорнути схему» and «Текстом» share the tool row, an address a line. */
+  .ng-rt[data-phone-long] .ng-dg-tools .ng-dx-button {
+    padding: 0 8px;
+  }
+
+  .ng-rt[data-phone-long] .ng-rt-ifaces {
+    font-size: 13px;
+  }
+
+  .ng-rt[data-phone-long] .ng-rt-work {
+    gap: 4px;
+  }
+
+  .ng-rt[data-phone-long] .ng-rt-work .ng-action-line {
+    font-size: 14px;
+  }
+
+  /* Round 8: «Знайди несправність»: the first route stays whole in the first view. */
+  .ng-rf .ng-rt-left,
+  .ng-rf .ng-rt-stage {
+    gap: 4px;
+  }
 }

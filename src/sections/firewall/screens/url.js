@@ -21,12 +21,12 @@ export const MAX_SEED = 999999;
 
 const records = new WeakMap();
 /** The bank's resolved records (predict with its chain level; order where offered), once per bank. */
-function recordsOf(bank) {
+export function recordsOf(bank) {
   if (!records.has(bank)) {
     const predict = predictRecord(bank);
     const order = bank.orderRecords?.length && bank.resolveOrderRecord ? bank.resolveOrderRecord(bank.orderRecords[0]) : null;
     records.set(bank, {
-      ruleSets: predict.variants.filter(v => v.kind !== 'chain'), chain: predict.variants.find(v => v.kind === 'chain') ?? null,
+      predict, ruleSets: predict.variants.filter(v => v.kind !== 'chain'), chain: predict.variants.find(v => v.kind === 'chain') ?? null,
       all: predict.variants, order,
     });
   }

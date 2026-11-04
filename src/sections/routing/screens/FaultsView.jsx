@@ -575,7 +575,7 @@ function FaultsWork({ bank, record, slot, syntax, layout, root, building, onAgai
             <TopologyMap
               ref={mapRef}
               topo={topo} activeRouter={router} setActiveRouter={selectRouter} fitHeight={layout !== 'narrow'}
-              viewKey={ex.key} zoom={expand.zoom} onZoom={expand.onZoom}
+              viewKey={ex.key} zoom={expand.zoom} onZoom={expand.onZoom} preview={expand.preview}
               covered={expand.covered(textOpen)}
               underlay={<PathUnder plan={plan} step={step} ids={markers} />}
               overlay={<PathOver plan={plan} step={step} />}

@@ -18,7 +18,7 @@ import { nextSeed } from './seeds.js';
 
 /** The exercise for useExercise: a round of the six requirements on one seed. */
 export const proofExercise = {
-  id: proofs.id, version: proofs.version,
+  id: proofs.id, version: proofs.version, generatorVersion: proofs.generatorVersion,
   create: (_, { seed, vendor }) => ({ seed, vendor, cards: proofs.proofSet(seed, { vendor }) }),
   check: () => ({ ok: false, complete: false }),
   solution: () => null,

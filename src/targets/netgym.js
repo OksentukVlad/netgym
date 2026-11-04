@@ -12,7 +12,9 @@
 // advice, still no locks.
 // Each section's screen brings its own strings and shares the shell's app
 // store. Round 6 (spec URL v2.1): each section's `url` is its URL codec
-// (screens/url.js): which of its place goes into the address, and back. A section's `bank` is the task bank its screen gets (targets choose
+// (screens/url.js): which of its place goes into the address, and back; its
+// `saved` (screens/saved.js) says what a restored place and instance must look
+// like (web only, spec save v2). A section's `bank` is the task bank its screen gets (targets choose
 // banks; routing's also carries RF-1's «Знайди несправність» record as
 // `faults`). The IP screens link to each other by these section ids
 // (src/sections/ip/screens/links.js).
@@ -50,20 +52,27 @@ import { url as checksUrl } from '../sections/checks/screens/url.js';
 import { url as firewallUrl } from '../sections/firewall/screens/url.js';
 import { url as vlanUrl } from '../sections/vlan/screens/url.js';
 import { url as setupUrl } from '../sections/setup/screens/url.js';
+import { saved as routingSaved } from '../sections/routing/screens/saved.js';
+import { binarySaved, calculatorSaved, maskSaved } from '../sections/ip/screens/saved.js';
+import { saved as dhcpSaved } from '../sections/dhcp/screens/saved.js';
+import { saved as checksSaved } from '../sections/checks/screens/saved.js';
+import { saved as firewallSaved } from '../sections/firewall/screens/saved.js';
+import { saved as vlanSaved } from '../sections/vlan/screens/saved.js';
+import { saved as setupSaved } from '../sections/setup/screens/saved.js';
 
 const target = {
   id: 'netgym',
   title: uk.appName,
   sections: [
-    { id: 'ip-calculator', ...ip.calculator, Screen: CalculatorScreen, url: calculatorUrl },
-    { id: 'ip-mask', ...ip.mask, Screen: MaskScreen, url: maskUrl },
-    { id: 'ip-binary', ...ip.binary, Screen: BinaryScreen, url: binaryUrl },
-    { id: 'routing', ...routingSection, advice: routingWords.recommendedFirst, Screen: RoutingScreen, bank: { ...routingBank, faults: routingFaults }, url: routingUrl },
-    { id: 'dhcp', ...dhcpSection, Screen: DhcpScreen, url: dhcpUrl },
-    { id: 'checks', ...checksSection, Screen: ChecksScreen, url: checksUrl },
-    { id: 'firewall', ...firewallSection, advice: firewallWords.recommendedFirst, Screen: FirewallScreen, bank: firewallBank, url: firewallUrl },
-    { id: 'vlan', ...vlanSection, advice: vlanWords.recommendedFirst, Screen: VlanScreen, bank: { predict: vlanPredict, ports: vlanPorts, route: vlanRoute, faults: vlanFaults }, url: vlanUrl },
-    { id: 'setup', ...setupSection, advice: setupWords.recommendedFirst, Screen: SetupScreen, bank: setupBank, url: setupUrl },
+    { id: 'ip-calculator', ...ip.calculator, Screen: CalculatorScreen, url: calculatorUrl, saved: calculatorSaved },
+    { id: 'ip-mask', ...ip.mask, Screen: MaskScreen, url: maskUrl, saved: maskSaved },
+    { id: 'ip-binary', ...ip.binary, Screen: BinaryScreen, url: binaryUrl, saved: binarySaved },
+    { id: 'routing', ...routingSection, advice: routingWords.recommendedFirst, Screen: RoutingScreen, bank: { ...routingBank, faults: routingFaults }, url: routingUrl, saved: routingSaved },
+    { id: 'dhcp', ...dhcpSection, Screen: DhcpScreen, url: dhcpUrl, saved: dhcpSaved },
+    { id: 'checks', ...checksSection, Screen: ChecksScreen, url: checksUrl, saved: checksSaved },
+    { id: 'firewall', ...firewallSection, advice: firewallWords.recommendedFirst, Screen: FirewallScreen, bank: firewallBank, url: firewallUrl, saved: firewallSaved },
+    { id: 'vlan', ...vlanSection, advice: vlanWords.recommendedFirst, Screen: VlanScreen, bank: { predict: vlanPredict, ports: vlanPorts, route: vlanRoute, faults: vlanFaults }, url: vlanUrl, saved: vlanSaved },
+    { id: 'setup', ...setupSection, advice: setupWords.recommendedFirst, Screen: SetupScreen, bank: setupBank, url: setupUrl, saved: setupSaved },
   ],
 };
 

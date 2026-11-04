@@ -15,7 +15,14 @@ export const uk = {
   theme: { dark: 'Темна тема', light: 'Світла тема' },
   // The web build only (platform.js): a quiet note on the start screen, and
   // its footer link to the notices page tools/build-web.sh writes.
-  webNotice: 'Перегляд у браузері: розраховано на комп\'ютер; на телефоні поки незручно.',
+  webNotice: 'На телефоні працює; схеми зручніше дивитися на весь екран.',
   noticesLink: 'Ліцензії та сторонні компоненти',
   noticesHref: 'third-party-notices.html',
+  // The web build only: clearing saved progress (app/saved.js).
+  footerSeparator: ' · ',
+  resetProgress: 'Почати спочатку',
+  resetConfirm: 'Стерти всі відповіді та позначки ✓, збережені на цьому пристрої? Налаштування залишаться.',
+  // A screen that failed to render (ScreenBoundary.jsx).
+  screenFailed: 'Цей розділ не відкрився.',
+  screenBack: 'Повернутися до розділів',
 };

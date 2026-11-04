@@ -31,7 +31,7 @@ import { nextSeed } from './seeds.js';
 
 /** The exercise for useExercise (logic/ladder.js; no reference to reveal). */
 export const ladderExercise = {
-  id: ladder.id, version: ladder.version,
+  id: ladder.id, version: ladder.version, generatorVersion: ladder.generatorVersion,
   create: (_, { seed, level, vendor }) => ladder.createLadder(level, vendor, seed, { otherAddresses: true }),
   check: () => ({ ok: false, complete: false }),
   solution: () => null,

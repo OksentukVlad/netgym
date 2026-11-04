@@ -36,7 +36,9 @@ with the parts still planned marked as such.
 4. **Nothing depends on saved state or the URL.** Navigation is in memory,
    and persistence is optional and best effort. Every task can be reached by
    a short code. (Round 6: the shell mirrors where you are into the URL's
-   hash and reads it back on load; with no hash the app starts as before.)
+   hash and reads it back on load; with no hash the app starts as before.
+   Round 8: the web version keeps progress in `localStorage`, best effort:
+   `src/app/saved.js`; a failing or empty storage starts as before.)
 5. **Explicit over clever.** Registration is by plain imports in target
    manifests: no plugin loader, no discovery. Task data says what it means;
    nothing is inferred from interface notes or names.

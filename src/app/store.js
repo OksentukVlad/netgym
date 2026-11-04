@@ -1,7 +1,8 @@
 // The app store (ARCHITECTURE §6 "State"): one reducer for the whole app,
 // provided by StoreProvider.jsx through React context. Pure: no React, DOM or
 // storage, tested in Node like nav.js. It lives above the shell, so it
-// survives leaving a section and coming back (within the session).
+// survives leaving a section and coming back. The web version also keeps it
+// on the device between visits (saved.js, wired in by Shell.jsx).
 //
 // State = {
 //   prefs:     { syntax: 'cisco'|'routeros', theme: 'dark'|'light', inputMode: 'type'|'choose',
@@ -16,10 +17,12 @@
 import { initialInstance, instanceReducer } from '../ui/exercise-state.js';
 
 export const defaultPrefs = Object.freeze({ syntax: 'cisco', theme: 'dark', inputMode: 'type', mode: 'guided' });
+/** The values each preference can hold (saved.js checks a restored one against them). */
+export const prefChoices = Object.freeze({ syntax: ['cisco', 'routeros'], theme: ['dark', 'light'], inputMode: ['type', 'choose'], mode: ['guided', 'free'] });
 
-/** @param {Partial<typeof defaultPrefs>} [prefs] @param {object} [places] the places a link set (Shell.jsx, before the first render) */
-export function initialStore(prefs = {}, places = {}) {
-  return { prefs: { ...defaultPrefs, ...prefs }, instances: {}, places: { ...places } };
+/** @param {Partial<typeof defaultPrefs>} [prefs] @param {object} [places] the places saved or set by a link (Shell.jsx, before the first render) @param {object} [instances] the instances saved */
+export function initialStore(prefs = {}, places = {}, instances = {}) {
+  return { prefs: { ...defaultPrefs, ...prefs }, instances: { ...instances }, places: { ...places } };
 }
 
 /**
@@ -31,6 +34,7 @@ export function initialStore(prefs = {}, places = {}) {
  *   { type: 'hydrate', places, prefs }      a URL's location (Shell.jsx, app/url.js): each
  *                                           scope in `places` replaced by its complete place,
  *                                           `prefs` (known names only) set; instances kept
+ *   { type: 'clear' }                       «Почати спочатку»: instances and places go, prefs stay
  */
 export function storeReducer(state, action) {
   switch (action.type) {
@@ -63,6 +67,8 @@ export function storeReducer(state, action) {
         places: places.length ? { ...state.places, ...action.places } : state.places,
       };
     }
+    case 'clear':
+      return Object.keys(state.instances).length || Object.keys(state.places).length ? { ...state, instances: {}, places: {} } : state;
     default:
       throw new Error(`unknown store action: ${action.type}`);
   }

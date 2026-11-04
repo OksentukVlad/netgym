@@ -58,7 +58,7 @@ export const ASIDES = 'dhcp.fault';
 
 /** The exercise for useExercise (logic/faults.js; the reference only on reveal). */
 export const faultExercise = {
-  id: faults.id, version: faults.version,
+  id: faults.id, version: faults.version, generatorVersion: faults.generatorVersion,
   create: (_, { seed, level, vendor, other }) => faults.createFault(level, vendor, seed, { otherAddresses: other }),
   check: () => ({ ok: false, complete: false }),
   solution: task => faults.referenceRepair(task),

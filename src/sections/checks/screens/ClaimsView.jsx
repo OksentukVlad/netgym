@@ -23,7 +23,7 @@ import { nextSeed } from './seeds.js';
 
 /** The exercise for useExercise (logic/claims.js; no reference to reveal). */
 export const claimsExercise = {
-  id: claims.id, version: claims.version,
+  id: claims.id, version: claims.version, generatorVersion: claims.generatorVersion,
   create: (_, { seed, level, vendor }) => claims.createClaim(level, vendor, seed),
   check: () => ({ ok: false, complete: false }),
   solution: () => null,

@@ -202,13 +202,46 @@
   font-size: var(--ng-font-small);
 }
 
+.ng-home-footer {
+  color: var(--ng-muted);
+}
+
 .ng-home-footer a {
   color: var(--ng-muted);
 }
 
-.ng-home-footer a:focus-visible {
+/* A button, as it acts rather than leads anywhere, drawn as the link beside it.
+ * The padding widens the tap area; the margin keeps the line as high as the link's. */
+.ng-home-reset {
+  margin: -8px 0;
+  padding: 8px 0;
+  color: var(--ng-muted);
+  font: inherit;
+  text-decoration: underline;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.ng-home-footer a:focus-visible,
+.ng-home-reset:focus-visible {
   outline: var(--ng-focus-width) solid var(--ng-focus);
   outline-offset: 3px;
+}
+
+/* A screen that failed to render (ScreenBoundary.jsx): one calm line and the ways out. */
+.ng-screen-failed {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  padding: 24px;
+  color: var(--ng-text);
+}
+
+.ng-screen-failed p {
+  flex-basis: 100%;
+  margin: 0;
 }
 
 /* ── Round 6, the phone layer (plan-mobile v2 P1) ────────────────────────
@@ -241,5 +274,15 @@
   .ng-home-column {
     padding-left: 14px;
     padding-right: 14px;
+  }
+
+  /* The two footer links don't fit one line here: one under the other, no dot left dangling. */
+  .ng-home-separator {
+    display: none;
+  }
+
+  .ng-home-reset {
+    display: block;
+    margin: 4px 0 -8px;
   }
 }

@@ -1747,11 +1747,41 @@ tr.is-marked > th,
 }
 
 /* Round 6 repair: under 640 px the drawing in the page is a short preview
-   (170 px; it pans at its readable size), so the task and the first control
-   stay in the first view; «Розгорнути схему» shows it whole. */
+   (156 px since round 8; it pans at its readable size), so the task and the
+   first control stay in the first view; «Розгорнути схему» shows it whole. */
 @media (max-width: 639.98px) {
   .ng-vl[data-mode="narrow"] .ng-vl-frame {
-    height: min(var(--ng-vl-natural, 340px), 170px);
+    height: min(var(--ng-vl-natural, 340px), 156px);
     min-height: 0;
+  }
+
+  /* Round 8: «Текстом» and «Розгорнути схему» share one row. */
+  .ng-vl-tools .ng-dx-button {
+    padding: 0 8px;
+  }
+
+  .ng-vl-tools .ng-te-button.is-link {
+    padding: 0 2px;
+  }
+
+  /* Round 8: the words above the first control take fewer lines (never below 14 px). */
+  .ng-vl-question {
+    font-size: 15px;
+  }
+
+  .ng-vl-work .ng-action-line,
+  .ng-vl-intro .ng-vl-givens {
+    font-size: 14px;
+  }
+
+  /* Round 8: every port on one line inside the screen's width, at the 12 px floor. */
+  .ng-vl-evidence {
+    font-size: 12px;
+  }
+
+  .ng-vl-evidence th,
+  .ng-vl-evidence td {
+    padding-right: 3px;
+    padding-left: 3px;
   }
 }

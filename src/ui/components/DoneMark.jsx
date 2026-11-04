@@ -3,9 +3,9 @@
 // «розв’язано» becomes part of that control's accessible name; the ✓ itself
 // is aria-hidden.
 //
-// Meaning: solved at least once without a reveal in this app run (the
-// shared session's `earned.solved`; a reveal before earning prevents it, a
-// reveal after keeps it; the store is in memory, nothing persists).
+// Meaning: solved at least once without a reveal (the shared session's
+// `earned.solved`; a reveal before earning prevents it, a reveal after keeps
+// it). The Windows app keeps it for the run; the web version on the device.
 // `earnedBy` aggregates it over the store's instances by any part of their
 // identity (a task id, a variant, a level): a level shows ✓ when at least one
 // of its tasks was earned.

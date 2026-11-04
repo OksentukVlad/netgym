@@ -13,11 +13,12 @@
 //
 // Round 6 (spec URL v2.1): where you are is kept in the URL's hash (app/url.js
 // and each section's codec, the target's `url`), so a refresh, a bookmark or
-// a link opens the same section, exercise, level, task and vendor; answers,
-// drafts, hints and ✓ marks stay in memory only.
-//   - Before the first render the hash is decoded (bootOf): the route, and
-//     the section's complete places and vendor, hydrated into the store, so
-//     the screen mounts on them.
+// a link opens the same section, exercise, level, task and vendor. Answers,
+// drafts, hints and ✓ marks are never in the URL; the web version keeps them
+// on the device (saved.js, spec save v2).
+//   - Before the first render (bootOf): what's saved, checked (saved.js); then
+//     the hash, decoded against it: the route, and the section's complete
+//     places and vendor over the saved ones, so the screen mounts on them.
 //   - A link opened (a hash without our history state): the entry becomes the
 //     start screen («#/») and the section is pushed after it, so Back reaches
 //     the start screen. A refresh keeps its entry as it is.
@@ -43,8 +44,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { HOME, currentRoute, isHome, navReducer, sameRoute } from './nav.js';
 import { HOME_HASH, decodeLocation, encodeLocation, isHomeHash } from './url.js';
 import { initialStore } from './store.js';
+import { restoreSaved } from './saved.js';
 import StoreProvider from './StoreProvider.jsx';
 import Bar, { ThemeButton } from './Bar.jsx';
+import ScreenBoundary from './ScreenBoundary.jsx';
 import { BarSlotContext, SheetAreaContext } from '../ui/BarSlot.jsx';
 import { NavContext } from '../ui/useNav.js';
 import { usePref, useStore } from '../ui/useStore.js';
@@ -58,19 +61,24 @@ const urlHistory = () => typeof location !== 'undefined' && typeof location.href
   && typeof history !== 'undefined' && typeof history.pushState === 'function' && typeof history.replaceState === 'function';
 
 /**
- * The first render's navigation, prefs and places, from the page's hash
- * (app/url.js): { nav, prefs, places, link }. `link` is true for a section
- * hash opened anew (no history state of ours for that section on the entry):
- * the start screen's entry is synthesized before it; a refresh keeps its entry.
+ * The first render's state, in the order spec save v2 fixes: the defaults,
+ * what's saved (validated), the page's hash decoded against that (app/url.js),
+ * and only then the store: { nav, prefs, places, instances, saver, link }. The
+ * URL wins where it speaks: its scopes are replaced by the decoded places, a
+ * link without a vendor keeps the saved one, every other saved scope stays.
+ * `link` is true for a section hash opened anew (no history state of ours for
+ * that section on the entry): the start screen's entry is synthesized before
+ * it; a refresh keeps its entry.
  */
-export function bootOf(target, loc = globalThis.location, hist = globalThis.history, random = Math.random) {
-  const store = initialStore(target.prefs);
+export function bootOf(target, loc = globalThis.location, hist = globalThis.history, random = Math.random, saved = restoreSaved(target, { random })) {
+  const prefs = { ...target.prefs, ...saved.prefs };
+  const store = initialStore(prefs, saved.places, saved.instances);
   const hash = typeof loc?.hash === 'string' ? loc.hash : '';
   const decoded = decodeLocation(target, hash, store, random);
-  if (!decoded.route) return { nav: { stack: [HOME] }, prefs: target.prefs, places: {}, link: false };
-  const saved = hist?.state?.ng;
-  const refresh = saved?.section === decoded.route.section;
-  return { nav: { stack: [HOME, decoded.route] }, prefs: { ...target.prefs, ...decoded.prefs }, places: decoded.places, link: !refresh };
+  const kept = { instances: saved.instances, saver: saved.saver };
+  if (!decoded.route) return { nav: { stack: [HOME] }, prefs, places: saved.places, link: false, ...kept };
+  const refresh = hist?.state?.ng?.section === decoded.route.section;
+  return { nav: { stack: [HOME, decoded.route] }, prefs: { ...prefs, ...decoded.prefs }, places: { ...saved.places, ...decoded.places }, link: !refresh, ...kept };
 }
 
 /** @param {{ target: { id: string, title: string, prefs?: object, sections: Array<{ id: string, title: string, blurb: string, advice?: string, Screen: Function, bank?: object, url?: object }> } }} props */
@@ -78,7 +86,7 @@ export default function Shell({ target }) {
   // Read once: the hash's place is in the store before any screen mounts.
   const [boot] = useState(() => bootOf(target));
   return (
-    <StoreProvider prefs={boot.prefs} places={boot.places}>
+    <StoreProvider prefs={boot.prefs} places={boot.places} instances={boot.instances}>
       <ShellFrame target={target} boot={boot} />
     </StoreProvider>
   );
@@ -88,6 +96,8 @@ function ShellFrame({ target, boot }) {
   const { state, dispatch } = useStore();
   const [theme] = usePref('theme');
   const [nav, setNav] = useState(boot.nav);
+  // «Почати спочатку», here or in another tab: the open screen starts again, its own memory too.
+  const [resets, setResets] = useState(0);
   // The bar's control slot (null on the start screen, which has no bar).
   const [slot, setSlot] = useState(null);
   // Round 6: the phone sheet's area for a screen's own choices (ui/BarSlot.jsx SheetControls).
@@ -206,6 +216,21 @@ function ShellFrame({ target, boot }) {
     };
   }, []);
 
+  // Saving (saved.js): every store change, and the page going away; web only.
+  const { saver } = boot;
+  useEffect(() => saver?.attach(() => stateRef.current, () => { dispatch({ type: 'clear' }); setResets(n => n + 1); }), []);
+  useEffect(() => { saver?.note(state); }, [state]);
+  /** «Почати спочатку»: the saved copy first, so no pending write can bring it back.
+   * Focus goes to the heading without moving the page, so the footer stays in view. */
+  function clearProgress() {
+    saver?.clear(stateRef.current.prefs);
+    dispatch({ type: 'clear' });
+    setResets(n => n + 1);
+    homeHeading.current?.focus({ preventScroll: true });
+  }
+  /** The same, asked from a screen that failed or from the start screen's footer. */
+  const askToClear = () => { if (window.confirm(uk.resetConfirm)) clearProgress(); };
+
   // A place change (or a first place stored) replaces the current entry's hash.
   useEffect(() => {
     if (!live.current) return;
@@ -258,11 +283,13 @@ function ShellFrame({ target, boot }) {
           {section ? (
             <Bar onBack={back} caption={uk.appName} title={section.title} headingRef={barHeading} slotRef={setSlot} sheetRef={setSheetArea} />
           ) : (
-            <StartScreen sections={target.sections} theme={theme} headingRef={homeHeading} onOpen={openSection} />
+            <StartScreen sections={target.sections} theme={theme} headingRef={homeHeading} onOpen={openSection} onClear={askToClear} />
           )}
           {section && (
             <div className="ng-screen" data-theme={theme} ref={screenBox}>
-              <section.Screen route={route} bank={section.bank} />
+              <ScreenBoundary resetKey={`${resets}|${hash}`} onBack={back} onClear={webPreview() ? askToClear : null}>
+                <section.Screen key={resets} route={route} bank={section.bank} />
+              </ScreenBoundary>
             </div>
           )}
         </div>
@@ -278,9 +305,12 @@ function ShellFrame({ target, boot }) {
 // 5b-2 (spec G): a section's `advice` («радимо спершу: …») is a quiet last
 // line of its card, part of the button's name; nothing is locked. The web
 // build adds a note above the cards and a footer link to the notices page;
-// the Windows app shows neither (platform.js).
-function StartScreen({ sections, theme, headingRef, onOpen }) {
+// the Windows app shows neither (platform.js). Spec save v2: with something
+// to clear, the footer also has «Почати спочатку»; it goes once cleared.
+function StartScreen({ sections, theme, headingRef, onOpen, onClear }) {
   const web = webPreview();
+  const { state } = useStore();
+  const clearable = Object.keys(state.instances).length > 0 || Object.keys(state.places).length > 0;
   return (
     <div className="ng-home" data-theme={theme}>
       <header className="ng-home-header">
@@ -311,6 +341,10 @@ function StartScreen({ sections, theme, headingRef, onOpen }) {
       {web && (
         <footer className="ng-home-column ng-home-footer">
           <a href={uk.noticesHref}>{uk.noticesLink}</a>
+          {clearable && <>
+            <span className="ng-home-separator" aria-hidden="true">{uk.footerSeparator}</span>
+            <button type="button" className="ng-home-reset" onClick={onClear}>{uk.resetProgress}</button>
+          </>}
         </footer>
       )}
     </div>

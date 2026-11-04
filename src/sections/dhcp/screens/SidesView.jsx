@@ -14,7 +14,7 @@
 // examples.sidesExample: never a bank card).
 import { useMemo, useRef } from 'react';
 import { createRound, check, id as sidesId, version as sidesVersion } from '../logic/sides.js';
-import { createTopology } from '../logic/scenario.js';
+import { createTopology, generatorVersion } from '../logic/scenario.js';
 import { sidesExample } from '../logic/examples.js';
 import { useExercise } from '../../../ui/useExercise.js';
 import ExerciseLayout from '../../../ui/components/ExerciseLayout.jsx';
@@ -27,7 +27,7 @@ import { nextSeed } from './seeds.js';
 
 /** The exercise for useExercise: a round of six cards on its own topology. */
 export const sidesExercise = {
-  id: sidesId, version: sidesVersion,
+  id: sidesId, version: sidesVersion, generatorVersion,
   create: (_, { seed, other }) => ({ seed, cards: createRound(seed, { otherAddresses: other }), topology: createTopology(seed, { otherAddresses: other }) }),
   check: () => ({ ok: false, complete: false }),
   solution: () => null,

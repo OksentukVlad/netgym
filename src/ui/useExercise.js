@@ -10,10 +10,12 @@ import { useStore } from './useStore.js';
 const EMPTY = Object.freeze(initialInstance());
 
 /** The store key of a task instance: the logic's own instanceKey (bank tasks
- * carry their identity), or the exercise, its version and the params. */
+ * carry their identity), or the exercise, its versions and the params. A saved
+ * instance is found by this key, so a new generator must change it. */
 export function instanceKeyOf(logic, task, params) {
   if (task && typeof task.instanceKey === 'string') return task.instanceKey;
-  return JSON.stringify({ exerciseId: logic.id, version: logic.version, ...params });
+  const generator = logic.generatorVersion === undefined ? {} : { generatorVersion: logic.generatorVersion };
+  return JSON.stringify({ exerciseId: logic.id, version: logic.version, ...generator, ...params });
 }
 
 /**

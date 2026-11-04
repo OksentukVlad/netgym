@@ -80,6 +80,8 @@ export function useDiagramExpand({ zoom, onZoom = () => {} } = {}) {
     zoom: expanded ? own : (phone && (zoom === undefined || zoom === null) ? 'all' : zoom),
     onZoom: expanded ? setOwn : onZoom,
     covered: textOpen => Boolean(textOpen) && !expanded,
+    // The page's short overview on a phone (a screen may ask its drawing to keep to it); never the dialog.
+    preview: phone && !expanded,
     buttonRef,
     boxRef,
   };

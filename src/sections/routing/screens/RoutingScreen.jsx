@@ -659,6 +659,10 @@ function TasksView({ bank, exerciseSwitch = null }) {
   const [fullOpen, setFullOpen] = useState({});
   const fullShown = Boolean(full && fullOpen[ex.key]);
   const fullId = `${markerIds}-full`;
+  // Round 8: on a phone such a task keeps its first route in the first view: the first sentence (the second
+  // opens with «Уся умова»), the short drawing, «Розгорнути схему» in its tool row, the panel after the routes.
+  const phone = usePhone();
+  const phoneLong = phone && Boolean(full);
   useIsoLayoutEffect(() => {
     if (full || !short || layout === 'narrow' || details[ex.key] !== undefined) return;
     const left = root.current?.querySelector('.ng-rt-left'), text = left?.querySelector('.ng-rt-legend');
@@ -758,6 +762,7 @@ function TasksView({ bank, exerciseSwitch = null }) {
     <HelpPanel
       taskKey={ex.key}
       boardRef={boardRef}
+      placement={phoneLong ? 'after' : 'auto'}
       primary={editedSuccess && nextRecord ? 'next' : undefined}
       className="ng-rt-help"
       check={{ onCheck: runNetworkCheck }}
@@ -794,7 +799,7 @@ function TasksView({ bank, exerciseSwitch = null }) {
   const addressNotice = notice && (notice.key === null || notice.key === ex.key) ? notice.text : null;
 
   return (
-    <div ref={root} className="ng-rt" style={holding ? { '--ng-rt-help-hold': `${holding}px` } : undefined} data-theme={themeName} data-mode={layout} data-short={short ? '' : undefined} data-lap={lapShown ? (lapPlay.playing ? 'playing' : 'done') : undefined}
+    <div ref={root} className="ng-rt" style={holding ? { '--ng-rt-help-hold': `${holding}px` } : undefined} data-theme={themeName} data-mode={layout} data-short={short ? '' : undefined} data-phone-long={phoneLong ? '' : undefined} data-lap={lapShown ? (lapPlay.playing ? 'playing' : 'done') : undefined}
       onPointerDownCapture={skipLap} onKeyDownCapture={skipLap}>
       <BarControls>
         <div className="ng-rt-controls">
@@ -842,7 +847,7 @@ function TasksView({ bank, exerciseSwitch = null }) {
                 work column starts under the task bar and its first route and «Перевірити» fit the first view;
                 in one column the order is as before (task, legend, diagram, work). */}
             <div className="ng-rt-left">
-              <p className="ng-rt-desc">{detailsShut ? taskParts.first : taskText}</p>
+              <p className="ng-rt-desc">{detailsShut || (phoneLong && !fullShown) ? taskParts.first : taskText}</p>
               {full ? (
                 <div id={fullId} className="ng-rt-full" hidden={!fullShown}>
                   {fullShown && <><p>{full}</p>{failover && <p className="ng-rt-failover">{ui.shared.failover(failover.title)}</p>}</>}
@@ -864,17 +869,20 @@ function TasksView({ bank, exerciseSwitch = null }) {
                 )}
               </div>
               <section className="ng-rt-stage" aria-label={ui.shared.diagramLabel}>
-                <div className="ng-rt-stage-head">
-                  <p className="ng-rt-caption">{ui.shared.diagramCaption}</p>
-                  {drawnPath && cv.overlay === null && <PathLegend />}
-                  {/* Round 6 (P2): «Розгорнути схему» on a phone, at the stage's head (no row of its own). */}
-                  <ExpandButton expand={expand} className="ng-rt-expand" />
-                </div>
+                {(!phoneLong || (drawnPath && cv.overlay === null)) && (
+                  <div className="ng-rt-stage-head">
+                    <p className="ng-rt-caption">{ui.shared.diagramCaption}</p>
+                    {drawnPath && cv.overlay === null && <PathLegend />}
+                    {/* Round 6 (P2): «Розгорнути схему» on a phone, at the stage's head (no row of its own). */}
+                    {!phoneLong && <ExpandButton expand={expand} className="ng-rt-expand" />}
+                  </div>
+                )}
                 <DiagramExpand expand={expand}>
                 <TopologyMap
                   ref={mapRef}
                   topo={topo} activeRouter={router} setActiveRouter={selectRouter} fitHeight={layout !== 'narrow'}
-                  viewKey={ex.key} zoom={expand.zoom} onZoom={expand.onZoom}
+                  viewKey={ex.key} zoom={expand.zoom} onZoom={expand.onZoom} preview={expand.preview && phoneLong}
+                  tools={phoneLong ? <ExpandButton expand={expand} className="ng-rt-expand" /> : null}
                   covered={expand.covered(cv.overlay === 'text')} fit={lapPlay.playing}
                   underlay={<><PathUnder plan={plan} step={step} ids={markers} /><LapUnder frame={lapNow} ids={markers} /></>}
                   overlay={<><PathOver plan={plan} step={step} solved={presented?.ok && !lapShown ? solvedMarks(geo) : null} /><LapOver frame={lapNow} /></>}
