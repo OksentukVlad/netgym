@@ -7,7 +7,8 @@ export function initialState(task) {
     typedFeedback: {}, revealed: false, recallRevealed: false, showOwn: false, hintIndex: 0, assisted: false, earned: false };
 }
 
-/** Persist verbatim under instanceKey. `revealed` means sorting reveal only:
+/** Kept under instanceKey; the web version saves it without the typed lines
+ * (screens/saved.js). `revealed` means sorting reveal only:
  * recall assistance must never revoke a sorting completion in the shared session.
  * `lastFinding` is a snapshot with board positions; edits retain it for hints.
  */

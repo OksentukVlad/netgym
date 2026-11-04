@@ -58,6 +58,9 @@ and another browser or phone starts empty.
 - **Saved:** answers, typed text not yet checked, checks and verdicts, hints
   used, reveals and ✓ marks, per task; the theme, the vendor, the routing mode
   and the input mode; where each section was, so it opens at your last task.
+- **Not saved:** the command lines you type in «Налаштування з нуля», because
+  they can hold a password. After a refresh those lines come back empty.
+  The exercise asks for an invented training password: never type a real one.
 - **What comes back:** the same screen, including a wrong verdict. A task you
   revealed comes back revealed and earns nothing; a ✓ earned before the reveal
   stays. Folds and open menus are not saved.
@@ -81,12 +84,16 @@ and another browser or phone starts empty.
 - **Windows app:** saves nothing. Its storage in WebView2 is a separate
   decision; if it ever saves, the clear control moves with it.
 
-The keys are `netgym.v1` (the data) and `netgym.gen` (the reset generation).
+The keys are `netgym.v2` (the data) and `netgym.gen` (the reset generation).
+A load removes the older `netgym.v1`, which could hold typed passwords, and
+the progress in it with them.
 A saved task comes back only if its identity still matches the current bank
 revision, record and generator version and its contents pass its section's
 check (`src/sections/<id>/screens/saved.js`). Anything else is dropped alone
 and that task starts fresh. Change `VERSION` and `KEY` in `src/app/saved.js`
-whenever what's saved changes meaning. A bumped generator version, bank
+whenever what's saved changes meaning, and add the old key to `OLD_KEYS`.
+A section's `redact` (setup's) runs on every write, before anything is
+serialised. A bumped generator version, bank
 revision or record version already retires its saved tasks by itself.
 
 ## Layout

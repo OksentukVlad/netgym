@@ -24,7 +24,7 @@ import { browserSkip, launchChromium } from '../tools/browser.mjs';
 const root = fileURLToPath(new URL('..', import.meta.url));
 const missing = browserSkip();
 const BASE = 'http://netgym.test/netgym/';
-const KEY = 'netgym.v1', GEN_KEY = 'netgym.gen';
+const KEY = 'netgym.v2', GEN_KEY = 'netgym.gen';
 const CONFIRM = 'Стерти всі відповіді та позначки ✓, збережені на цьому пристрої? Налаштування залишаться.';
 
 async function bundle() {
@@ -211,14 +211,14 @@ test('saved progress in Chromium: refresh, flush, links, clearing, a second tab,
     context = await newContext();
     page = await newPage(context);
     await go(page, BASE);
-    await page.evaluate(k => localStorage.setItem(k, '{"version":1,"inst'), KEY);
+    await page.evaluate(k => localStorage.setItem(k, '{"version":2,"inst'), KEY);
     await reload(page);
     assert.equal(await reset(page).count(), 0);
     await page.getByRole('button', { name: /IP-адреси: маска/ }).click();
     await settle(page);
     await page.locator('.ng-screen input').first().fill('1');
     await page.waitForTimeout(600);
-    assert.ok((await stored(page)).startsWith('{"version":1'), 'a good write replaces it');
+    assert.ok((await stored(page)).startsWith('{"version":2'), 'a good write replaces it');
     await context.close();
     for (const script of [
       () => { Object.defineProperty(window, 'localStorage', { get() { throw new Error('denied'); } }); },
@@ -244,6 +244,43 @@ test('saved progress in Chromium: refresh, flush, links, clearing, a second tab,
       assert.equal(await reset(page).count(), 0, 'clearing works on the session alone');
       await context.close();
     }
+
+    // ── A typed password is never written; the old blob goes on load ──
+    context = await newContext();
+    await context.addInitScript(() => {
+      // Every write this page ever makes, and the blob a past version left.
+      window.written = [];
+      const setItem = Storage.prototype.setItem;
+      Storage.prototype.setItem = function write(key, value) { window.written.push(String(value)); return setItem.call(this, key, value); };
+      if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); setItem.call(localStorage, 'netgym.v1', '{"version":1,"typed":"enable secret Abc12345!"}'); }
+    });
+    page = await newPage(context);
+    await go(page, `${BASE}#/setup?deck=router&seed=12`);
+    assert.equal(await stored(page, 'netgym.v1'), null, 'the old blob is gone at once');
+    await page.getByRole('button', { name: /Показати відповідь/ }).first().click();
+    await settle(page);
+    await page.getByRole('button', { name: /Тепер по пам/ }).first().click();
+    await settle(page);
+    const lines = page.locator('.ng-screen textarea.ng-su-field');
+    const leaked = async () => (await page.evaluate(() => window.written)).filter(text => text.includes('Abc12345!'));
+    await lines.nth(0).fill('enable secret Abc12345!');
+    await lines.nth(1).fill('/user add name=maintainer group=full password=Abc12345!');
+    await page.waitForTimeout(600);
+    assert.ok((await page.evaluate(() => window.written)).length > 0, 'the debounce wrote');
+    assert.deepEqual(await leaked(), [], 'after the debounce');
+    await lines.nth(0).press('Enter');
+    await settle(page);
+    await page.waitForTimeout(600);
+    assert.deepEqual(await leaked(), [], 'after a check');
+    await lines.nth(2).fill('ena sec Abc12345!');
+    await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
+    assert.deepEqual(await leaked(), [], 'after a flush');
+    assert.ok(!(await stored(page)).includes('Abc12345!'));
+    await clean(page);
+    await reload(page);
+    assert.deepEqual(await leaked(), []);
+    assert.equal(await page.locator('.ng-screen textarea.ng-su-field').first().inputValue(), '', 'the lines come back empty, the recall still open');
+    await context.close();
 
     // ── Clearing on a phone keeps the footer in view, focus on the heading ──
     context = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });

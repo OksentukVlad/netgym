@@ -251,6 +251,123 @@ test('saved: routing faults: the proof of a passed fix is never saved; after a r
   assert.ok(h.routingFaults.options(task, 'cause', { result: again, answer: rf.answer, ...cause }).length > 0);
 });
 
+// ── Secrets: a typed password is never written ──────────────────────────────
+
+const PASSWORD = 'Abc12345!';
+const TYPED_LINES = [`enable secret ${PASSWORD}`, `/user add name=maintainer group=full password=${PASSWORD}`, `ena sec ${PASSWORD}`,
+  `username maintainer privilege 15 secret ${PASSWORD}`, `password ${PASSWORD}`, PASSWORD];
+const legacyDeck = () => setupBank.decks.find(d => d.id === 'dr-1');
+
+/** A real recall instance at `phase`, holding a typed line in every place one lands. */
+function recallInstance(line, phase = 'recall') {
+  const task = h.drillLogic.create(legacyDeck(), { seed: 12 });
+  let state = h.drillTransition(task, h.drillInitial(task), { type: 'reveal' });
+  state = h.drillTransition(task, state, { type: 'continue' });
+  const id = task.typedIds[0];
+  state = h.drillTransition(task, state, { type: 'typed', id, text: line });
+  state = h.drillTransition(task, state, { type: 'check-typed', id });
+  const setupCheck = { id, n: 1, result: state.typedFeedback[id], value: line, stamp: 1 };
+  return { task, id, instance: { ...withView({ setup: { ...state, phase }, setupCheck, setupHintAt: 1 }), answer: state.answer, result: { ok: false, code: 'x', findings: [{ code: 'x', token: line }] } } };
+}
+
+test('secrets: a typed line reaches the state where the brief says (a rejected line\'s finding quotes its token)', () => {
+  const task = h.drillLogic.create(legacyDeck(), { seed: 12 });
+  const id = task.typedIds[0];
+  assert.ok(JSON.stringify(h.checkTyped(task, id, `hostname R1 ${PASSWORD}`)).includes(PASSWORD), 'the leak the redaction has to stop');
+  assert.ok(JSON.stringify(recallInstance(`enable secret ${PASSWORD}`).instance).includes(PASSWORD));
+});
+
+test('secrets: no typed line is in the written blob, in any phase, and the instance stays valid', () => {
+  for (const line of TYPED_LINES) for (const phase of ['recall', 'done']) {
+    const { task, instance, id } = recallInstance(line, phase);
+    const text = h.fitted(h.initialStore({}, {}, { [task.instanceKey]: instance }), {}, 0, h.redactorOf(target));
+    assert.ok(!text.includes(PASSWORD), `${line}, ${phase}`);
+    const back = read(text).instances[task.instanceKey];
+    assert.ok(back, `${line}, ${phase}: still restores`);
+    assert.equal(back.view.setup.phase, 'recall', 'a finished recall reopens');
+    assert.equal(back.view.setup.answer.typed[id], '', 'the line comes back empty');
+    assert.deepEqual(back.view.setup.typedFeedback, {});
+    assert.equal(back.view.setupCheck, undefined);
+  }
+});
+
+test('secrets: on every write: after the debounce, after a flush, after a check, under eviction', t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const store = storage();
+  const writes = [];
+  const setItem = store.setItem;
+  store.setItem = (key, value) => { writes.push(value); setItem(key, value); };
+  const { saver } = h.restoreSaved(target, { storage: store, web: true });
+  let s = h.initialStore();
+  saver.note(s);
+  const { task, instance } = recallInstance(`enable secret ${PASSWORD}`);
+  s = { ...s, instances: { [task.instanceKey]: instance } };
+  saver.note(s);
+  t.mock.timers.tick(DEBOUNCE_MS);
+  s = { ...s, instances: { ...s.instances, [task.instanceKey]: { ...instance, presses: 1 } } };
+  saver.note(s);
+  saver.flush();
+  // Over the cap the eviction path serialises entries on its own.
+  s = { ...s, instances: { ...s.instances, [maskKey(1)]: big(CAP + 10, false), [maskKey(2)]: big(CAP, true) } };
+  saver.note(s);
+  saver.flush();
+  assert.ok(writes.length >= 3, `${writes.length}`);
+  for (const text of writes) assert.ok(!text.includes(PASSWORD));
+});
+
+test('secrets: an instance that can\'t be cleaned isn\'t written at all', () => {
+  const { task, instance } = recallInstance(`enable secret ${PASSWORD}`);
+  const text = h.fitted(h.initialStore({}, {}, { [task.instanceKey]: instance }), {}, 0, () => { throw new Error('broken'); });
+  assert.ok(!text.includes(PASSWORD));
+  assert.deepEqual(JSON.parse(text).instances, {});
+});
+
+test('secrets: the backstop drops command strings anywhere in the instance; ids and the placeholder survive', () => {
+  const { task } = recallInstance('x');
+  const redact = h.redactorOf(target);
+  const instance = withView({ other: { deep: [`enable secret ${PASSWORD}`, `password=${PASSWORD}`, `SECRET ${PASSWORD}`, `user m priv 15 sec ${PASSWORD}`, `pass ${PASSWORD}`] }, ids: ['enable-secret', 'password-encryption', 'service password-encryption', 'c-0a1b2c3d'], kept: 'enable secret <пароль>' });
+  const { view } = redact(task.instanceKey, instance);
+  assert.deepEqual(view.other.deep, ['', '', '', '', '']);
+  assert.deepEqual(view.ids, instance.view.ids);
+  assert.equal(view.kept, 'enable secret <пароль>');
+});
+
+test('secrets: a sorted deck keeps its order, ids and verdict; the reveal stays honest, its reference lines shown', () => {
+  const { key, instance } = exercises['setup-drill'];
+  const clean = h.redactorOf(target)(key, instance);
+  assert.deepEqual(clean.view.setup.answer.order, instance.view.setup.answer.order);
+  assert.deepEqual(clean.view.setup.feedback, instance.view.setup.feedback, 'the sorting verdict is no typed line');
+  assert.equal(clean.view.setupEdited, null);
+  const task = h.drillLogic.create(legacyDeck(), { seed: 12 });
+  let state = h.drillTransition(task, h.drillInitial(task), { type: 'reveal' });
+  state = h.drillTransition(task, state, { type: 'continue' });
+  state = h.drillTransition(task, state, { type: 'reveal' });
+  assert.equal(state.phase, 'done-shown');
+  const shown = h.redactorOf(target)(task.instanceKey, withView({ setup: state })).view.setup;
+  assert.equal(shown.phase, 'done-shown');
+  assert.deepEqual(shown.answer.typed, state.answer.typed, 'the reference, placeholders and all');
+});
+
+test('secrets: only setup has a redaction: other sections\' instances are written as they are', () => {
+  const { key, instance } = exercises['dhcp-sides'];
+  assert.equal(h.redactorOf(target)(key, instance), instance);
+  assert.deepEqual(target.sections.flatMap(s => Object.entries(s.saved?.exercises ?? {}).filter(([, rule]) => rule.redact).map(([id]) => id)), ['setup-drill']);
+});
+
+test('secrets: every load removes the old blob, passwords and all, before reading; only on the web', () => {
+  const old = JSON.stringify({ version: 1, gen: 0, prefs: { theme: 'light' }, places: {}, done: {}, instances: { x: { at: 1, state: { typed: `enable secret ${PASSWORD}` } } } });
+  assert.deepEqual([...h.OLD_KEYS], ['netgym.v1']);
+  const store = storage({ 'netgym.v1': old, [GEN_KEY]: '4' });
+  const back = h.restoreSaved(target, { storage: store, web: true });
+  assert.equal(store.data.has('netgym.v1'), false);
+  assert.deepEqual([back.prefs, back.instances, back.gen], [{}, {}, 4], 'nothing of it is read; the generation stands');
+  const failing = storage({ 'netgym.v1': old }, ['removeItem']);
+  assert.doesNotThrow(() => h.restoreSaved(target, { storage: failing, web: true }));
+  const app = storage({ 'netgym.v1': old });
+  h.restoreSaved(target, { storage: app, web: false });
+  assert.equal(app.data.has('netgym.v1'), true, 'the Windows app touches nothing');
+});
+
 // ── Bad blobs ───────────────────────────────────────────────────────────────
 
 test('saved: a corrupted, an old-version and an oversized blob each start clean', () => {

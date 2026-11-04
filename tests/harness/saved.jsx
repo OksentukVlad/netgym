@@ -3,7 +3,8 @@
 // built from: every exercise's logic, as its screen calls it.
 export { default as target } from '../../src/targets/netgym.js';
 export { bootOf } from '../../src/app/Shell.jsx';
-export { CAP, DEBOUNCE_MS, GEN_KEY, KEY, MAX_DONE, MAX_READ, VERSION, createSaver, fitted, readSaved, restoreSaved } from '../../src/app/saved.js';
+export { CAP, DEBOUNCE_MS, GEN_KEY, KEY, MAX_DONE, MAX_READ, OLD_KEYS, VERSION, createSaver, fitted, readSaved, redactorOf, restoreSaved } from '../../src/app/saved.js';
+export { checkTyped } from '../../src/sections/setup/logic/typed.js';
 export { initialStore, storeReducer } from '../../src/app/store.js';
 export { initialInstance, instanceReducer } from '../../src/ui/exercise-state.js';
 export { instanceKeyOf } from '../../src/ui/useExercise.js';

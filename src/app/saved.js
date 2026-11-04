@@ -2,8 +2,13 @@
 // store and localStorage. Web only: restoreSaved() reads and saves nothing
 // outside webPreview(). The store stays pure; Shell.jsx wires this in.
 //
-//   netgym.v1   one JSON blob: { version, gen, prefs, places, instances, done }
+//   netgym.v2   one JSON blob: { version, gen, prefs, places, instances, done }
 //   netgym.gen  the reset generation, a number in its own key
+//
+// A section's `redact` runs on every instance on every write, before it is
+// serialised: what a learner might type as a password never reaches storage
+// (the setup section's table). An instance it can't clean isn't written.
+// netgym.v1 held typed passwords in plain text: a load removes it unread.
 //
 // `instances` holds each exercise's instance as the reducer holds it, with
 // when it was last touched ({ at, state }); `at` counts changes, not time.
@@ -26,9 +31,11 @@ import { webPreview } from './platform.js';
 import { decodeSection } from './url.js';
 import { defaultPrefs, prefChoices } from './store.js';
 
-export const KEY = 'netgym.v1';
+export const KEY = 'netgym.v2';
 export const GEN_KEY = 'netgym.gen';
-export const VERSION = 1;
+export const VERSION = 2;
+/** Older blobs, removed at every load: v1 could hold typed passwords. */
+export const OLD_KEYS = Object.freeze(['netgym.v1']);
 /** The size limits, in characters of the serialised JSON. */
 export const CAP = 1000000;
 export const MAX_READ = 2000000;
@@ -82,6 +89,15 @@ function tablesOf(target) {
     for (const [scope, check] of Object.entries(section.saved?.places ?? {})) places.set(scope, { check, bank: section.bank });
   }
   return { exercises, places };
+}
+
+/** The target's redaction: (key, instance) → what may be written of it. */
+export function redactorOf(target) {
+  const { exercises } = tablesOf(target);
+  return (key, instance) => {
+    const redact = exercises.get(attempt(() => JSON.parse(key))?.exerciseId)?.redact;
+    return redact ? redact(instance) : instance;
+  };
 }
 
 const passes = (check, value, ...rest) => (check ? attempt(() => check(value, ...rest) === true, false) : true);
@@ -180,10 +196,13 @@ const lengthOf = (key, value) => JSON.stringify(key).length + 1 + JSON.stringify
  * goes; then the oldest ✓. The store keeps everything until the page closes;
  * this only decides what the next visit finds.
  */
-export function fitted(state, touched, gen) {
+export function fitted(state, touched, gen, redact = (_, instance) => instance) {
   const instances = {}, done = {};
   const at = key => touched[key] ?? 0;
-  for (const [key, instance] of Object.entries(state.instances)) instances[key] = { at: at(key), state: instance };
+  for (const [key, instance] of Object.entries(state.instances)) {
+    const clean = attempt(() => redact(key, instance));
+    if (clean) instances[key] = { at: at(key), state: clean };
+  }
   const blob = { version: VERSION, gen, prefs: state.prefs, places: state.places, instances, done };
   const serialised = () => JSON.stringify(blob, writeSets);
   const whole = serialised();
@@ -221,9 +240,9 @@ const isBlank = state => !Object.keys(state.instances).length && !Object.keys(st
  *                  generation, removes the saved blob (the prefs stay)
  *   attach(getState, onReset)  listens to the page; onReset: another tab cleared
  * @param {Storage|null} storage
- * @param {{ gen?: number, touched?: object }} from what readSaved found
+ * @param {{ gen?: number, touched?: object, redact?: Function }} from what readSaved found, and the target's redaction
  */
-export function createSaver(storage, { gen: firstGen = 0, touched: firstTouched = {} } = {}) {
+export function createSaver(storage, { gen: firstGen = 0, touched: firstTouched = {}, redact } = {}) {
   let gen = firstGen;
   let touched = { ...firstTouched };
   let clock = Math.max(0, ...Object.values(touched));
@@ -254,7 +273,7 @@ export function createSaver(storage, { gen: firstGen = 0, touched: firstTouched 
       attempt(() => storage.removeItem(KEY));
       return;
     }
-    const next = fitted(state, touched, gen);
+    const next = fitted(state, touched, gen, redact);
     if (next === null || next === lastText) return;
     try { storage.setItem(KEY, next); lastText = next; } catch { stopped = true; }
   }
@@ -307,6 +326,7 @@ export function createSaver(storage, { gen: firstGen = 0, touched: firstTouched 
  * version) nothing and no saver. Read before the first render (Shell.jsx). */
 export function restoreSaved(target, { storage = browserStorage(), web = webPreview(), random = Math.random } = {}) {
   if (!web) return { ...NOTHING, saver: null };
+  for (const key of OLD_KEYS) attempt(() => storage?.removeItem(key));
   const saved = readSaved(target, storage, random);
-  return { ...saved, saver: createSaver(storage, saved) };
+  return { ...saved, saver: createSaver(storage, { ...saved, redact: redactorOf(target) }) };
 }
