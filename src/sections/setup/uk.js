@@ -165,7 +165,7 @@ export const ui = {
   task: 'Збери базове налаштування в робочому порядку.',
   // The action line above the deck (round 5, R1). Round 9 (B1): the order first; the Cisco decks' second
   // step asks for the modes, the mode «?» after its word.
-  actionOrder: 'Постав картки в робочий порядок кнопками ↑ ↓.',
+  actionOrder: 'Перетягни картки за ≡ або натискай ↑ ↓.',
   actionModes: 'У кожній картці обери режим.',
   modesTask: 'Порядок прийнято: картки закріплено.',
   // Recall (spec S1): the order stays; three lines are typed from memory.

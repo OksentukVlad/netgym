@@ -314,7 +314,7 @@ export const orderUi = {
   // The screen (OrderView.jsx): the level switch, the list, the walk toggle.
   level: 'Рівень',
   // Round 5 (R1; 5b-2 A): the action line over the list (the worked example sits under it).
-  action: 'Постав правила в робочий порядок кнопками ↑ ↓.',
+  action: 'Перетягни правила за ≡ або натискай ↑ ↓.',
   // «Увесь фільтр»: the two chains' lists (round 9, B4), after each chain's pill.
   chainHeads: { input: 'пакети до самого роутера', forward: 'пакети крізь роутер' },
   actionDone: 'Порядок прийнято.',

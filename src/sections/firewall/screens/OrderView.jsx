@@ -8,7 +8,7 @@
 //
 // One decision at a time:
 //   - the first view: the task and its goal in a few short lines, the
-//     diagram, and the list (ReorderList: ≡ and ↑ ↓, keyboard grab);
+//     diagram, and the list (ReorderList: ≡ drag and ↑ ↓, keyboard grab);
 //   - «Перевірити» gives one finding: a packet whose fate changed (its card,
 //     «має: … · у тебе: …», and «Показати шлях пакета», which lays FW-1's
 //     walk over the learner's own rows), or one rule that never fires. Only

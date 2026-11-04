@@ -7,9 +7,8 @@
 //   computed here, never carried by the items.
 // - «↑» is unavailable only on the first row and «↓» only on the last: the
 //   limits depend on the list's ends alone (aria-disabled, so a button that
-//   reaches an end keeps its focus). There is no pointer drag, so the action
-//   lines say «кнопками ↑ ↓». Round 9 (B5): on a phone a row also has «↑↑»,
-//   to the top of the list (a deck took 49 taps of ↑ ↓).
+//   reaches an end keeps its focus). Round 9 (B5): on a phone a row also has
+//   «↑↑», to the top of the list (a deck took 49 taps of ↑ ↓).
 // - `start`: the first row's number, for a list that goes on from another
 //   (the firewall's two chains): numbers and names only, the moves stay its own.
 // - Keyboard, on the handle only (events from the content's own controls,
@@ -19,6 +18,19 @@
 //   arrows, Home and End move the focus between handles. Moving focus
 //   elsewhere drops the item where it is. A click (pointer, screen reader)
 //   grabs and drops as Space does.
+// - Round 10: the handle also drags, by Pointer Events (mouse, touch, pen; the
+//   HTML5 drag API does nothing on touch). Only the handle has `touch-action:
+//   none`, so a phone's page still scrolls from anywhere else, and only the
+//   handle starts a drag, so the content's controls never do. Past a few px
+//   of movement the card follows the pointer up and down inside its own list
+//   (its centre stays between the list's ends, so a drag can't leave the list
+//   or widen the page); the other rows move aside as the drop would leave them
+//   and a dashed slot shows where it will land. Nearer than that it is a
+//   click. Near the edge of the scroll area (scrollAreaOf: the page on
+//   a phone, .ng-screen on a desktop) the area scrolls, until the list's end
+//   is in view. The DOM order doesn't change during a drag: the drop commits
+//   once through `onReorder`. Esc, `pointercancel` or the window losing focus
+//   put the card back; a list that changes under a drag ends it quietly.
 // - Every move is committed at once through `onReorder` (so the DOM order is
 //   always the caller's order); the grab's start order is this component's
 //   own state, kept only for Esc.
@@ -36,14 +48,147 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { CLEAR_MS } from './Feedback.jsx';
 import { uk } from '../uk.js';
-import { usePhone } from '../phone.js';
-import { keyTarget, moveTo } from '../reorder.js';
+import { scrollAreaOf, usePhone, visibleHeightOf } from '../phone.js';
+import { edgeSpeed, keyTarget, landing, moveTo } from '../reorder.js';
 import '../tokens.css';
 import './ReorderList.css';
 
 const useIsoLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 const sameItems = (a, b) => a.length === b.length && a.every(id => b.includes(id));
+
+// How far a press moves before it is a drag: a finger shakes more than a mouse.
+const LIFT_MOUSE = 4;
+const LIFT_TOUCH = 8;
+// Auto-scroll stops once the list's end is this far inside the scroll area.
+const END_MARGIN = 16;
+
+/**
+ * Dragging a row by its handle. The card's position and the scrolling are
+ * written per frame, outside React; React hears only where the card would
+ * land. `on`: lifted(id), landed(id, to), cancelled(id), read at the moment
+ * they are called, so a drop reaches the caller's current `onReorder`.
+ */
+function useRowDrag({ ids, wrap, rowOf, on }) {
+  const [drag, setDrag] = useState(null); // { id, top, height }: the slot it would land in
+  const session = useRef(null);
+  const skipClick = useRef(false);
+  const now = useRef(null);
+
+  useIsoLayoutEffect(() => {
+    now.current = { ids, on };
+    const s = session.current;
+    if (s && s.order !== ids.join('\n')) s.end('quiet');
+  });
+  useEffect(() => () => session.current?.end('quiet'), []);
+
+  /** The rows where the layout has them (in the wrap, so scrolling changes nothing; the transforms don't count). */
+  const measure = () => now.current.ids.map(id => {
+    const row = rowOf(id);
+    return { top: row.offsetTop, bottom: row.offsetTop + row.offsetHeight };
+  });
+  /** Brings the card to the pointer; the other rows make room where it would land. */
+  function follow(s) {
+    const { ids: order } = now.current, rows = measure(), from = order.indexOf(s.id);
+    const home = (rows[from].top + rows[from].bottom) / 2;
+    const y = s.pointerY - wrap.current.getBoundingClientRect().top - s.grip;
+    const centre = Math.max(rows[0].top, Math.min(rows[rows.length - 1].bottom, y));
+    rowOf(s.id).style.transform = `translate3d(0, ${centre - home}px, 0)`;
+    const { to, top, height, step } = landing(rows, from, centre);
+    if (to === s.to && top === s.top) return;
+    s.to = to;
+    s.top = top;
+    order.forEach((id, i) => {
+      if (i === from) return;
+      const by = i > from && i <= to ? -step : i < from && i >= to ? step : 0;
+      rowOf(id).style.transform = by ? `translate3d(0, ${by}px, 0)` : '';
+    });
+    setDrag({ id: s.id, top, height });
+  }
+  function autoScroll(s, time) {
+    const area = scrollAreaOf(wrap.current);
+    if (!area) return;
+    const page = area === document.scrollingElement || area === document.documentElement;
+    const top = page ? 0 : area.getBoundingClientRect().top;
+    const bottom = top + visibleHeightOf(wrap.current);
+    const speed = edgeSpeed(s.pointerY, top, bottom);
+    const elapsed = Math.min(48, time - (s.time ?? time - 16));
+    s.time = time;
+    if (!speed) return;
+    const rows = measure(), at = wrap.current.getBoundingClientRect().top;
+    const more = speed < 0 ? at + rows[0].top < top + END_MARGIN : at + rows[rows.length - 1].bottom > bottom - END_MARGIN;
+    if (more) area.scrollTop += Math.sign(speed) * Math.max(1, Math.round(Math.abs(speed) * elapsed / 1000));
+  }
+
+  function press(event, id) {
+    if (session.current || !event.isPrimary || event.button !== 0) return;
+    skipClick.current = false;
+    const handle = event.currentTarget;
+    const s = {
+      id, pointerId: event.pointerId, x: event.clientX, y: event.clientY, pointerY: event.clientY,
+      lift: event.pointerType === 'mouse' ? LIFT_MOUSE : LIFT_TOUCH,
+      ids: now.current.ids, order: now.current.ids.join('\n'), lifted: false, grip: 0, to: -1, top: -1, frame: 0, time: null,
+    };
+    const frame = time => {
+      s.frame = requestAnimationFrame(frame);
+      autoScroll(s, time);
+      follow(s);
+    };
+    const onMove = e => {
+      if (e.pointerId !== s.pointerId) return;
+      s.pointerY = e.clientY;
+      if (s.lifted || Math.hypot(e.clientX - s.x, e.clientY - s.y) < s.lift) return;
+      s.lifted = true;
+      try { handle.setPointerCapture(s.pointerId); } catch { /* the pointer has already gone: its up or cancel ends this */ }
+      const home = rowOf(id);
+      s.grip = s.y - wrap.current.getBoundingClientRect().top - (home.offsetTop + home.offsetHeight / 2);
+      now.current.on.lifted(id);
+      follow(s);
+      s.frame = requestAnimationFrame(frame);
+    };
+    const onUp = e => { if (e.pointerId === s.pointerId) s.end('drop'); };
+    const onCancel = e => { if (e.pointerId === s.pointerId) s.end('cancel'); };
+    const onBlur = () => s.end('cancel');
+    // Capture: while a card is carried the keys are the drag's, so the handle's own (a grab, a move) stay out of it.
+    const onKey = e => {
+      if (!s.lifted) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.key === 'Escape') s.end('escape');
+    };
+    s.end = how => {
+      if (session.current !== s) return;
+      session.current = null;
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      document.removeEventListener('pointercancel', onCancel);
+      document.removeEventListener('keydown', onKey, true);
+      window.removeEventListener('blur', onBlur);
+      cancelAnimationFrame(s.frame);
+      if (!s.lifted) return;
+      if (how === 'drop') follow(s); // where the pointer was let go, not the last frame
+      for (const row of s.ids.map(rowOf)) if (row) row.style.transform = '';
+      setDrag(null);
+      // A mouse's press and release on the handle are also a click; after a drop or Esc it means nothing.
+      skipClick.current = how === 'drop' || how === 'escape';
+      if (how === 'drop') now.current.on.landed(id, s.to);
+      else if (how !== 'quiet') now.current.on.cancelled(id);
+    };
+    session.current = s;
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+    document.addEventListener('pointercancel', onCancel);
+    document.addEventListener('keydown', onKey, true);
+    window.addEventListener('blur', onBlur);
+  }
+  /** Whether a click on a handle is one (not the end of a drag). */
+  function clicked() {
+    const skip = skipClick.current;
+    skipClick.current = false;
+    return !skip;
+  }
+  return { drag, press, clicked };
+}
 
 /**
  * @param {{
@@ -66,7 +211,8 @@ export default function ReorderList({ items, onReorder, label, name, children, r
   // The last announcement: { kind, id, n, name, stamp }; `settled` is the stamp shown.
   const [said, setSaid] = useState(null);
   const [settled, setSettled] = useState(0);
-  const els = useRef({ handle: new Map(), top: new Map(), up: new Map(), down: new Map() });
+  const els = useRef({ row: new Map(), handle: new Map(), top: new Map(), up: new Map(), down: new Map() });
+  const wrap = useRef(null);
   const focusAfter = useRef(null);
   const helpId = useId();
   // A grab belongs to this list of items; another list (another task) ends it.
@@ -163,18 +309,38 @@ export default function ReorderList({ items, onReorder, label, name, children, r
     say('placed', id, 1);
   }
   const keep = (part, id) => el => { if (el) els.current[part].set(id, el); else els.current[part].delete(id); };
+  const { drag, press, clicked } = useRowDrag({
+    ids, wrap, rowOf: id => els.current.row.get(id),
+    on: {
+      lifted(id) {
+        setGrab(null);
+        say('grabbed', id, ids.indexOf(id) + 1);
+      },
+      landed(id, to) {
+        focusAfter.current = { id, part: 'handle' };
+        const next = moveTo(ids, id, to);
+        if (next) commit(next, id, 'handle');
+        say('dropped', id, to + 1);
+      },
+      cancelled(id) {
+        focusAfter.current = { id, part: 'handle' };
+        say('cancelled', id, ids.indexOf(id) + 1);
+      },
+    },
+  });
 
   return (
-    <div className={`ng-reorder-wrap ${className}`.trim()}>
+    <div ref={wrap} className={`ng-reorder-wrap${drag ? ' is-carrying' : ''} ${className}`.trim()}>
       <p id={helpId} className={showHelp ? 'ng-reorder-help' : 'ng-sr-only'}>{uk.reorder.help}</p>
       <ol className="ng-reorder" aria-label={label}>
         {items.map((item, index) => {
-          const n = index + start, grabbed = held?.id === item.id, first = index === 0, last = index === total - 1;
+          const n = index + start, dragged = drag?.id === item.id, grabbed = dragged || held?.id === item.id, first = index === 0, last = index === total - 1;
           return (
-            <li key={item.id} className={`ng-reorder-item${grabbed ? ' is-grabbed' : ''}${rowClassName ? ` ${rowClassName(item, index)}` : ''}`.trimEnd()}>
+            <li key={item.id} ref={keep('row', item.id)} className={`ng-reorder-item${grabbed ? ' is-grabbed' : ''}${dragged ? ' is-dragging' : ''}${rowClassName ? ` ${rowClassName(item, index)}` : ''}`.trimEnd()}>
               <div ref={keep('handle', item.id)} role="button" tabIndex={0} className="ng-reorder-handle" aria-pressed={grabbed}
                 aria-label={uk.reorder.handle({ n, name: name(item) })} aria-describedby={helpId}
-                onKeyDown={event => onHandleKey(event, item.id, index)} onClick={() => toggle(item.id)} onBlur={event => onHandleBlur(event, item.id)}>
+                onPointerDown={event => press(event, item.id)} onKeyDown={event => onHandleKey(event, item.id, index)}
+                onClick={() => { if (clicked()) toggle(item.id); }} onBlur={event => onHandleBlur(event, item.id)}>
                 <span className="ng-reorder-grip" aria-hidden="true">≡</span>
                 <span className="ng-reorder-n" aria-hidden="true">{n}</span>
               </div>
@@ -193,6 +359,7 @@ export default function ReorderList({ items, onReorder, label, name, children, r
           );
         })}
       </ol>
+      {drag && <div className="ng-reorder-slot" style={{ top: `${drag.top}px`, height: `${drag.height}px` }} aria-hidden="true" />}
       <p className="ng-sr-only ng-reorder-live" aria-live="polite">{spoken}</p>
     </div>
   );

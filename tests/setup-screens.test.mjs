@@ -73,7 +73,7 @@ test('setup strings: every screen word is non-empty with its parameters, and cal
   // One task sentence for every deck (spec S2); MikroTik's without the modes part.
   // Round 5 repair v1: the task sentence is the goal only; the how (and the modes) is the action line's.
   assert.equal(ui.task, 'Збери базове налаштування в робочому порядку.');
-  assert.equal(ui.actionOrder, 'Постав картки в робочий порядок кнопками ↑ ↓.');
+  assert.equal(ui.actionOrder, 'Перетягни картки за ≡ або натискай ↑ ↓.');
   assert.equal(ui.actionModes, 'У кожній картці обери режим.');
   // The mode «?» goes after «режим» and its full stop (the end of the line), never inside a word; without the word, at the end.
   assert.equal(h.helpAt(ui.actionModes), ui.actionModes.length);

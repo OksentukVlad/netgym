@@ -49,6 +49,37 @@
   outline-offset: 1px;
 }
 
+/* Carried by the pointer (ReorderList.jsx writes the transform): lifted, above
+   the rows, its outline solid (the slot is the dashed one). A filter, not a
+   box-shadow: the callers' rows use theirs for chain and mark edges, which
+   stay on the card. */
+.ng-reorder-item.is-dragging {
+  position: relative;
+  z-index: 2;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.35));
+  outline-style: solid;
+  will-change: transform;
+}
+
+.ng-reorder-item.is-dragging .ng-reorder-handle { cursor: grabbing; }
+
+/* Where the card will land: the gap the other rows leave, under the card. */
+.ng-reorder-slot {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  right: 0;
+  box-sizing: border-box;
+  background: var(--ng-blue-bg);
+  border: 2px dashed var(--ng-blue);
+  border-radius: var(--ng-radius);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ng-reorder-wrap.is-carrying .ng-reorder-item:not(.is-dragging) { transition: transform 120ms ease-out; }
+}
+
 .ng-reorder-handle {
   box-sizing: border-box;
   display: inline-flex;
@@ -65,7 +96,11 @@
   font-family: var(--ng-mono);
   font-size: var(--ng-font-small);
   font-weight: 700;
-  cursor: pointer;
+  cursor: grab;
+  /* The drag owns a touch on the handle, and only there: anywhere else the page scrolls. */
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -127,7 +162,7 @@
    caller's content across the whole card (its purpose, its command, its own
    controls at full width), then the handle and «↑» «↓» on one row. Nothing
    sits beside the content, so nothing paints over it. The targets stay
-   44 px (48 on a coarse pointer, tokens.css); there is no pointer drag. */
+   44 px (48 on a coarse pointer, tokens.css). */
 @media (max-width: 639.98px) {
   .ng-reorder-item {
     grid-template-columns: auto minmax(0, 1fr) auto;

@@ -192,7 +192,7 @@ await scenario('first view', m => {
   // Round 5 (R1, R2): one action line, above the deck; every card's purpose under its command.
   const action = all('.ng-action-line');
   const board = [...q('.ng-su-board').childNodes].filter(n => n.nodeType === 1);
-  check('first: one action line, the deck’s, right above the deck, in words true of every device (no drag)', action.length === 1 && actionWords() === ui.actionOrder && !/Перетягни/.test(ui.actionOrder)
+  check('first: one action line, the deck’s, right above the deck, naming the drag and the buttons', action.length === 1 && actionWords() === ui.actionOrder && /≡/.test(ui.actionOrder) && /↑ ↓/.test(ui.actionOrder)
     && (board[0] === action[0] || board[0].contains(action[0])) && (board[1]?.localName === 'ol' || Boolean(q('ol.ng-reorder', board[1]))), words(action[0]));
   // 5b-2 A: the folded worked example is the action line's next sibling, above the deck.
   check('first: the worked example folded, right under the action line, before the deck', exampleOk() === '' && action[0].nextSibling === q('[data-worked-example]')

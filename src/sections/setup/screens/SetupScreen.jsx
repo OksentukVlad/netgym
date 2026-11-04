@@ -7,7 +7,7 @@
 // The flow (logic/state.js): sorting → modes (Cisco) → sorted → recall → done.
 // Round 9 (B1): one decision at a time. Modes were a wall: 60 radios on the
 // first view, and no word on the order until all 12 were set.
-//   - sorting: the action line (round 5, R1) above the deck (ReorderList: ≡
+//   - sorting: the action line (round 5, R1) above the deck (ReorderList: ≡ drag
 //     and ↑ ↓, keyboard grab); each card's purpose first, its command under
 //     it (R2, the bank's data; 5b-2 F). Right under the action line, the
 //     worked example (5b-2 A: three cards in order with their modes on Cisco,
