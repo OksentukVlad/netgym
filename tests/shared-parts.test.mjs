@@ -198,6 +198,8 @@ test('the start screen: the IP screens first, «Почни тут» inside the f
   const html = unescape(h.startScreen());
   const cards = [...html.matchAll(/<button type="button" class="ng-card">([\s\S]*?)<\/button>/g)].map(m => m[1]);
   assert.equal(cards.length, 9);
+  assert.match(html, /<p class="ng-home-tagline">Тренажер з комп’ютерних мереж[^<]*<\/p>/, 'one line says what NetGym is (B7)');
+  assert.doesNotMatch(html, /ng-done|навчальн|екзамен|клас/u, 'no ✓ before anything is solved; no class or exam in its words');
   assert.ok(cards[0].includes('IP-калькулятор') && cards[0].includes('<span class="ng-card-start">Почни тут</span>'), 'chip text inside the first card\'s button');
   assert.ok(cards.slice(1).every(c => !c.includes('Почни тут')), 'only the first');
   assert.ok(cards.every(c => c.includes('<span class="ng-card-arrow" aria-hidden="true">→</span>') && !c.includes('Відкрити')), 'the whole card is the button; no separate «Відкрити →»');

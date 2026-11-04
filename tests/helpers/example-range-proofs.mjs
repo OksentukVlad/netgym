@@ -105,7 +105,7 @@ export const rangeProofs = [
   },
   {
     "file": "src/sections/routing/logic/faults-exercise.js",
-    "sha256": "49be08705b94cf61ea7d6315be84a183ff1bccd11fea98436beff79f93e59fb0",
+    "sha256": "f1a7a23706dbb852dfa10cff0522a3171022b97fb826e5dc3f4d7d95402ebbb7",
     "ranges": [
       "10.0.0.0/7",
       "172.0.0.0/10",
@@ -127,7 +127,7 @@ export const rangeProofs = [
   },
   {
     "file": "src/sections/firewall/logic/predict.js",
-    "sha256": "a77cfa458821b52e35bf0aa7320fe11aa3f74b57dba6e474b7e49562e296f53a",
+    "sha256": "433df7ed856835b64690529908b2488661a4b4197102967caa52cb0a10e36d97",
     "ranges": [
       "100.64.0.0/10",
       "192.168.0.0/16",
@@ -170,7 +170,7 @@ export const rangeProofs = [
   },
   {
     "file": "src/sections/dhcp/logic/sides.js",
-    "sha256": "caa6e3b1ce3e3ee2d13b7a2f3392ffdf0800bec812f3bfbda1bf670b0edf982d",
+    "sha256": "1ad095339b267ef71ac8429d6ef153b0282b51ed5857face967803540c9ecf5b",
     "ranges": [
       "10.0.0.0/8",
       "172.16.0.0/12",
@@ -203,7 +203,7 @@ export const rangeProofs = [
   },
   {
     "file": "src/sections/dhcp/logic/faults.js",
-    "sha256": "8bafc77721a90f00708207b2486bb34e9003c87efa1070a85358f7a41bf023d1",
+    "sha256": "5a844eece52729187acd4320cd5755c1953181d5e8a9771b4c59ceb3109ab1fb",
     "ranges": [
       "10.0.0.0/8",
       "172.16.0.0/12",
@@ -216,7 +216,7 @@ export const rangeProofs = [
   },
   {
     "file": "src/sections/checks/logic/probes.js",
-    "sha256": "1045c4b7fbd06b4a7b4742911e82534c78dcfeffcfe5658a660225fe82553b53",
+    "sha256": "4838ea80469487d31b0cb4cca0fdf53c17f564f45f5d8ec7088fd2199aa13f66",
     "ranges": [
       "10.0.0.0/8",
       "172.16.0.0/12",
@@ -230,7 +230,7 @@ export const rangeProofs = [
   },
   {
     "file": "src/sections/checks/logic/claims.js",
-    "sha256": "d5820a22d2bd2d28add1bd10c7f5635e6839deebbe438fdf36e2e29f73e78066",
+    "sha256": "4e2711c58d36f4169970aa2e287825e8aa557b57a6d4009df0841706f2d9386f",
     "ranges": [
       "10.0.0.0/8",
       "172.16.0.0/12",
@@ -244,7 +244,7 @@ export const rangeProofs = [
   },
   {
     "file": "src/sections/checks/logic/proofs.js",
-    "sha256": "d876700de07528bbf0ae3209d53af3f6d2b36de03f1f149f0327d7ca67c2ed18",
+    "sha256": "66244fbe94276277ff9e2901312e4be99304df81d2b38eb1e0929b1d14aa7df0",
     "ranges": [
       "10.0.0.0/8",
       "172.16.0.0/12",

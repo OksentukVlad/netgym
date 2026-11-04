@@ -3,7 +3,7 @@ import { id as routingId } from '../logic/static.js';
 import { generatorVersion } from '../logic/generated.js';
 import faults from '../logic/faults-exercise.js';
 import { generatorVersion as faultsGenerator } from '../logic/faults-frozen.js';
-import { any, asides, between, bool, count, field, finite, isObject, jsonOf, listOf, mapOf, matches, nullable, oneOf, resultOf, shape, text, zoom } from '../../../ui/saved-shape.js';
+import { any, asides, between, bool, count, field, finite, firstVisits, isObject, jsonOf, listOf, mapOf, matches, nullable, oneOf, resultOf, shape, text, zoom } from '../../../ui/saved-shape.js';
 import { MAX_SEED } from './url.js';
 
 const seed = between(0, MAX_SEED);
@@ -54,6 +54,7 @@ export const saved = Object.freeze({
     }, ['taskId']),
     'routing-faults': shape({ open: bool, level: between(1, 9), seed }),
     'routing.tasks': shape(asides),
+    ...firstVisits,
   },
   exercises: {
     [routingId]: {
@@ -65,6 +66,7 @@ export const saved = Object.freeze({
       },
       view: shape({
         checks: count, checkedEdits: count, proven: jsonOf(answer), mine: bool, zoom,
+        checkedOn: text, movedFrom: nullable(text), routerHints: mapOf(count),
         review: shape({ generation: count, edits: count, tips: listOf(any), star: bool }, ['generation', 'edits', 'tips']),
       }),
       answer: nullable(answer),
@@ -82,7 +84,7 @@ export const saved = Object.freeze({
         drafts: mapOf(shape({ syntax: text, values: fieldValues })), router: text,
         marks: mapOf(shape({ code: text, syntax: text, values: fieldValues })),
         checks: count, verdict: nullable(shape({ tone: text, done: bool })), checkedRows: text,
-        solved: bool, earned: bool, serial: count, hintSnap: text, zoom,
+        solved: bool, earned: bool, serial: count, hintSnap: text, zoom, revealedRows: text,
       }),
     },
   },

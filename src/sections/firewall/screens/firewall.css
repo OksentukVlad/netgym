@@ -565,6 +565,9 @@
 
 /* The walk, row by row (§5): words carry it; colour only helps. */
 .ng-fw-walk { font-weight: 700; }
+/* Round 9 (B6): words still to come keep their place, so the buttons under them don't move during the walk. */
+.ng-fw-walk.is-pending,
+.ng-fw-hold { visibility: hidden; }
 .ng-fw-row.is-other-chain,
 .ng-fw-row.is-disabled.is-disabled { color: var(--ng-muted); }
 .ng-fw-row.is-other-chain .ng-fw-n { color: var(--ng-muted); }

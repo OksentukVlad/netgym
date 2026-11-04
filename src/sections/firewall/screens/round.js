@@ -14,9 +14,9 @@
 //   revealed  [cardId]  cards locked by «Показати відповідь»
 //   played    [cardId]  commits whose walk has played (in commit order)
 //   zoom      the diagram's zoom
-// Hint progress is the session's hintIndex (per round: the rungs stay open
-// for later cards; their text can use the current card). The section place
-// keeps the active variant and each variant's seed.
+//   cardHints { [cardId]: n }  the rungs opened on each card (the session's
+//             hintIndex only says the round was helped)
+// The section place keeps the active variant and each variant's seed.
 import { generatorVersion, initialCommitState } from '../logic/predict.js';
 
 export const EXERCISE_ID = 'fw-predict';

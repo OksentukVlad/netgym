@@ -142,7 +142,7 @@ export function parse(text, { mode = G, profile: selected = profile } = {}) {
         if (ended.id === 'transport-ssh' && values.transport !== 'ssh') return finding('unsafe-command', tokens[positions.transport], positions.transport, { reason: 'insecure-transport' });
         return { ok: true, id: ended.id, values, positions, tokens };
       }
-      if (candidates.some(c => c.id === 'crypto') && (depth === 4 || (depth === 5 && candidates.every(c => c.words[depth] === 'modulus')))) return finding('unsafe-command', tokens[0], 0, { reason: 'modulus-required' });
+      if (candidates.some(c => c.id === 'crypto') && (depth === 4 || (depth === 5 && candidates.every(c => c.words[depth] === 'modulus')))) return finding('unsafe-command', { text: '', start: text.length, end: text.length }, index, { reason: 'modulus-required' });
       return absent();
     }
     const live = candidates.filter(c => depth < c.words.length);

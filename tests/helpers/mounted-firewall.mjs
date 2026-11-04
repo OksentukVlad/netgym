@@ -354,6 +354,35 @@ scenario('level 1', m => {
   check('level 1: not all right: no ✓ on level 1', !levelDone(1));
 }, { level: 1 });
 
+// Round 9 usage review (Андрій).
+scenario('round 9: level 1 says what «Далі» does', m => {
+  const seedBefore = placeOf(m).seeds.basic;
+  for (let i = 0; i < 3; i++) {
+    click(door(rightAnswer(m, i).hook));
+    click(check2());
+    if (i < 2) click(cont());
+  }
+  check('A18: the round\'s end names level 2', /«Далі» — рівень 2/.test(roundLine()), roundLine());
+  click(nextB());
+  check('A18: «Далі» opens level 2 on a new set, not an old half-done round', placeOf(m).level === 2 && placeOf(m).seeds.basic !== seedBefore);
+}, { level: 1 });
+scenario('round 9: a skip stays on its level and says what it drops', m => {
+  check('A21: the quiet link names the round', /^Пропустити раунд/.test(text(nextB())), text(nextB()));
+  const seedBefore = placeOf(m).seeds.chain;
+  click(nextB());
+  check('A21: level 1, a new round', placeOf(m).level === 1 && placeOf(m).seeds.chain !== seedBefore);
+}, { level: 1 });
+scenario('round 9: hints stay with their packet', m => {
+  click(hintB());
+  click(hintB());
+  click(hintB());
+  check('A20: three opened on packet 1, none left', !hintB());
+  click(door(rightAnswer(m, 0).hook));
+  click(check2());
+  click(cont());
+  check('A20: packet 2 starts at hint 1, nothing carried over', /Підказка 1 з 3/.test(text(hintB())) && all('[data-help="hint"]').length === 0, text(q('.ng-fw-work')).slice(0, 200));
+}, { level: 1 });
+
 // ── 7c. The «Куди» fact link (round 5, R3) ──
 scenario('fact link', m => {
   const task = taskOf(m);
@@ -466,6 +495,8 @@ scenario('overlays and steps', m => {
   // Round 5 (5b-2 B): each step is named in words under the stepper (the trace's captions), the group described by them.
   const caption = () => text(q('#ng-fw-step-caption'));
   check('«По кроках»: starts at step 1', /^крок 1 з \d+$/.test(counter()) && walk() === 'stepping', counter());
+  // «По кроках» is paced by the learner: no words held, so the step's row and the verdict fit together at 1000 × 700.
+  check('«По кроках»: words still to come hold no place', all('.ng-fw-walk.is-pending').length > 0 && all('.ng-fw-walk.is-pending').every(el => text(el).trim().length <= 1) && !q('.ng-fw-hold'));
   check('«По кроках»: step 1 names the packet setting off; the group is described by those words', /^Пакет \S+ → \S+ вирушає$/.test(caption()) && q('#ng-fw-step-caption').getAttribute('aria-live') === 'polite'
     && q('.ng-fw-stepper').getAttribute('aria-describedby') === 'ng-fw-step-caption', caption());
   key(q('.ng-fw-stepper').querySelector('button'), 'ArrowRight');
@@ -661,13 +692,21 @@ function wheelZoom(label, mountIt, frameSelector, barSelector) {
   const hintWords = n => text(all('.ng-fwo [data-help="hint"]')[n - 1]);
   const nextButton = () => q('.ng-fwo .ng-help-next');
   const current = () => q('.ng-fwo [data-help-current]');
+  /** The rows as shown: «Увесь фільтр» reads the order chain by chain (round 9, B4). */
+  const shownOrder = (task, order) => {
+    const chain = id => task.rules.find(r => r.id === id).chain;
+    return task.rules.some(r => r.chain === 'forward') ? [...order.filter(id => chain(id) === 'input'), ...order.filter(id => chain(id) === 'forward')] : order;
+  };
   /** Structure: DOM order and numbers are the learner's, only the ends limit ↑ ↓, each description is shown once (plus where a finding or hint names it). */
   function structure(m) {
     const task = task2(m), st = state2(m), out = [];
-    const want = st.answer.order.map(id => quoted(descOf(task, id)));
+    const want = shownOrder(task, st.answer.order).map(id => quoted(descOf(task, id)));
     if (JSON.stringify(rowNames()) !== JSON.stringify(want)) out.push('order');
     if (items().some((li, i) => text(li.querySelector('.ng-reorder-n')) !== String(i + 1))) out.push('numbering');
-    if (items().some((li, i) => { const [u, d] = li.querySelectorAll('.ng-reorder-move').map(b => b.getAttribute('aria-disabled')); return (u === 'true') !== (i === 0) || (d === 'true') !== (i === items().length - 1); })) out.push('move limits');
+    for (const list of all('.ng-fwo ol.ng-reorder')) {
+      const rows = list.querySelectorAll('.ng-reorder-item');
+      if (rows.some((li, i) => { const [u, d] = li.querySelectorAll('.ng-reorder-move').map(b => b.getAttribute('aria-disabled')); return (u === 'true') !== (i === 0) || (d === 'true') !== (i === rows.length - 1); })) out.push('move limits');
+    }
     for (const f of orderListFindings(m.container.outerHTML)) out.push(`names:${f}`);
     if (!st.walkOpen) {
       const body = text(fwo()), named = text(q('.ng-fwo [data-help="message"]'));
@@ -729,12 +768,15 @@ function wheelZoom(label, mountIt, frameSelector, barSelector) {
     click(level('Увесь фільтр'));
     const all9 = task2(m);
     note();
-    check('FW-2 levels: «Увесь фільтр» shows all nine, input and forward in one list', items().length === 9 && new Set(all9.rules.map(r => r.chain)).size === 2 && JSON.stringify(rowNames()) === JSON.stringify(all9.rules.map(r => quoted(descOf(all9, r.id)))));
-    check('FW-2 levels: its goal adds the WAN line and the port-forward fact (F2), the diagram its dst-NAT label', all('.ng-fwo-goal p').length === 4 && /прокидання порту/.test(text(q('.ng-fwo-goal'))) && /Проброс порту: 100\.64\.0\.2:443 → Сервер:443/.test(text(q('.ng-fwo-goal'))) && q('.ng-fwo .ng-fw-nat') !== null);
+    check('FW-2 levels: «Увесь фільтр» shows all nine, a list per chain, numbered on from one to the other (B4)', items().length === 9 && all('.ng-fwo ol.ng-reorder').map(ol => ol.querySelectorAll('.ng-reorder-item').length).join() === '5,4'
+      && JSON.stringify(rowNames()) === JSON.stringify(shownOrder(all9, all9.rules.map(r => r.id)).map(id => quoted(descOf(all9, id))))
+      && items().map(li => text(li.querySelector('.ng-reorder-n'))).join() === '1,2,3,4,5,6,7,8,9');
+    check('FW-2 levels: the sentence that makes it tractable comes first (B4)', q('.ng-fwo-intro').children[0] === q('.ng-fwo-ordering') && all('.ng-fwo-chain-head').length === 2);
+    check('FW-2 levels: its goal adds the WAN line and the port-forward fact (F2), the diagram its dst-NAT label', all('.ng-fwo-goal p').length === 4 && /прокидання порту/.test(text(q('.ng-fwo-goal'))) && /Прокидання порту: 100\.64\.0\.2:443 → Сервер:443/.test(text(q('.ng-fwo-goal'))) && q('.ng-fwo .ng-fw-nat') !== null);
     check('FW-2 levels (5b-2): the port-forward line is marked as the given (data-nat); both chains, so the line about their order; the example closed again (a new level)',
-      all('.ng-fwo-goal [data-nat]').length === 1 && /^Проброс порту/.test(text(q('.ng-fwo-goal [data-nat]'))) && text(q('.ng-fwo-ordering')) === fwc.ordering
+      all('.ng-fwo-goal [data-nat]').length === 1 && /^Прокидання порту/.test(text(q('.ng-fwo-goal [data-nat]'))) && text(q('.ng-fwo-ordering')) === fwc.ordering
       && exampleProblem(m.container, { open: false }) === null);
-    check('FW-2 levels: the chains grouped inside the one list: an edge per chain, a divider where it changes (F2)', items().every(li => /is-chain-(input|forward)/.test(li.className)) && items().filter(li => li.className.includes('is-chain-change')).length === items().filter((li, i) => i > 0 && (li.className.match(/is-chain-(\w+)/)?.[1] !== items()[i - 1].className.match(/is-chain-(\w+)/)?.[1])).length && all('.ng-fwo ol').length >= 1);
+    check('FW-2 levels: an edge per chain, no divider: each list holds one chain', items().every(li => /is-chain-(input|forward)/.test(li.className)) && !items().some(li => li.className.includes('is-chain-change')));
     click(main2());
     click(level('Лише до роутера'));
     check('FW-2 levels: back on the first level, its own list as it was, unchecked', items().length === 5 && status2() === '' && place2(m).variantId === 'input');
@@ -968,7 +1010,7 @@ function wheelZoom(label, mountIt, frameSelector, barSelector) {
 
   orderScenario('FW-2 pass, nine rules', m => {
     const task = task2(m), ref = reference(m);
-    // A free interleaving: forward first, then input (verdicts and firing are the same).
+    // A free interleaving, as a saved order may hold: the screen reads it chain by chain.
     const order = [...ref.filter(x => task.rules.find(r => r.id === x).chain === 'forward'), ...ref.filter(x => task.rules.find(r => r.id === x).chain === 'input')];
     putOrder(m, order);
     click(main2());
@@ -976,7 +1018,7 @@ function wheelZoom(label, mountIt, frameSelector, barSelector) {
     check('FW-2 pass, nine rules: another correct order passes too (checked by behaviour)', state2(m).result.ok && /✓ Так/.test(status2()));
     check('FW-2 pass, nine rules: all four tips, FastTrack first', all('.ng-fwo-tips li').map(li => text(li)).join('|') === ['fasttrack', 'replies', 'input', 'forward'].map(k => orderUi.tips[k]).join('|'));
     const lines = q('.ng-fwo-result .ng-copy-pre').textContent.split('\n');
-    check('FW-2 pass, nine rules: the script follows that interleaving', lines.length === 9 && lines.slice(0, 4).every(l => l.includes('chain=forward')) && lines.slice(4).every(l => l.includes('chain=input')));
+    check('FW-2 pass, nine rules: the script goes chain by chain, as the lists do', lines.length === 9 && lines.slice(0, 5).every(l => l.includes('chain=input')) && lines.slice(5).every(l => l.includes('chain=forward')));
   }, { variantId: 'all' });
 
   orderScenario('FW-2 reveal', m => {

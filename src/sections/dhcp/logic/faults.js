@@ -130,6 +130,7 @@ export function repairFields(task, config = task.config) {
       ...(options ? { options } : {}), ...(native && term ? { native: term } : {}) });
   };
   add('enabled', ['dhcp', 'enabled'], 'boolean', null, task.vendor === 'cisco' ? 'service dhcp' : 'disabled');
+  if (native && task.vendor !== 'cisco') fields.at(-1).label = words.fields.serverDisabled;
   add('interface', ['dhcp', 'interface'], 'select', [p.lan, p.wan, ...task.bridgePorts], task.vendor === 'cisco' ? 'receiving interface' : 'DHCP Server Interface');
   if (task.vendor === 'cisco') {
     add('poolNetwork', ['dhcp', 'poolNetwork'], 'ip', null, 'network');

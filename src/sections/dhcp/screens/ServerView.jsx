@@ -90,7 +90,7 @@ export function stripProps(task, answer, marked = null) {
   const pin = (address, name, extra = {}) => ({ value: lastOctet(address), label: `${name} .${lastOctet(address)}`, short: `.${lastOctet(address)}`, marked: address === marked, ...extra });
   const markerOk = !bands.length && v.marker && sameNet(v.marker, v.network) && lastOctet(v.marker) >= span.start && lastOctet(v.marker) <= span.end;
   return {
-    octet: 4, unit: (span.end - span.start + 1) / 16, span, bands,
+    octet: 4, unit: (span.end - span.start + 1) <= 32 ? 8 : (span.end - span.start + 1) / 16, span, bands,
     value: markerOk ? lastOctet(v.marker) : null,
     pins: [pin(v.router, labels.router, { auto: v.routerAutoExcluded }), ...v.statics.map(s => pin(s.address, s.name))],
     caption: v.routerAutoExcluded ? `${v.caption}. ${capital(labels.automaticExclusion)}.` : v.caption,
@@ -104,7 +104,9 @@ export default function ServerView({ vendor, place, setPlace }) {
   usePlace(ASIDES, () => ({ asides: { dora: false } }));
   const level = place.server.level;
   const { seed, other } = place.server.tasks[level];
-  const ex = useExercise(serverExercise, null, { seed, level, vendor, other });
+  // Levels 1–2 have the same neutral answer for both vendors. Keep it while
+  // comparing the resulting commands; only level 3 has vendor-specific forms.
+  const ex = useExercise(serverExercise, null, { seed, level, vendor: level < 3 ? 'cisco' : vendor, other });
   const { task, view, session } = ex;
   const form = formOf(task);
   const base = task.network.split('.').slice(0, 3).join('.');
@@ -259,6 +261,7 @@ export default function ServerView({ vendor, place, setPlace }) {
         verdict={verdict}
         stale={stale}
         reveal={{ revealed, onReveal, render: () => null, applied: screen.revealApplied }}
+        continueAction={done && level < 3 ? { label: screen.nextServerLevel(level + 1), onClick: () => chooseLevel(level + 1) } : null}
         next={{ onNext: another }}
       />}
       tools={finished ? <>

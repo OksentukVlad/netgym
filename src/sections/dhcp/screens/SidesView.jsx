@@ -21,6 +21,7 @@ import ExerciseLayout from '../../../ui/components/ExerciseLayout.jsx';
 import HelpPanel from '../../../ui/components/HelpPanel.jsx';
 import WorkedExample from '../../../ui/components/WorkedExample.jsx';
 import { actions, labels, modes, screen, verdicts } from '../uk.js';
+import { uk as shared } from '../../../ui/uk.js';
 import Options, { useNewCard } from './Options.jsx';
 import Picture from './Picture.jsx';
 import { nextSeed } from './seeds.js';
@@ -47,7 +48,7 @@ export default function SidesView({ vendor, place, setPlace }) {
   const tries = view.tries ?? {};          // card id → the sides chosen, in order
   const chosen = tries[card.id] ?? [];
   const last = chosen.at(-1) ?? null;
-  const result = useMemo(() => (last ? check(card, last) : null), [card, last]);
+  const result = useMemo(() => (last ? check(card, last, vendor) : null), [card, last, vendor]);
   const right = Boolean(result?.ok);
   const done = task.cards.every(c => (tries[c.id] ?? []).includes(c.side));
   const cardRef = useRef(null);
@@ -58,7 +59,7 @@ export default function SidesView({ vendor, place, setPlace }) {
     if (right) return;
     const next = { ...tries, [card.id]: [...chosen, side] };
     const complete = task.cards.every(c => (next[c.id] ?? []).includes(c.side));
-    const outcome = check(card, side);
+    const outcome = check(card, side, vendor);
     ex.check({ cards: next }, { result: { ok: outcome.ok, complete: complete && outcome.ok } });
     ex.setView({ tries: next, checks: (view.checks ?? 0) + 1 });
   }
@@ -92,7 +93,7 @@ export default function SidesView({ vendor, place, setPlace }) {
       </>}
       action={right ? actions.committed : actions.sides}
       actionId="ng-dh-action"
-      example={<WorkedExample taskKey={ex.key} context={EXAMPLE.context} head={EXAMPLE.columns} rows={EXAMPLE.rows} note={EXAMPLE.note} />}
+      example={<WorkedExample taskKey={ex.key} context={EXAMPLE.context} head={EXAMPLE.columns} rows={EXAMPLE.rows} note={EXAMPLE.note} tag={shared.example.tagCards} />}
       answer={<Options key={card.id} options={options} value={last} marks={marks} onChoose={choose} locked={right} labelledBy="ng-dh-action" evidence={Boolean(result)} className="ng-dh-sides" />}
       help={<HelpPanel
         taskKey={`${ex.key}|${card.id}`}

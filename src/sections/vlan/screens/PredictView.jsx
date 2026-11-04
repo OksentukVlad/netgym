@@ -61,6 +61,8 @@ import Aside, { useAsideFold } from '../../../ui/components/Aside.jsx';
 import TextEquivalent, { TextEquivalentButton, lineCount } from '../../../ui/components/TextEquivalent.jsx';
 import DiagramExpand, { ExpandButton, useDiagramExpand, useTextOpen } from '../../../ui/topology/DiagramExpand.jsx';
 import ActionLine from '../../../ui/components/ActionLine.jsx';
+import WorkedExample from '../../../ui/components/WorkedExample.jsx';
+import { predictExample } from '../logic/examples.js';
 import VlanDiagram from './VlanDiagram.jsx';
 import GivenConfig from './GivenConfig.jsx';
 import EvidenceTable from './EvidenceTable.jsx';
@@ -184,13 +186,13 @@ export default function PredictView({ record, syntax, place, setPlace, head, ski
     focusQuestion.current = true;
     show(i);
   }
-  /** «Далі →»: this shape in this vendor, one level up (to 2), a new seed. */
+  /** «Далі →»: this shape in this vendor, one level up (to 2), a new seed. A skip stays on its level (Андрій). */
   function onAgain() {
-    const { level } = nextSlot(slot, slot.seed);
+    const { level } = complete ? nextSlot(slot, slot.seed) : slot;
     const seed = validSeed(s => buildable(record, paramsOf(shape, syntax, { seed: s, level })), slot.seed);
     focusQuestion.current = true;
     foldAsides();
-    setPlace({ predict: { ...place.predict, [slotKey(shape, syntax)]: nextSlot(slot, seed) } });
+    setPlace({ predict: { ...place.predict, [slotKey(shape, syntax)]: { seed, level } } });
   }
   const chooseShape = id => setPlace({ shape: id });
 
@@ -220,6 +222,7 @@ export default function PredictView({ record, syntax, place, setPlace, head, ski
   } : nudged ? { tone: 'info', scope: 'part', stamp: `n${nudge.n}`, summary: ui.checkNeeds } : null;
 
   const hosts = task.topology.hosts;
+  const example = useMemo(() => predictExample({ syntax }), [syntax]);
   // A commit's evidence: the learner's own answer (its first PC, or «Нікому»); before it, the whole choice.
   const firstChosen = committed ? (hosts.map(h => h.device).find(id => selection.includes(id)) ?? null) : null;
   return (
@@ -273,6 +276,8 @@ export default function PredictView({ record, syntax, place, setPlace, head, ski
         <h2 ref={questionRef} tabIndex={-1} className="ng-vl-question">{ui.question({ host: current.from })}</h2>
         <EvidenceTable task={task} source={current.from} highlight={facts.highlight} onFact={facts.onFact} />
         <ActionLine id="ng-vl-predict-action">{committed ? ui.predictDone : comprehension.frameAction}</ActionLine>
+        {/* The worked example (round 9, B3): one switch of its own, who gets the frame and why. */}
+        <WorkedExample taskKey={ex.key} context={example.context} head={example.columns} rows={example.rows} note={example.note} />
         {committed && <span id="ng-vl-choices-locked" className="ng-sr-only">{ui.choicesLocked}</span>}
         <div className={`ng-vl-choices${committed ? ' is-locked' : ''}`} role="group" aria-labelledby={committed ? 'ng-vl-choices-locked' : 'ng-vl-predict-action'}
           {...(verdict && !committed ? { 'data-evidence': 'current' } : {})}>
@@ -305,7 +310,7 @@ export default function PredictView({ record, syntax, place, setPlace, head, ski
           primary={committed ? undefined : 'check'}
           verdict={verdict}
           continueAction={committed && !complete ? { label: ui.next, onClick: onNext } : null}
-          next={{ onNext: onAgain, ready: complete, ...(committed && !complete ? { destination: ui.newRounds } : {}) }}
+          next={{ onNext: onAgain, ready: complete, skipLabel: ui.skipNetwork, ...(committed && !complete ? { destination: ui.newRounds } : {}) }}
         />
         {steps.length > 0 && <WalkWords title={ui.walkTitle} steps={after ? [...steps, ui.received({ hosts: received })] : steps} />}
         {legend.length > 0 && (

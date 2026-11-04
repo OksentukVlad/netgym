@@ -67,7 +67,8 @@ test('the phone layer in Chromium: scrolling, the sheet, 640 px, the full-screen
     });
     assert.deepEqual(m, { pageScrolls: true, screenOverflow: 'visible', barPosition: 'static' }, 'phone: the page is the scroller');
     await page.evaluate(() => window.scrollTo(0, 400));
-    assert.ok(await page.evaluate(() => document.querySelector('.ng-bar').getBoundingClientRect().bottom <= 0), 'phone: the bar scrolls away with the page');
+    // By as much as the page scrolled: the first VLAN screen may now be only a little longer than the window.
+    assert.ok(await page.evaluate(() => window.scrollY > 0 && Math.abs(document.querySelector('.ng-bar').getBoundingClientRect().top + window.scrollY) < 1), 'phone: the bar scrolls away with the page');
     assert.equal(await page.evaluate(() => document.querySelectorAll('.ng-bar').length && getComputedStyle(document.querySelector('.ng-bar')).flexWrap), 'nowrap', 'phone: the bar is one row');
     assert.ok(await page.evaluate(() => document.querySelector('.ng-bar').getBoundingClientRect().height < 64), 'phone: the bar is one row high');
     await page.setViewportSize(DESK); await settle(page);
@@ -229,24 +230,27 @@ test('the phone layer in Chromium: scrolling, the sheet, 640 px, the full-screen
     m = await items.first().evaluate(li => {
       const box = el => el.getBoundingClientRect();
       const body = box(li.querySelector('.ng-reorder-body')), handle = box(li.querySelector('.ng-reorder-handle'));
-      const moves = [...li.querySelectorAll('.ng-reorder-move')].map(box), choice = box(li.querySelector('.ng-su-choice'));
+      const moves = [...li.querySelectorAll('.ng-reorder-move')].map(box);
       const meets = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
-      const targets = [handle, ...moves, ...[...li.querySelectorAll('.ng-su-prompts [role="radio"]')].map(box)];
+      const targets = [handle, ...moves];
       return {
         below: handle.top >= body.bottom - 1 && moves.every(r => r.top >= body.bottom - 1),
         oneRow: moves.every(r => Math.abs(r.top - handle.top) < 2),
-        clear: ![handle, ...moves].some(r => meets(r, choice)),
-        fullWidth: choice.width > 0.8 * body.width,
+        clear: !moves.some(r => meets(r, handle)),
+        three: moves.length,
         targets: targets.every(r => r.height >= 43.5 && r.width >= 43.5),
         inside: li.getBoundingClientRect().right <= innerWidth,
       };
     });
-    assert.deepEqual(m, { below: true, oneRow: true, clear: true, fullWidth: true, targets: true, inside: true }, 'rows: content, then the handle and «↑» «↓»; 44 px targets; no overlap');
+    assert.deepEqual(m, { below: true, oneRow: true, clear: true, three: 3, targets: true, inside: true }, 'rows: content, then the handle and «↑↑» «↑» «↓»; 44 px targets; no overlap');
     const purpose = n => items.nth(n).locator('[data-purpose]').textContent();
     const first = await purpose(0);
     await items.first().getByRole('button', { name: /^Нижче/ }).click(); await settle(page);
     assert.equal(await purpose(1), first, '«↓» moves the card one place down');
     assert.ok(await page.evaluate(() => document.activeElement.matches('.ng-reorder-move') && document.activeElement.closest('.ng-reorder-item') === document.querySelectorAll('.ng-su-board .ng-reorder > .ng-reorder-item')[1]), 'focus follows the card');
+    const last = await purpose(11);
+    await items.nth(11).getByRole('button', { name: /^На початок/ }).click(); await settle(page);
+    assert.equal(await purpose(0), last, '«↑↑» takes a card to the top in one tap (B5)');
     await page.close();
 
     assert.deepEqual(errors, [], 'no page errors');

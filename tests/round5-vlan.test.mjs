@@ -166,7 +166,7 @@ test('round 5 VLAN: the action line names the choices; the choices carry the PC 
   const task = predict.create(bank.predict, { variantId: 'p1', seed: 7, vendor: 'cisco', surprises: 0 });
   const html = predictHtml(task, 'cisco');
   // Round 5 (5b-2 E): it says to go by the table's VLAN, not the addresses.
-  assert.match(html, /<p id="ng-vl-predict-action" class="ng-action-line" data-action-line="">Познач ПК, яким комутатор віддасть цей кадр — за VLAN у таблиці, не за IP-адресами\.<\/p>/);
+  assert.match(html, /<p id="ng-vl-predict-action" class="ng-action-line" data-action-line="">Познач ПК за VLAN, не за IP-адресами\.<\/p>/);
   assert.match(html, /class="ng-vl-choices" role="group" aria-labelledby="ng-vl-predict-action"/);
   // The action line sits right before the choices, after the evidence.
   assert.ok(html.indexOf('ng-vl-evidence') < html.indexOf('ng-vl-predict-action') && html.indexOf('ng-vl-predict-action') < html.indexOf('ng-vl-choices'));

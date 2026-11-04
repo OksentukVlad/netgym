@@ -74,16 +74,16 @@ scenario('C3', m => {
   check('C3: the worked example is folded', q('[data-worked-example] .ng-wex-toggle')?.getAttribute('aria-expanded') === 'false');
   check('C3: no option is marked in the DOM before a choice', !all('.ng-ck-option').some(el => /is-(ok|no)/.test(el.className)));
   for (let i = 0; i < cards.length; i++) {
-    const card = cards[i], wrong = card.options.find(o => o.id !== card.correctOptionId), right = card.options.find(o => o.id === card.correctOptionId);
+    const card = cards[i], wrong = card.options.find(o => !proofs.checkProof(card, o.id).ok), right = card.options.find(o => o.id === card.correctOptionId);
     if (i === 0) {
       click(all('.ng-ck-option').find(el => text(el) === wrong.label));
-      check('C3: a wrong option: «Ще ні», a check needs its result, marked ✗, still open', tone() === 'no' && status().includes(words.proofs.feedback)
+      check('C3: a wrong option: «Ще ні», a check needs its result, marked ✗, still open', tone() === 'no' && status().includes(wrong.reason)
         && all('.ng-ck-option').find(el => text(el).startsWith(wrong.label)).className.includes('is-no') && !q('.ng-ck-proof[aria-readonly="true"]'), status());
       check('C3: no next requirement before the right option', !button('Наступна вимога'));
     }
     click(all('.ng-ck-option').find(el => text(el).startsWith(right.label)));
     if (i === 0) {
-      check('C3: the right option: ✓, the note, locked, «Відповідь зафіксовано.»', tone() === 'ok' && status().includes(card.explanation)
+      check('C3: the right option: ✓, the note, locked, «Відповідь зафіксовано.»', tone() === 'ok' && status().includes(right.reason)
         && q('.ng-ck-proof').getAttribute('aria-readonly') === 'true' && action() === words.screen.committed, status());
       check('C3: a part verdict (not the round)', scope() === 'part');
     }
@@ -121,7 +121,7 @@ scenario('C1 L1', m => {
     && all('.ng-wex-lines li').length === 4, text(q('.ng-wex-card')));
   click(q('[data-worked-example] .ng-wex-toggle'));
   click(button(words.ui.next));
-  check('C1 L1: «Далі ↓» folds ipconfig to its command and one word; the gateway ping is open', all('.ng-ck-folded li').map(text).join('|') === full[0].folded
+  check('C1 L1: «Далі ↓» folds ipconfig to its command and one word; the gateway ping is open', all('.ng-ck-folded li summary').map(text).join('|') === full[0].folded
     && text(q('.ng-ck-latest .ng-ck-command code')) === full[1].command && !/[✓✗]/.test(text(q('.ng-ck-folded'))));
   click(button(words.ui.next)); click(button(words.ui.next));
   check('C1 L1: the last rung offers only «Стоп: тут»', all('.ng-ck-turn .ng-ck-decide').map(text).join('|') === words.ui.stop && action() === words.screen.turnLast);
@@ -187,14 +187,14 @@ scenario('C1 L2', m => {
   const seed = seedWhere(make, t => t.scenario.faultId === 'route');
   setPlace(m, { ladder: { level: 2, tasks: { 1: { seed: 1 }, 2: { seed } } } });
   const task = make(seed);
-  check('C1 L2: the level 2 task, what must work', text(q('.ng-ck-task')) === words.ladder.chosenTask && all('.ng-ck-given-lines li').length === 3);
+  check('C1 L2: the level 2 task, what must work', text(q('.ng-ck-task')) === words.ladder.chosenTask && all('.ng-ck-given-lines li').length === 4);
   check('C1 L2: no output yet, «Обери першу перевірку.»', !q('.ng-ck-latest') && action() === words.screen.chooseRung && !button(words.ui.stop));
   const rungs = ladder.rungs(task);
   check('C1 L2: every rung, on the PC and on the router', all('.ng-ck-rung').length === rungs.length
     && all('.ng-ck-rung-group').map(g => g.getAttribute('aria-label')).join('|') === `${words.screen.onPc}|${words.screen.onRouter}`);
   click(q('.ng-ck-rung[data-rung="gateway"]'));
   const field = q('.ng-ck-argument input');
-  check('C1 L2: a rung with an argument opens its field (only the argument is typed)', field && text(q('.ng-ck-argument .ng-ck-verb')) === 'ping' && field.value === '');
+  check('C1 L2: a rung with an argument opens its field (only the argument is typed)', field && text(q('.ng-ck-argument .ng-ck-verb')) === 'ping' && field.value === ladder.requirements(task).gateway);
   type(field, 'ping 8.8.8.8'); key(q('.ng-ck-argument input'), 'Enter');
   check('C1 L2: the whole command typed: «без «ping»», nothing runs', text(q('.ng-ck-argument-error')) === words.screen.withoutVerb('ping') && !q('.ng-ck-latest'), text(q('.ng-ck-argument-error')));
   type(q('.ng-ck-argument input'), '999.1.1.1'); key(q('.ng-ck-argument input'), 'Enter');
@@ -204,6 +204,7 @@ scenario('C1 L2', m => {
   check('C1 L2: the argument runs: the gateway ping open, the field closed', text(q('.ng-ck-latest .ng-ck-command code')) === `ping ${gateway}` && !q('.ng-ck-argument'));
   check('C1 L2: «Стоп: тут» and «Усе працює» after an output', button(words.ui.stop) && button(words.ladder.healthy) && action() === words.screen.chooseMore);
   click(q('.ng-ck-rung[data-rung="routes"]'));
+  check('C1: earlier output can be reopened without losing the latest rung', q('.ng-ck-folded details summary') && q('.ng-ck-folded details .ng-ck-terminal'));
   check('C1 L2: a router rung runs at once: show ip route, the ping folded', text(q('.ng-ck-latest .ng-ck-command code')) === 'show ip route' && all('.ng-ck-folded li').length === 1);
   click(button(words.ui.stop));
   click(option(words.places.exit));
@@ -277,6 +278,13 @@ scenario('C2 L2', m => {
   check('C2 L2 MikroTik: RouterOS output', all('.ng-ck-terminal .ng-ck-command code').some(el => text(el).startsWith('/')), all('.ng-ck-command').map(text));
 });
 
+// Round 9 (Андрій): a setup deck's link keeps its vendor and what it configured.
+scenario('a setup deck\'s link', m => {
+  check('A19: three requirements, «Вимога 1 з 3», and no DHCP', /з 3/.test(text(q('.ng-ck-progress'))) && !/dhcp/i.test(text(q('.ng-ck'))), text(q('.ng-ck-progress')));
+  check('A19: the task is about access, not a router', /^Доступ до пристрою налаштовано/.test(text(q('.ng-ck-task'))), text(q('.ng-ck-task')));
+  check('A19: the deck\'s vendor wins over a remembered one', m.store.state.prefs.syntax === 'routeros' && /\/ip service|\/tool mac-server|\bssh /.test(text(q('.ng-ck'))));
+}, { route: { section: 'checks', params: { ex: 'proof', scope: 'access', syntax: 'routeros' } } });
+
 // ── Links ──
 scenario('a link opens «Де зламалось»', m => {
   check('a link\'s route (ex=ladder) opens «Де зламалось»', placeOf(m).exercise === 'ladder' && q('.ng-ck[data-exercise="ladder"]'));
@@ -293,6 +301,36 @@ scenario('a link opens «Де зламалось»', m => {
   } catch (e) { check('DHCP link: ran', false, e.stack.split('\n').slice(0, 4).join(' | ')); }
   m.unmount();
 }
+
+scenario('R9 C3 lease completes the requirement', m => {
+  const seed = placeOf(m).proof.seed;
+  const card = proofs.proofSet(seed, { vendor: 'cisco' })[0];
+  const lease = card.options.find(o => o.id === 'binding-only');
+  click(option(lease.label));
+  check('A1: choosing the lease passes and offers the next requirement', tone() === 'ok' && button(words.screen.nextRequirement) && status().includes(lease.reason), status());
+});
+
+scenario('R9 C2 reveal', m => {
+  click(radio(words.modes.claims));
+  const seed = placeOf(m).claims.tasks[1].seed;
+  const task = claims.createClaim(1, 'cisco', seed);
+  click(q('.ng-help-reveal-link'));
+  check('A2: reveal opens step 2 and marks a sufficient evidence set', all('.ng-ck-line.is-on').length === (task.expectedLineIds.length || 1)
+    && q('.ng-ck-verdicts[aria-readonly="true"]') && status().includes(words.screen.revealedClaim), status());
+  const instance = Object.entries(m.store.state.instances).find(([key]) => JSON.parse(key).exerciseId === claims.id)?.[1];
+  check('A2: a revealed claim is assisted and never earns completion', instance?.session.revealed && !instance?.session.earned.solved, instance?.session);
+});
+
+scenario('R9 SSH first login', m => {
+  click(radio(words.modes.ladder));
+  const make = seed => ladder.createLadder(2, 'cisco', seed, { otherAddresses: true });
+  const seed = seedWhere(make, t => t.scenario.faultId === 'host-key');
+  setPlace(m, { ladder: { level: 2, tasks: { 1: { seed: 1 }, 2: { seed } } } });
+  click(q('.ng-ck-rung[data-rung="ssh"]')); click(button(words.screen.run));
+  check('A5: the normal key prompt offers explicit continuation', text(q('.ng-ck-key')).includes(words.screen.keyNormal) && button(words.screen.trustKey), text(q('.ng-ck-key')));
+  click(button(words.screen.trustKey));
+  check('A5: continuation shows the remote prompt and command response', text(q('.ng-ck-latest')).includes('R1> show clock') && !q('.ng-ck-key'), text(q('.ng-ck-latest')));
+});
 
 check('no React warnings', warnings.length === 0, warnings.slice(0, 3));
 console.log(JSON.stringify({ results }));

@@ -71,7 +71,7 @@ import faults from '../logic/faults-exercise.js';
 import { useExercise } from '../../../ui/useExercise.js';
 import { useStore } from '../../../ui/useStore.js';
 import Segmented from '../../../ui/components/Segmented.jsx';
-import HelpPanel from '../../../ui/components/HelpPanel.jsx';
+import HelpPanel, { bringIntoView } from '../../../ui/components/HelpPanel.jsx';
 import { Stepper } from '../../../ui/BarSlot.jsx';
 import { isPhoneNow, usePhone } from '../../../ui/phone.js';
 import MoreMenu from '../../../ui/components/MoreMenu.jsx';
@@ -320,6 +320,14 @@ export default function FaultsView({ records, syntax, place, setPlace, head, ski
     // Round 6 repair: on a phone a new task's focus never scrolls the page past its task (HelpPanel starts it at the top).
     (stage === 'repair' ? formHeading.current : stageHeading.current)?.focus(isPhoneNow() ? { preventScroll: true } : undefined);
   }, [stage, ex.key]);
+  // On a phone a chosen cause makes the verdict «до змін»: it and «Перевірити», the next step, come into view.
+  const causeChosen = useRef(false);
+  useEffect(() => {
+    if (!causeChosen.current) return;
+    causeChosen.current = false;
+    const panel = workRef.current?.closest('.ng-vl')?.querySelector('[data-help-panel]');
+    if (isPhoneNow() && panel) bringIntoView([panel.querySelector('[data-help="row"]'), panel.querySelector('[data-help-current]')].filter(Boolean), 'auto');
+  }, [cause]);
   const textButton = useRef(null);
   const focusMark = useRef(false);
   useEffect(() => {
@@ -395,10 +403,10 @@ export default function FaultsView({ records, syntax, place, setPlace, head, ski
   const previousNumbers = () => { if (previousSlot) { focusStage.current = true; setSlot(previousSlot, { ...slot, shape: task.identity.shape }); } };
   /** The phone's level stepper: that level, a new seed and the network it draws. */
   const chooseLevel = n => { if (n === slot.level) return; focusStage.current = true; foldAsides(); setSlot(pickSlot(record, syntax, n, { previous: slot.seed })); };
-  /** «Далі →»: the next level (to 3), a new seed and the network it draws. */
-  const onAgain = () => { focusStage.current = true; foldAsides(); setSlot(pickSlot(record, syntax, nextLevel(slot.level), { previous: slot.seed })); };
+  /** «Далі →»: the next level (to 3), a new seed and the network it draws; a skip stays on its level (Олена). */
+  const onAgain = () => { focusStage.current = true; foldAsides(); setSlot(pickSlot(record, syntax, ex.session.status === 'solved' ? nextLevel(slot.level) : slot.level, { previous: slot.seed })); };
   const chooseDevice = id => ex.setView({ deviceId: id });
-  const chooseCause = value => ex.setView({ cause: value });
+  const chooseCause = value => { causeChosen.current = true; ex.setView({ cause: value }); };
 
   const previous = stale ? ` · ${ui.previous}` : '';
   const shapeTitle = task.shapeSpec?.title ?? '';

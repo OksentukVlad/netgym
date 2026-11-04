@@ -510,7 +510,7 @@ test('lap, task 15: the lap uses the normal scenario only; ISP2 traffic and the 
   const end = lapFrame(lap, schedule.at(-1));
   assert.deepEqual([end.ending, end.faded, end.moving], [null, false, []], 'the link is back, the lines bright');
   assert.equal(end.words, 'Якщо лінк до ISP1 недоступний — резерв спрацював.');
-  assert.equal(stripText(presented, end), '✓ Мережа працює! Усі пінги проходять в обидва боки. Якщо лінк до ISP1 недоступний — резерв спрацював.');
+  assert.equal(stripText(presented, end), '✓ Маршрути пройшли перевірки моделі: усі пінги проходять в обидва боки. Якщо лінк до ISP1 недоступний — резерв спрацював.');
   assert.equal(end.marks.length, 3, 'the LAN box and both provider clouds reached');
 });
 
@@ -612,7 +612,7 @@ test('lap words: the strip says the success at once, appends the ending’s word
     assert.equal(lapAnnouncement(presented, task.network, task.record), texts.at(-1), `${code}: announced once, as the strip ends`);
     assert.equal(lapEnding(presented, task.network, task.record)?.words ?? null, lap.ending?.words ?? null);
   }
-  assert.equal(networkUi.success, '✓ Мережа працює! Усі пінги проходять в обидва боки.');
+  assert.equal(networkUi.success, '✓ Маршрути пройшли перевірки моделі: усі пінги проходять в обидва боки.');
   // Round 4: «Показати ще раз» is a quiet link in the success box after a pass, not after a failure.
   const { presented } = passing(1);
   const html = p.renderStrip(presented, null, { kind: 'lap', words: null });

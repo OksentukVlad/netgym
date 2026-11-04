@@ -25,7 +25,7 @@ export const uk = {
   help: {
     more: 'Детальніше',
     hintsFolded: ({ n }) => `Підказки (${n})`,
-    stale: 'до змін',
+    stale: 'це до змін',
     applied: 'Відповідь показано на схемі; твоя спроба — під кнопкою «Моя відповідь».',
     myAnswer: 'Моя відповідь',
     shown: 'показано',
@@ -41,6 +41,7 @@ export const uk = {
   reorder: {
     help: '≡ з клавіатури: пробіл — узяти, стрілки, Home і End — нести, пробіл — покласти, Esc — скасувати.',
     handle: ({ n, name }) => `${n}. Переставити: ${name}`,
+    top: ({ n }) => `На початок: позиція ${n}`,
     up: ({ n }) => `Вище: позиція ${n}`,
     down: ({ n }) => `Нижче: позиція ${n}`,
     grabbed: ({ name, n, total }) => `${name}: узято, позиція ${n} з ${total}.`,
@@ -90,8 +91,8 @@ export const uk = {
   },
   // WorkedExample (round 5, spec 5b-2 A): one finished answer on other values, folded.
   example: {
-    toggle: 'Приклад',                          // «Приклад ▸ готова відповідь (інші числа)»
-    toggleRest: 'готова відповідь (інші числа)',
+    toggle: 'Приклад: як це розв’язують',
     tag: 'приклад · інші числа',
+    tagCards: 'приклад · інші картки',          // no numbers in it: the setup decks, DHCP's sides
   },
 };

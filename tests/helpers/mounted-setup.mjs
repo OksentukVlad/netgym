@@ -8,10 +8,11 @@
 //   - keyboard-only reordering through the handle (grab, arrows, Home, End,
 //     drop; Esc restores; focus by identity; announcements; nested controls
 //     ignored), and the ↑ ↓ buttons;
-//   - the help panel: missing modes first, one rule, marks on its cards and
+//   - the help panel: the order alone first, one rule, marks on its cards and
 //     the first flagged row as evidence; an edit keeps the verdict «до змін»
-//     and marks the edited row; a mode finding; hints (no dead button, focus
-//     on the last); asides open until the first check;
+//     and marks the edited row; the modes step once the order passes (round
+//     9, B1): missing modes first, a mode finding; hints (no dead button, focus
+//     on the last); asides open until the deck's last check;
 //   - the reveal on the board («показано», «Моя відповідь»), success (the
 //     learner's script, its copy, the ✓ on the deck picker), the locked deck;
 //   - recall by keyboard: «Тепер по пам'яті →», each line's own Enter check
@@ -84,7 +85,7 @@ const instOf = m => m.store.state.instances[taskOf(m).instanceKey];
 const stateOf = m => instOf(m)?.view?.setup ?? initialState(taskOf(m));
 /** Another seed for the deck on screen (as «Далі →» does, without its button). */
 const setSeed = (m, seed) => step(() => m.store.dispatch({ type: 'place', scope: 'setup', patch: { seeds: { ...placeOf(m).seeds, [deckOf(m)]: seed } } }));
-const rows = () => all('.ng-reorder-item');
+const rows = () => { const sortable = all('.ng-reorder-item'); return sortable.length ? sortable : all('.ng-su-modes-deck .ng-su-own-item'); };
 const handle = i => q('.ng-reorder-handle', rows()[i]);
 const moves = i => all('.ng-reorder-move', rows()[i]);
 const radio = (i, label) => all('[role="radio"]', rows()[i]).find(b => words(b) === label);
@@ -146,9 +147,15 @@ function otherValidOrder(task) {
   }
   throw new Error('no other valid order');
 }
-/** Arrange, choose and check: the deck passes. */
-function solve(m, order = otherValidOrder(taskOf(m))) {
+/** Arrange and check: the order passes, and a deck with modes opens its second step (round 9, B1). */
+function toModes(m, order = otherValidOrder(taskOf(m))) {
   arrange(m, order);
+  click(checkButton());
+}
+/** Arrange, check, choose and check: the deck passes. */
+function solve(m, order = otherValidOrder(taskOf(m))) {
+  toModes(m, order);
+  if (stateOf(m).phase !== 'modes') return;
   choose(m, modes(taskOf(m)));
   click(checkButton());
 }
@@ -171,36 +178,36 @@ function gates(m, label, { unchecked = false } = {}) {
 
 // ── The first view ───────────────────────────────────────────────────────
 
+// Round 9 (Андрій): while sorting, «Пропустити» says the deck comes back on new values.
+await scenario('round 9: deck skip', m => {
+  check('A21: the quiet link names new values', /^Пропустити: нові значення/.test(words(nextButton())), words(nextButton()));
+});
+
 await scenario('first view', m => {
   const task = taskOf(m);
   check('first: twelve rows in the generated (learner’s) order', JSON.stringify(rowTexts(root())) === JSON.stringify(render(task, stateOf(m)).map(r => r.text)) && rows().length === 12);
   gates(m, 'first', { unchecked: true });
-  check('first: every prompt group unchecked, «режим?» on each', all('.ng-su-board [role="radio"]').every(b => b.getAttribute('aria-checked') === 'false')
-    && all('.ng-su-board [role="radio"]').length === 60 && all('.ng-su-empty').length === 12);
+  check('first: one decision: no mode control anywhere on the order step (B1)', all('.ng-su-board [role="radio"]').length === 0 && all('.ng-su-empty').length === 0 && !q('.ng-su-modes-q'));
   check('first: the heading and the one task sentence', words(q('.ng-su-h1')) === deckUi['dr-1'].heading && taskWords() === ui.task, taskWords());
   // Round 5 (R1, R2): one action line, above the deck; every card's purpose under its command.
   const action = all('.ng-action-line');
   const board = [...q('.ng-su-board').childNodes].filter(n => n.nodeType === 1);
-  check('first: one action line, the deck’s, right above the deck, the «?» its last thing after the full stop', action.length === 1 && actionWords() === ui.action
-    && words(action[0]) === `${ui.action} ?` && action[0].lastChild === q('.ng-su-modes-q')
+  check('first: one action line, the deck’s, right above the deck, in words true of every device (no drag)', action.length === 1 && actionWords() === ui.actionOrder && !/Перетягни/.test(ui.actionOrder)
     && (board[0] === action[0] || board[0].contains(action[0])) && (board[1]?.localName === 'ol' || Boolean(q('ol.ng-reorder', board[1]))), words(action[0]));
   // 5b-2 A: the folded worked example is the action line's next sibling, above the deck.
   check('first: the worked example folded, right under the action line, before the deck', exampleOk() === '' && action[0].nextSibling === q('[data-worked-example]')
     && !q('ol.ng-reorder', board[0]), exampleOk());
   const missing = purposesOk(12);
   check('first: twelve rows with a term, each with its own card’s purpose', !missing && rows().every((li, i) => words(q('[data-purpose]', li)) === render(task, stateOf(m))[i].purpose), missing);
-  check('first: the purpose is the row’s first line (the purpose, the command, its prompt group), never a muted note', rows().every(li => {
+  check('first: the purpose is the row’s first line (the purpose, then the command), never a muted note', rows().every(li => {
     const parts = [...q('.ng-su-row', li).childNodes].filter(n => n.nodeType === 1);
-    return parts.length === 3 && parts[0].hasAttribute('data-purpose') && parts[1].className === 'ng-su-term' && Boolean(q('.ng-su-cmd', parts[1])) && parts[2].className.startsWith('ng-su-choice');
+    return parts.length === 2 && parts[0].hasAttribute('data-purpose') && parts[1].className === 'ng-su-term' && Boolean(q('.ng-su-cmd', parts[1]));
   }));
   check('first: each handle is named by its card’s purpose', all('.ng-reorder-handle').every((h, i) => h.getAttribute('aria-label') === shared.reorder.handle({ n: i + 1, name: render(task, stateOf(m))[i].purpose })));
-  check('first: one mode «?» (in the action line), none in the task sentence or per card', modeQ().length === 1 && Boolean(q('.ng-action-line .ng-su-modes-q'))
-    && !q('.ng-su-task .ng-su-modes-q') && !q('.ng-reorder .ng-su-modes-q')
-    && modeQ()[0].getAttribute('aria-expanded') === 'false' && modeQ()[0].getAttribute('aria-label') === ui.modesTitle && !popOpen());
   check('first: «Перевірити» primary, «Далі →» secondary (skip), «Показати відповідь» a link', primary(checkButton()) && nextButton() && !primary(nextButton())
     && words(revealButton()) === shared.showAnswer && !continueButton());
   check('first: one status, empty; nothing current', all('[role="status"]').length === 1 && status() === '' && evidence().length === 0 && !q('[data-help-current]'));
-  check('first: the two asides open (CLI modes, how to arrange)', asidesOpen() === 2 && words(q('.ng-su-modes')).includes('Router(config-if)# exit'));
+  check('first: one aside open (how to arrange); the CLI modes wait for their step', asidesOpen() === 1 && !q('.ng-su-modes'));
   check('first: no «⋯» before there is something to copy', !q('.ng-more-button'));
   check('first: the reference was never read', solutionCalls === 0, { solutionCalls });
 });
@@ -208,6 +215,12 @@ await scenario('first view', m => {
 // ── The mode help (round 5, spec 5b-1 §3 v2) ─────────────────────────────
 
 await scenario('mode help', m => {
+  toModes(m);
+  check('mode help: one «?» (in the action line), none in the task sentence or per card', modeQ().length === 1 && Boolean(q('.ng-action-line .ng-su-modes-q'))
+    && !q('.ng-su-task .ng-su-modes-q') && !q('.ng-su-modes-deck .ng-su-modes-q')
+    && modeQ()[0].getAttribute('aria-expanded') === 'false' && modeQ()[0].getAttribute('aria-label') === ui.modesTitle && !popOpen());
+  check('mode help: the action line ends on it, after the full stop; the CLI modes open on this step', actionWords() === ui.actionModes && q('.ng-action-line').lastChild === modeQ()[0] && asidesOpen() === 1
+    && words(q('.ng-su-modes')).includes('Router(config-if)# exit'));
   const before = JSON.stringify(stateOf(m));
   click(modeQ()[0]);
   check('mode help: «?» opens the popover under the action line, the focus in it', popOpen() && modeQ()[0].getAttribute('aria-expanded') === 'true'
@@ -216,15 +229,15 @@ await scenario('mode help', m => {
     && JSON.stringify(all('dd', modePop()).map(words)) === JSON.stringify(Object.values(ui.modes)) && words(q('.ng-su-modes-full')) === ui.modesFull
     && words(all('[id]', modePop()).find(e => e.getAttribute('id') === modePop().getAttribute('aria-labelledby'))) === ui.modesTitle);
   check('mode help: its words name no card or order', setupLeaks(words(modePop()), 'typed').length === 0 && !rowTexts(root()).some(t => words(modePop()).includes(t)));
-  gates(m, 'mode help open', { unchecked: true });
+  gates(m, 'mode help open');
   key(modePop(), 'Escape');
   check('mode help: Escape closes it, the focus back on «?»', !popOpen() && document.activeElement === modeQ()[0] && modeQ()[0].getAttribute('aria-expanded') === 'false');
   click(modeQ()[0]);
   click(modeQ()[0]);
   check('mode help: «?» again closes it', !popOpen());
-  // Fold the asides (the first check), then ask for the full example: the aside opens and takes the focus.
+  // Fold the asides (the modes' first check), then ask for the full example: the aside opens and takes the focus.
   click(checkButton());
-  check('mode help: the asides folded after the first check', asidesOpen() === 0);
+  check('mode help: the asides folded after the modes’ first check', asidesOpen() === 0);
   click(modeQ()[0]);
   click(q('.ng-su-modes-full'));
   const aside = q('.ng-su-aside-modes');
@@ -252,18 +265,14 @@ const sameExample = syntax => {
 await scenario('worked example', m => {
   solutionCalls = 0;
   const store = () => JSON.stringify(m.store.state);
-  check('example: folded at first, its quiet toggle in words', exampleOk() === '' && words(exampleToggle()) === `${shared.example.toggle} ▸ ${shared.example.toggleRest}`, words(exampleToggle()));
+  check('example: folded on a later visit, its toggle in words', exampleOk() === '' && words(exampleToggle()) === `${shared.example.toggle} ▸`, words(exampleToggle()));
   const before = store();
   click(exampleToggle());
-  check('example (Cisco): opened by its toggle, one finished card with its mode, the tag', exampleOk({ open: true, rows: 1 }) === '' && sameExample('cisco'), [exampleOk({ open: true, rows: 1 }), exampleShown()]);
+  check('example (Cisco): opened by its toggle, three cards in order with their modes, the tag (no «інші числа»: there are none)', exampleOk({ open: true, rows: 3, tag: shared.example.tagCards }) === '' && sameExample('cisco'), [exampleOk({ open: true, rows: 3, tag: shared.example.tagCards }), exampleShown()]);
   check('example (Cisco): the purpose first, then the command and its mode, as the cards read', JSON.stringify(exampleShown().head) === JSON.stringify(['Призначення', 'Команда', 'Режим']));
   check('example: its command is in no card of the deck', !rowTexts(root()).some(t => exampleShown().rows.some(r => r.includes(t))));
   check('example: opening it changes nothing in the store (no answer, draft, hint or assistance)', store() === before && !instOf(m)?.session?.assisted);
   gates(m, 'example open', { unchecked: true });
-  // The mode help still opens right under the action line, over the example.
-  click(modeQ()[0]);
-  check('example: the mode popover comes after it in the block, and opens', popOpen() && q('.ng-su-action').children.indexOf(modePop()) === q('.ng-su-action').children.indexOf(q('[data-worked-example]')) + 1);
-  key(modePop(), 'Escape');
   click(exampleToggle());
   check('example: its toggle folds it again', exampleOk() === '');
   // Never opened by a check, a hint or the asides' fold.
@@ -272,7 +281,7 @@ await scenario('worked example', m => {
   check('example: a check and a hint leave it folded', exampleOk() === '' && stateOf(m).phase === 'sorting');
   click(exampleToggle());
   click(checkButton());
-  check('example: a check leaves an opened example open (the same task)', exampleOk({ open: true, rows: 1 }) === '');
+  check('example: a check leaves an opened example open (the same task)', exampleOk({ open: true, rows: 3, tag: shared.example.tagCards }) === '');
   // A new task (values or deck) folds it; coming back finds it folded.
   click(nextButton());
   check('example: «Далі →» (new values) folds it', exampleOk() === '' && seedOf(m) !== 1);
@@ -280,7 +289,7 @@ await scenario('worked example', m => {
   pick('Роутер MikroTik');
   check('example: another deck shows its own, folded', exampleOk() === '' && deckOf(m) === 'dr-3');
   click(exampleToggle());
-  check('example (MikroTik): two cards in create-before-use order, no mode column, the reason in the context', exampleOk({ open: true, rows: 2 }) === '' && sameExample('routeros')
+  check('example (MikroTik): two cards in create-before-use order, no mode column, the reason in the context', exampleOk({ open: true, rows: 2, tag: shared.example.tagCards }) === '' && sameExample('routeros')
     && JSON.stringify(exampleShown().head) === JSON.stringify(['Призначення', 'Команда']) && /міст/u.test(exampleShown().context), exampleShown());
   gates(m, 'example open (MikroTik)', { unchecked: true });
   pick('Роутер Cisco');
@@ -288,8 +297,16 @@ await scenario('worked example', m => {
   click(exampleToggle());
   m.remount();
   check('example: leaving the section and coming back finds it folded', exampleOk() === '');
-  // Only while sorting, with the action line: none on the passed deck's script.
-  solve(m);
+  // On the modes step too, under its action line, folded; the mode popover still opens right under the line.
+  toModes(m);
+  check('example: on the modes step, folded', exampleOk() === '' && stateOf(m).phase === 'modes');
+  click(exampleToggle());
+  click(modeQ()[0]);
+  check('example: the mode popover comes after it in the block, and opens', popOpen() && q('.ng-su-action').children.indexOf(modePop()) === q('.ng-su-action').children.indexOf(q('[data-worked-example]')) + 1);
+  key(modePop(), 'Escape');
+  // Only with the action line: none on the passed deck's script.
+  choose(m, modes(taskOf(m)));
+  click(checkButton());
   check('example: none once the deck is sorted (no action line either)', stateOf(m).phase === 'sorted' && !q('[data-worked-example]') && !q('.ng-action-line'));
   check('example: the reference was never read', solutionCalls === 0, { solutionCalls });
 });
@@ -302,7 +319,21 @@ function keyActivate(el, k) {
   if (!prevented) step(() => fire(el, 'click'));
 }
 
-await scenario('mode help by keyboard and pointer (repair v1)', () => {
+await scenario('the first visit (round 9, B3)', m => {
+  check('first visit: the example starts open, once', exampleOk({ open: true, rows: 3, tag: shared.example.tagCards }) === '' && m.store.state.places.examples?.setup === true, exampleOk({ open: true, rows: 3, tag: shared.example.tagCards }));
+  check('first visit: it moved no focus and changed no answer', document.activeElement !== exampleToggle() && !instOf(m)?.session?.assisted);
+  click(exampleToggle());
+  check('first visit: its toggle folds it', exampleOk() === '');
+  click(nextButton());
+  check('first visit: new values: folded', exampleOk() === '');
+  pick('Комутатор Cisco 2960');
+  check('first visit: another deck: folded (one first visit for the section)', exampleOk() === '');
+  m.remount();
+  check('first visit: coming back: folded', exampleOk() === '');
+}, { firstVisit: true });
+
+await scenario('mode help by keyboard and pointer (repair v1)', m => {
+  toModes(m);
   keyActivate(modeQ()[0], 'Enter');
   check('mode help: Enter on «?» opens it, the focus in it', popOpen() && document.activeElement === modePop());
   key(modePop(), 'Escape');
@@ -310,8 +341,8 @@ await scenario('mode help by keyboard and pointer (repair v1)', () => {
   check('mode help: Space on «?» opens it too', popOpen() && document.activeElement === modePop());
   step(() => q('.ng-su-modes-full').focus());
   check('mode help: Tab inside (to «Повний приклад») keeps it open', popOpen() && document.activeElement === q('.ng-su-modes-full'));
-  step(() => handle(0).focus());
-  check('mode help: Tab out of it closes it, the focus where it went', !popOpen() && document.activeElement === handle(0) && modeQ()[0].getAttribute('aria-expanded') === 'false');
+  step(() => radio(0, '#').focus());
+  check('mode help: Tab out of it closes it, the focus where it went', !popOpen() && document.activeElement === radio(0, '#') && modeQ()[0].getAttribute('aria-expanded') === 'false');
   keyActivate(modeQ()[0], 'Enter');
   step(() => fire(q('dd', modePop()), 'pointerdown'));
   check('mode help: a press inside the popover keeps it open', popOpen());
@@ -321,7 +352,7 @@ await scenario('mode help by keyboard and pointer (repair v1)', () => {
   step(() => fire(modeQ()[0], 'pointerdown'));
   click(modeQ()[0]);
   check('mode help: a press on «?» itself toggles it closed (not closed and reopened)', !popOpen());
-  check('mode help: no deck change from the help', !q('.ng-reorder-item.is-marked') && status() === '');
+  check('mode help: no deck change from the help', !q('.ng-su-own-item.is-marked') && status() === `✓ ${shared.yes} ${text('order-ok')}`);
 });
 
 // ── Keyboard-only reordering ─────────────────────────────────────────────
@@ -367,23 +398,35 @@ await scenario('keyboard', m => {
   check('keys: not grabbed, ArrowDown moves focus to the next handle only', document.activeElement === handle(1) && JSON.stringify(stateOf(m).answer.order) === JSON.stringify(before));
   key(handle(1), 'End');
   check('keys: not grabbed, End focuses the last handle', document.activeElement === handle(11));
-  // Nested controls: their keys never reach the handle.
-  const option = radio(4, '#');
-  click(option);
-  key(option, 'ArrowRight');
-  check('nested: arrows in a prompt group change the prompt, never the order', JSON.stringify(stateOf(m).answer.order) === JSON.stringify(before)
-    && stateOf(m).answer.prompts[before[4]] === '(config)#' && handle(4).getAttribute('aria-pressed') === 'false');
-  check('nested: a chosen prompt takes «режим?» away from its row only', !q('.ng-su-empty', rows()[4]) && all('.ng-su-empty').length === 11);
-  key(radio(4, '(config)#'), ' ');
-  check('nested: Space in a prompt group grabs nothing', all('.ng-reorder-handle[aria-pressed="true"]').length === 0);
   key(handle(5), ' ');
   key(handle(5), 'ArrowDown');
-  click(radio(0, '>'));
+  click(moves(1)[1]);
   check('keys: focus elsewhere drops the card in its new place', all('.ng-reorder-handle[aria-pressed="true"]').length === 0 && stateOf(m).answer.order[6] === before[5]);
   click(handle(3));
   const grabbedByClick = handle(3).getAttribute('aria-pressed') === 'true';
   click(handle(3));
   check('pointer: a click on the handle grabs, another drops', grabbedByClick && handle(3).getAttribute('aria-pressed') === 'false');
+});
+
+await scenario('the modes step', m => {
+  const order = otherValidOrder(taskOf(m));
+  toModes(m, order);
+  check('modes: the order passed locks the cards: no handles or moves, the learner’s order kept', stateOf(m).phase === 'modes' && !q('.ng-reorder-handle') && !q('.ng-reorder-move')
+    && JSON.stringify(stateOf(m).answer.order) === JSON.stringify(order));
+  check('modes: every prompt group unchecked, «режим?» on each', all('.ng-su-board [role="radio"]').length === 60 && all('.ng-su-board [aria-checked="true"]').length === 0 && all('.ng-su-empty').length === 12);
+  check('modes: the task line and the verdict say the order is done; the session did not earn it', words(q('.ng-su-task')) === ui.modesTask && status() === `✓ ${shared.yes} ${text('order-ok')}`
+    && q('[data-help-current]').getAttribute('data-help-scope') === 'part' && !instOf(m).session.earned.solved && instOf(m).presses === 1, status());
+  check('modes: the focus on the first card’s modes', document.activeElement === all('[role="radio"]', rows()[0])[0]);
+  check('modes: «Перевірити» primary, a hint and a reveal; no script yet', primary(checkButton()) && hintButton() && revealButton() && !q('.ng-su-part'));
+  gates(m, 'modes step');
+  const option = radio(4, '#');
+  click(option);
+  key(option, 'ArrowRight');
+  check('modes: arrows in a prompt group change the prompt, never the order', JSON.stringify(stateOf(m).answer.order) === JSON.stringify(order) && stateOf(m).answer.prompts[order[4]] === '(config)#');
+  check('modes: a chosen prompt takes «режим?» away from its row only', !q('.ng-su-empty', rows()[4]) && all('.ng-su-empty').length === 11);
+  m.remount();
+  check('modes: coming back restores the step and the choice', stateOf(m).phase === 'modes' && all('.ng-su-board [aria-checked="true"]').length === 1 && status() === `✓ ${shared.yes} ${text('order-ok')}`);
+  gates(m, 'modes restored');
 });
 
 await scenario('buttons', m => {
@@ -403,28 +446,28 @@ await scenario('buttons', m => {
 
 // ── Checks ───────────────────────────────────────────────────────────────
 
-await scenario('missing modes come first', m => {
+await scenario('missing modes come first in their step', m => {
   const task = taskOf(m);
+  toModes(m);
   click(checkButton());
   const st = stateOf(m), finding = st.feedback.findings[0];
-  check('missing: an empty prompt is reported before any order rule', finding.code === 'mode-missing' && finding.cards.length === 12, finding);
+  check('missing: an empty prompt is the finding, on every card', finding.code === 'mode-missing' && finding.cards.length === 12, finding);
   check('missing: the status counts the cards (no list of twelve numbers)', status() === `• ${shared.notYet} ${text('mode-missing', { positions: finding.positions })}` && !/1, 2, 3/.test(status()), status());
   check('missing: every row says «Ще ні» in the prompt group’s place, every group aria-invalid', all('.ng-su-choice .ng-su-mark').length === 12 && all('.ng-su-empty').length === 0
     && all('.ng-su-board [role="radiogroup"][aria-invalid="true"]').length === 12);
   check('missing: the first row is the evidence', evidence().length === 1 && rows()[0].contains(evidence()[0]));
-  check('missing: one attempt in the session; the asides fold', instOf(m).presses === 1 && asidesOpen() === 0 && all('.ng-aside-q').length === 2);
+  check('missing: one more attempt in the session; the aside folds', instOf(m).presses === 2 && asidesOpen() === 0 && all('.ng-aside-q').length === 1);
   gates(m, 'missing modes');
   click(hintButton());
   const ladder = hints(task, stateOf(m)).map(h => text(h.code, h.params));
-  check('missing: hint 1 asks where each command is typed, naming no prompt', words(q('.ng-help-hint-text')).endsWith(ladder[0]) && ladder[0] === text('hint-mode-missing', { positions: finding.positions })
-    && !/\(config|#/.test(ladder[0]), ladder[0]);
+  const firstCard = task.cards.find(c => c.id === finding.cards[0]);
+  check('missing: hint 1 is concrete: the first card still without a mode, and where it goes', words(q('.ng-help-hint-text')).endsWith(ladder[0]) && ladder[0] === text('hint-mode-missing', { positions: finding.positions, prompt: firstCard.mode })
+    && ladder[0].startsWith(`Почни з картки ${finding.positions[0]}.`) && ladder[0].includes(firstCard.mode), ladder[0]);
   check('missing: under the hint the verdict shrinks to one line, outside the status', words(q('.ng-help-mini')).startsWith(`• ${shared.notYet}`) && !q('[role="status"] .ng-help-mini'));
   gates(m, 'missing modes, hint 1');
 });
 
 await scenario('a check names one rule', m => {
-  const task = taskOf(m);
-  choose(m, modes(task));
   click(checkButton());
   const st = stateOf(m), finding = st.feedback.findings[0];
   check('check: the generated order fails one dependency', st.feedback.ok === false && ['needs-before', 'not-last'].includes(finding.code), finding);
@@ -449,7 +492,7 @@ await scenario('a check names one rule', m => {
 
 await scenario('a mode finding', m => {
   const task = taskOf(m);
-  arrange(m, otherValidOrder(task));
+  toModes(m);
   const prompts = modes(task), order = stateOf(m).answer.order;
   const target = order[4];
   choose(m, { ...prompts, [target]: prompts[target] === '#' ? '>' : '#' });
@@ -473,8 +516,8 @@ await scenario('hints', m => {
   for (let n = 1; n <= 3; n++) {
     click(hintButton());
     check(`hints: rung ${n} current, the session counts it`, words(q('.ng-help-hint-text')) === `${shared.hintN({ n, total: 3 })}. ${ladder[n - 1]}` && instOf(m).session.hintIndex === n && stateOf(m).hintIndex === n, words(q('.ng-help-hint-text')));
-    // Rung 3 is the shape on other values (spec S2 v2); the first two name no pair or prompt.
-    if (n < 3) check(`hints: rung ${n} names no pair or prompt`, setupLeaks(ladder[n - 1], 'hint').length === 0 && !/\(config|#/.test(ladder[n - 1]), ladder[n - 1]);
+    // Rung 3 is the shape on other values (spec S2 v2); the order step's hints ask nothing about modes.
+    if (n < 3) check(`hints: rung ${n} names no prompt`, !/\(config|#|режим/.test(ladder[n - 1]), ladder[n - 1]);
     else check('hints: rung 3 is the shape on other values', ladder[2] === text('hint-shape', { example: ladder[2].replace(/^[^:]*: /, '') }), ladder[2]);
     check(`hints: rung ${n} marks no card (before any check)`, evidence().length === 0);
     gates(m, `hint ${n}`, { unchecked: true });
@@ -482,13 +525,11 @@ await scenario('hints', m => {
   check('hints: the button goes after the last rung (no dead button); focus on that rung', !hintButton() && document.activeElement === q('.ng-help-hint-text'));
   check('hints: the earlier rungs fold into «Підказки (2)»', words(q('.ng-help-fold summary')) === shared.help.hintsFolded({ n: 2 }));
   check('hints: assisted, nothing marked, no reference', instOf(m).session.assisted && all('.ng-su-mark').length === 0 && solutionCalls === 0);
-  check('hints: a hint is no check: the asides stay open', asidesOpen() === 2);
+  check('hints: a hint is no check: the aside stays open', asidesOpen() === 1);
 });
 
 await scenario('navigation restoration (sorting)', m => {
-  const task = taskOf(m);
   click(moves(3)[0]);
-  choose(m, modes(task));
   click(checkButton());
   click(hintButton());
   const snap = () => ({ rows: rowTexts(root()), marks: all('.ng-reorder-item.is-marked').length, checked: all('.ng-su-board [aria-checked="true"]').map(words),
@@ -514,7 +555,8 @@ await scenario('reveal', m => {
     && scriptText(q('.ng-su-part')) === scriptForState(task, st).script && scriptForState(task, st).script === realSolution(task).script);
   check('reveal: the panel says so in one line, focus on it', status() === ui.applied && document.activeElement === q('.ng-help-applied-text'));
   check('reveal: the session is revealed and assisted; no ✓ on the deck', instOf(m).session.revealed && instOf(m).session.assisted && !instOf(m).session.earned.solved && !q('.ng-su-decks .ng-done'));
-  check('reveal: «Тепер по пам’яті →» primary, «Далі →» secondary, no hint or reveal left', primary(continueButton()) && !primary(nextButton()) && !hintButton() && !revealButton()
+  check('reveal: «Тепер по пам’яті →» primary, «Далі →» a quiet link under it (B8), no hint or reveal left', primary(continueButton()) && !primary(nextButton()) && nextButton().className.includes('ng-button-quiet')
+    && !hintButton() && !revealButton() && q('.ng-help-row-link').contains(nextButton())
     && words(nextButton()) === `${shared.nextName} →, ${ui.nextWhere}`);
   gates(m, 'revealed');
   const toggle = q('.ng-su-own-toggle');
@@ -544,7 +586,8 @@ await scenario('success', async m => {
   check('success: the board is the learner’s own script, not the reference', scriptText(q('.ng-su-part')) === scriptForState(task, st).script && scriptText(q('.ng-su-part')) !== realSolution(task).script);
   check('success: the deck is locked (nothing to sort or choose)', !q('.ng-reorder') && !q('.ng-su-board [role="radio"]'));
   check('success: earned; ✓ on the deck picker’s option', instOf(m).session.earned.solved === true && deckRadios()[0].contains(q('.ng-done')) && deckName(deckRadios()[0]) === 'Роутер Cisco');
-  check('success: «Тепер по пам’яті →» primary, «Далі →» secondary; no check, hint or reveal', primary(continueButton()) && !primary(nextButton()) && !checkButton() && !hintButton() && !revealButton());
+  check('success: «Тепер по пам’яті →» primary, «Далі →» a quiet link under it (B8); no check, hint or reveal', primary(continueButton()) && !primary(nextButton()) && nextButton().className.includes('ng-button-quiet')
+    && q('.ng-help-row-link').contains(nextButton()) && !checkButton() && !hintButton() && !revealButton());
   check('success: the task line says the order was accepted; no mode «?» or action line on a locked deck', words(q('.ng-su-task')) === ui.sortedTask && modeQ().length === 0 && !q('.ng-action-line'));
   copies.length = 0;
   await stepAsync(() => fire(q('.ng-su-part .ng-copy-button'), 'click'));
@@ -852,14 +895,13 @@ for (const id of ['dr-2', 'dr-3']) {
     gates(m, `${id} hints`, { unchecked: true });
     check(`${id} start: no reference read`, solutionCalls === 0);
     if (id === 'dr-2') {
-      check('dr-2 start: five cards with a prompt choice each, none chosen; the CLI example', all('.ng-su-board [role="radiogroup"]').length === 5
-        && all('.ng-su-board [role="radio"]').length === 25 && !q('.ng-su-board [aria-checked="true"]') && Boolean(q('.ng-su-modes')));
+      check('dr-2 start: five cards, no mode asked for yet, the CLI example waiting for its step', all('.ng-su-board [role="radiogroup"]').length === 0 && !q('.ng-su-modes'));
       const missing = purposesOk(5);
       check('dr-2 start: every card’s purpose under it (the SVI cards’ say «інтерфейс VLAN»); the gateway card on the generated values', !missing
         && rows().every((li, i) => words(q('[data-purpose]', li)) === render(task, stateOf(m))[i].purpose)
         && rows().filter(li => /^(?:ip address|no shutdown)/.test(words(q('.ng-su-cmd', li)))).every(li => words(q('[data-purpose]', li)).includes('інтерфейс')
         && rowTexts(root()).includes(`ip address ${task.values.ip} ${task.values.mask}`) && rowTexts(root()).includes(`ip default-gateway ${task.values.gateway}`)), missing);
-      check('dr-2 start: one mode «?», the action line with modes', modeQ().length === 1 && actionWords() === ui.action);
+      check('dr-2 start: the order’s action line, no mode «?» yet', modeQ().length === 0 && actionWords() === ui.actionOrder);
       check('dr-2 start: no SSH or user card (they are the router’s)', !rowTexts(root()).some(t => /^(?:crypto|username|enable secret|ip ssh|transport|login)/.test(t)));
     } else {
       check('dr-3 start: no prompt choice, no CLI example', all('.ng-su-board [role="radiogroup"]').length === 0 && !q('.ng-su-modes') && !q('.ng-su-empty'));
@@ -889,7 +931,6 @@ for (const id of ['dr-2', 'dr-3']) {
     solutionCalls = 0;
     pick(deck.label);
     arrange(m, idsBy(m, deck.broken));
-    if (deck.prompts) chooseBy(m, deck.prompts);
     click(checkButton());
     check(`${id} fail: the hand-picked dependency, in words, after its cards’ positions`, status().startsWith(`• ${shared.notYet} ${id === 'dr-2' ? 'Картка' : 'Картки'} `) && status().endsWith(` ${text(deck.why)}`)
       && status() === `• ${shared.notYet} ${verdictWords(taskOf(m), stateOf(m))}`, status());
@@ -908,9 +949,9 @@ for (const id of ['dr-2', 'dr-3']) {
     pick(deck.label);
     const task = taskOf(m), v = task.values;
     arrange(m, idsBy(m, deck.order));
-    if (deck.prompts) chooseBy(m, deck.prompts);
     const texts = deck.order.map(start => rowTexts(root()).find(t => byStart(t, start)));
     click(checkButton());
+    if (deck.prompts) { chooseBy(m, deck.prompts); click(checkButton()); }
     const st = stateOf(m);
     check(`${id} pass: «✓ Так» with the deck’s words`, st.phase === 'sorted' && status() === `✓ ${shared.yes} ${text(id === 'dr-3' ? 'ok.dr-3' : 'ok')}`, status());
     gates(m, `${id} success`);
@@ -962,6 +1003,7 @@ await scenario('dr-2: recall', m => {
   pick(DR['dr-2'].label);
   const task = taskOf(m), v = task.values;
   arrange(m, idsBy(m, DR['dr-2'].order));
+  click(checkButton());
   chooseBy(m, DR['dr-2'].prompts);
   click(checkButton());
   click(continueButton());
@@ -1058,10 +1100,6 @@ for (const deck of ['dr-1', 'dr-2', 'dr-3']) {
     const ref = realSolution(task).order;
     render(task, stateOf(m)).forEach((row, i) => { q('.ng-reorder-n', rows()[i]).textContent = String(ref.indexOf(row.id) + 1); });
   }, 'numbering', deck);
-  if (deck !== 'dr-3') await injected('a preselected correct prompt', (m, task) => {
-    const id = stateOf(m).answer.order[0];
-    radio(0, task.cards.find(c => c.id === id).mode).setAttribute('aria-checked', 'true');
-  }, 'prompts', deck);
   await injected('reference-based disabling', (m, task) => {
     const ref = realSolution(task).order, order = stateOf(m).answer.order;
     order.forEach((id, i) => { if (i > 0 && ref.indexOf(id) < ref.indexOf(order[i - 1])) moves(i)[0].setAttribute('aria-disabled', 'true'); });
@@ -1124,14 +1162,33 @@ for (const deck of ['dr-1', 'dr-3']) await scenario(`inject lifecycle leaks${dec
   check(name('gate catches «показано» on a solved board'), disclosureFindings(root(), task, st).some(f => f.startsWith('«показано»')));
 }, { deck });
 
+await scenario('inject a preselected correct prompt', m => {
+  const task = taskOf(m);
+  toModes(m);
+  const id = stateOf(m).answer.order[0];
+  radio(0, task.cards.find(c => c.id === id).mode).setAttribute('aria-checked', 'true');
+  check('gate catches a preselected prompt on the modes step', structureFindings(root(), task, stateOf(m)).some(f => f.startsWith('prompts')));
+});
+
 await scenario('inject a stale mark after an edit', m => {
   const task = taskOf(m);
-  choose(m, modes(task));
   click(checkButton());
   click(moves(4)[1]);
   rows()[7].setAttribute('class', `${rows()[7].className} is-marked`);
   check('gate catches a mark kept after an edit', disclosureFindings(root(), task, stateOf(m)).some(f => f.startsWith('marks')));
 });
+
+// Last: the reveal reads the reference, which the earlier scenarios assert it hasn't.
+for (const [deck, syntax, label] of [['dr-1', 'cisco', 'роутер'], ['dr-2', 'cisco', 'комутатор'], ['dr-3', 'routeros', 'роутер']]) {
+  const went = [];
+  await scenario(`round 9: ${deck} link`, m => {
+    click(revealButton());
+    const link = q('.ng-help-link');
+    check(`A19 ${deck}: the link names the device`, words(link).includes(`що ${label} працює`), words(link));
+    click(link);
+    check(`A19 ${deck}: it carries the deck's vendor and what the deck configured`, went[0]?.section === 'checks' && went[0].params.ex === 'proof' && went[0].params.scope === 'access' && went[0].params.syntax === syntax, went);
+  }, { deck, nav: { go: route => went.push(route), has: id => id === 'checks' } });
+}
 
 check('no React warnings or errors', warnings.length === 0, warnings.slice(0, 3));
 console.log(JSON.stringify({ results }));

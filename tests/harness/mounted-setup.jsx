@@ -8,6 +8,7 @@
 // scenario can count its solution() calls (the screen never makes one: its
 // scripts come from scriptForState). The bank is NetGym's: the deck
 // registry (DR-1, DR-2, DR-3), as src/targets/netgym.js passes it.
+import { NavContext } from '../../src/ui/useNav.js';
 import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { act } from 'react';
@@ -44,12 +45,14 @@ function Frame({ store, control }) {
 
 /** Mount the screen on `deck` with `seed` for every deck (the same seed: their
  * instances must still be apart); `store` always holds the latest { state, dispatch }. */
-export function mountSetup({ prefs, seed = 1, deck = 'dr-1' } = {}) {
+export function mountSetup({ prefs, seed = 1, deck = 'dr-1', nav = null, firstVisit = false } = {}) {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
   const store = {}, control = {};
-  act(() => root.render(<StoreProvider prefs={prefs}><Frame store={store} control={control} /></StoreProvider>));
+  const frame = <Frame store={store} control={control} />;
+  // A later visit unless asked: the example opens by itself once only (round 9, B3).
+  act(() => root.render(<StoreProvider prefs={prefs} places={firstVisit ? { setup: { deck, seeds: Object.fromEntries(setupBank.decks.map(d => [d.id, seed])) } } : { examples: { setup: true } }}>{nav ? <NavContext.Provider value={nav}>{frame}</NavContext.Provider> : frame}</StoreProvider>));
   act(() => store.dispatch({ type: 'place', scope: 'setup', patch: { deck, seeds: Object.fromEntries(setupBank.decks.map(d => [d.id, seed])) } }));
   return {
     container, store,

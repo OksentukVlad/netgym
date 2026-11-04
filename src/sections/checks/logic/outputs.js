@@ -64,11 +64,13 @@ export function ping(result, vendor = 'windows') {
     ['summary', `Success rate is ${outcome === 'reply' ? '100 percent (5/5)' : '0 percent (0/5)'}`]]);
   if (vendor !== 'windows') throw new RangeError('invalid-checks-vendor');
   // Windows counts ICMP unreachable messages as received packets; they still
-  // do not establish an Echo Reply. Claims select the result, not summary.
+  // do not establish an Echo Reply. A zero-received summary can show failure;
+  // a positive received count alone cannot prove an Echo Reply.
   const received = ['reply', 'unreachable'].includes(outcome) ? 4 : 0;
   return terminal(`ping ${ip}`, [['request', `Pinging ${ip} with 32 bytes of data:`],
     ['result', outcome === 'reply' ? `Reply from ${ip}: bytes=32 time<1ms TTL=64`
-      : outcome === 'unreachable' ? `Reply from ${reporter}: Destination host unreachable.` : 'Request timed out.'],
+      : outcome === 'unreachable' ? `Reply from ${reporter}: Destination host unreachable.`
+        : outcome === 'general-failure' ? 'PING: transmit failed. General failure.' : 'Request timed out.'],
     ['summary', `Packets: Sent = 4, Received = ${received},`], ['loss', `Lost = ${4 - received} (${received ? 0 : 100}% loss)`]]);
 }
 export function tracert(result) {
@@ -89,13 +91,17 @@ export function nslookup(result) {
   else rows.push(['name', `Name: ${result.answerName ?? result.name}`], ['answer', `Address: ${result.address}`]);
   return terminal(`nslookup ${result.name}`, rows);
 }
-export function ssh(result, user = 'netadmin') {
-  const rows = [['target', `Connecting to ${result.destination}:22`]];
+export function ssh(result, user = 'netadmin', vendor = 'cisco') {
+  const rows = [];
   if (result.outcome === 'host-key') rows.push(['key', 'The authenticity of host'], ['host', `${result.destination} cannot be established.`],
     ['fingerprint', 'ED25519 key fingerprint is SHA256:...'], ['result', 'Continue connecting (yes/no)?']);
-  else rows.push(['result', result.outcome === 'authenticated' ? 'Authenticated using "password".'
-    : ['denied', 'ssh-denied'].includes(result.outcome) ? 'Access denied'
-      : result.outcome === 'refused' ? 'Connection refused' : 'Connection timed out']);
+  else if (result.outcome === 'authenticated') {
+    const prompt = vendor === 'cisco' ? 'R1>' : `[${user}@R1] >`;
+    rows.push(['password', `${user}@${result.destination}'s password:`],
+      ['result', `${prompt} ${vendor === 'cisco' ? 'show clock' : '/system clock print'}`],
+      ['clock', vendor === 'cisco' ? '09:00:00.000 UTC Wed Nov 4 2026' : 'time: 09:00:00'], ['prompt', prompt]);
+  } else rows.push(['result', ['denied', 'ssh-denied'].includes(result.outcome) ? 'Access denied'
+    : result.outcome === 'refused' ? 'Connection refused' : 'Connection timed out']);
   return terminal(`ssh ${user}@${result.destination}`, rows);
 }
 export function http(result) {

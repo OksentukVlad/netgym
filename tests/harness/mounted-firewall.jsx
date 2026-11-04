@@ -64,7 +64,8 @@ export function mountFirewall({ prefs } = {}) {
   document.body.appendChild(container);
   const root = createRoot(container);
   const store = {}, probe = {}, control = {};
-  act(() => root.render(<StoreProvider prefs={prefs}><Frame store={store} probe={probe} control={control} /></StoreProvider>));
+  // A later visit: «Увесь фільтр»'s example opens by itself once only (round 9, B3).
+  act(() => root.render(<StoreProvider prefs={prefs} places={{ examples: { 'firewall-all': true } }}><Frame store={store} probe={probe} control={control} /></StoreProvider>));
   return {
     container, store, probe,
     /** Take the screen away and put it back, under the same store. */

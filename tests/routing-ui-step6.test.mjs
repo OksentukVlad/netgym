@@ -419,7 +419,7 @@ test('routing screen: a failing network check draws its path statically on the s
   act({ type: 'checked', answer, result: routing.check(task, answer) });
   act({ type: 'view', patch: { proven: JSON.stringify(answer) } });
   html = unescape(store.render(h.RoutingScreen, { bank: h.routingBank }));
-  assert.ok(html.includes('Мережа працює: усі пінги проходять в обидва боки.'));
+  assert.ok(html.includes('Маршрути пройшли перевірки моделі: усі пінги проходять в обидва боки.'));
   // Round 4: one success box in the panel under the rows, its detail open; «Далі →» primary.
   const [work, card, success] = ['class="ng-rt-work"', 'ng-rt-card', 'class="ng-rt-success"'].map(x => html.indexOf(x));
   assert.ok(work < card && card < success, 'the success box in the work panel, under the rows');

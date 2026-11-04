@@ -299,6 +299,12 @@ scenario('Z2: an invalid cause', m => {
   check('invalid-cause: «Обери причину зі списку», not assisted', status() === t('invalid-cause') && instance(m, A.task).session.assisted === false, status());
 });
 
+scenario('a skip stays on its level', m => {
+  open(m, A);
+  click(nextBtn());
+  check('«Пропустити»: a new task, the same level (Олена)', m.store.state.places.vlan.faults.cisco.level === 1 && m.store.state.places.vlan.faults.cisco.seed !== A.task.identity.seed);
+});
+
 scenario('levels', m => {
   open(m, A);
   const levels = [1];

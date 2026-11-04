@@ -67,7 +67,3 @@ export function marksOf(result, used, syntaxId) {
     .map(e => [e.rowId, { code: e.code, syntax: syntaxId, values: used[e.rowId] }]));
 }
 
-/** «Ще одна»: the next level the logic offers, staying at the last. */
-export function nextLevel(level, levels) {
-  return levels.find(l => l > level) ?? levels.at(-1) ?? level;
-}

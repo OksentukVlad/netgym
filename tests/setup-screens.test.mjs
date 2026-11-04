@@ -31,7 +31,7 @@ const recordOf = id => h.bank.decks.find(d => d.id === id);
 /** A deck put in `order` with every card's own prompt, then checked. */
 function sorted(task, order = task.referenceOrder) {
   let state = h.initialState(task);
-  state = h.transition(task, state, { type: 'order', order });
+  state = h.transition(task, h.transition(task, state, { type: 'order', order }), { type: 'check' });
   for (const card of task.cards.filter(c => c.mode)) state = h.transition(task, state, { type: 'prompt', id: card.id, prompt: card.mode });
   return h.transition(task, state, { type: 'check' });
 }
@@ -73,16 +73,16 @@ test('setup strings: every screen word is non-empty with its parameters, and cal
   // One task sentence for every deck (spec S2); MikroTik's without the modes part.
   // Round 5 repair v1: the task sentence is the goal only; the how (and the modes) is the action line's.
   assert.equal(ui.task, 'Збери базове налаштування в робочому порядку.');
-  assert.equal(ui.action, 'Перетягни картки (або ↑ ↓) у робочий порядок; у кожній обери режим.');
-  assert.equal(ui.actionOrder, 'Перетягни картки (або ↑ ↓) у робочий порядок.');
+  assert.equal(ui.actionOrder, 'Постав картки в робочий порядок кнопками ↑ ↓.');
+  assert.equal(ui.actionModes, 'У кожній картці обери режим.');
   // The mode «?» goes after «режим» and its full stop (the end of the line), never inside a word; without the word, at the end.
-  assert.equal(h.helpAt(ui.action), ui.action.length);
+  assert.equal(h.helpAt(ui.actionModes), ui.actionModes.length);
   assert.equal(h.helpAt('Обери режим, потім рядок.'), 'Обери режим,'.length);
   assert.equal(h.helpAt('Обери режими.'), 'Обери режими.'.length);
   assert.equal(h.helpAt('Без потрібного слова'), 'Без потрібного слова'.length);
   assert.equal(ui.continue, 'Тепер по пам’яті →');
   // Words around the cards before any check never name an order or a card's prompt.
-  const own = [ui.task, ui.action, ui.actionOrder, ui.modesTitle, ui.modesFull, ui.orders, ui.noPrompt, ui.promptOf(sample), ui.recallPlaceholder, ui.recallTask, shared.reorder.help];
+  const own = [ui.task, ui.actionModes, ui.actionOrder, ui.modesTitle, ui.modesFull, ui.orders, ui.noPrompt, ui.promptOf(sample), ui.recallPlaceholder, ui.recallTask, shared.reorder.help];
   for (const words of [...own, ...Object.values(shared.reorder).filter(v => typeof v === 'function').map(f => f(sample))]) assert.doesNotMatch(words, /→|перед |спершу|потім|\(config|#/, words);
   for (const words of own) assert.deepEqual(setupLeaks(words, 'typed'), [], words);
   // The modes in words: all five prompts; none names a card's command.
@@ -214,9 +214,8 @@ test('setup first view (server), every deck: no leaks in text or attributes, lea
       assert.deepEqual(identityLeaks(html, task), [], `${label}: card identity in an attribute`);
       const deck = deckOf(html);
       assert.doesNotMatch(deck, /aria-checked="true"/, `${label}: a prompt chosen`);
-      assert.equal((deck.match(/role="radiogroup"/g) ?? []).length, dr3 ? 0 : task.cards.length);
+      assert.equal((deck.match(/role="radiogroup"/g) ?? []).length, 0, `${label}: no mode asked for before the order passes`);
       assert.equal((deck.match(/<li class="ng-reorder-item/g) ?? []).length, { 'dr-1': 12, 'dr-2': 5, 'dr-3': 13 }[record.id]);
-      if (!dr3) assert.equal(deck.split(`>${ui.noPrompt}<`).length - 1, task.cards.length, `${label}: «режим?» on every row`);
       // 5b-2 F: each row starts with its purpose, its command (or the step) after it.
       for (const item of deck.split('<li class="ng-reorder-item').slice(1)) {
         assert.ok(item.indexOf('data-purpose=""') < item.search(/class="ng-su-(?:cmd|step)"/), `${label}: the purpose before the command`);
@@ -226,7 +225,7 @@ test('setup first view (server), every deck: no leaks in text or attributes, lea
       assert.match(raw, /data-action-line="">(?:(?!<\/p>).)*<\/p><div class="ng-wex" data-worked-example="">/, `${label}: the example is the action line's next sibling`);
       assert.ok(raw.indexOf('data-worked-example') < raw.indexOf('<ol class="ng-reorder"'), `${label}: the example above the deck`);
       const ex = setupExample({ syntax: dr3 ? 'routeros' : 'cisco' });
-      for (const words of [ex.context, ...ex.rows.map(r => r[1])]) assert.ok(!raw.includes(words), `${label}: the folded example shows nothing: «${words}»`);
+      for (const words of [ex.context, ex.rows.at(-1)[1]]) assert.ok(!raw.includes(words), `${label}: the folded example shows nothing: «${words}»`);
       let at = 0;
       for (const row of shown) {
         const next = deck.indexOf(row.text, at);
@@ -235,12 +234,12 @@ test('setup first view (server), every deck: no leaks in text or attributes, lea
       }
       assert.ok(!/ng-su-field|ng-su-script|ng-copy|ng-su-recall/.test(html), `${label}: no recall line or script before the check passes`);
       assert.ok(html.includes(`>${deckUi[record.id].heading}<`) && html.includes(`<p class="ng-su-task">${ui.task}</p>`));
-      // The action line: the mode «?» after its full stop on the Cisco decks, none on MikroTik.
-      assert.ok(raw.includes(dr3 ? `data-action-line="">${ui.actionOrder}</p>` : `data-action-line="">${ui.action} <button`), `${label}: the action line`);
-      assert.equal((raw.match(/class="ng-su-modes-q"/g) ?? []).length, dr3 ? 0 : 1, `${label}: one mode «?» on the Cisco decks`);
+      // The action line: the order alone on every deck; the mode «?» and the CLI example wait for the modes step.
+      assert.ok(raw.includes(`data-action-line="">${ui.actionOrder}</p>`), `${label}: the action line`);
+      assert.equal((raw.match(/class="ng-su-modes-q"/g) ?? []).length, 0, `${label}: no mode «?» on the order step`);
       assert.match(html, new RegExp(`aria-checked="true"[^>]*>${record.label}<`));
-      // The CLI example on the Cisco decks only; DR-3's login check is a step, not a command.
-      assert.equal(raw.includes('class="ng-su-modes"'), !dr3);
+      // DR-3's login check is a step, not a command.
+      assert.equal(raw.includes('class="ng-su-modes"'), false);
       assert.equal((deck.match(/class="ng-su-step"/g) ?? []).length, dr3 ? 1 : 0);
       if (dr3) {
         const step = shown.find(r => r.kind === 'checkpoint');
@@ -256,8 +255,6 @@ test('setup first view (server): positions number the handles and groups; ↑ fi
   const handles = [...html.matchAll(/class="ng-reorder-handle"[^>]*aria-label="([^"]*)"/g)].map(m => m[1]);
   assert.equal(handles.length, 12);
   handles.forEach((label, i) => assert.ok(label.startsWith(`${i + 1}. `), label));
-  const groups = [...html.matchAll(/role="radiogroup" aria-label="([^"]*)"/g)].map(m => m[1]).filter(l => l !== ui.decks);
-  assert.deepEqual(groups, Array.from({ length: 12 }, (_, i) => ui.promptOf({ n: i + 1 })));
   const ups = [...html.matchAll(/aria-label="Вище: позиція (\d+)" aria-disabled="(true|false)"/g)];
   const downs = [...html.matchAll(/aria-label="Нижче: позиція (\d+)" aria-disabled="(true|false)"/g)];
   assert.deepEqual(ups.map(m => m[2] === 'true'), Array.from({ length: 12 }, (_, i) => i === 0));

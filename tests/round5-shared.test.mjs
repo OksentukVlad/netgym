@@ -60,6 +60,14 @@ test('Purpose (R2): the markup contract, the normal text colour at 14 px, and th
   for (const policy of policies) for (const rule of policy.rules) assert.ok(ui.purpose[rule.descriptionCode], `${policy.id}/${rule.id}`);
 });
 
+test('RuleTable: while the walk plays, words still to come hold their place; «По кроках» (hold off) holds none (B6)', () => {
+  const rows = h.tableRows(policies[0]).filter(r => r.chain === 'input' && !r.end);
+  const outcomes = Object.fromEntries(rows.map((row, i) => [row.at ?? i, { state: 'mismatch', text: 'не збігається: довгі слова про це правило' }]));
+  const table = hold => h.render(el(h.RuleTable, { rows, value: null, onChange() {}, locked: true, outcomes, lit: 0, hold }));
+  assert.equal(table(true).split('aria-hidden="true">не збігається').length - 1, rows.length, 'each row holds its coming words, hidden');
+  assert.ok(!table(false).includes('не збігається'), 'stepping: nothing held');
+});
+
 test('expectPurposes: passes a rule table; fails a row without a purpose, an empty one, and a missing data-term', () => {
   const rows = h.tableRows(policies[0]).filter(r => r.chain === 'input');
   const table = h.render(el(h.RuleTable, { rows, value: null, onChange() {} }));

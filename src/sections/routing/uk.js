@@ -3,11 +3,11 @@ export const copy = {
   'routing.static.empty': 'Заповни це поле.',
   'routing.static.invalid-ip': 'Впиши IP-адресу: чотири числа від 0 до 255 через крапку.',
   'routing.static.invalid-prefix': 'Після адреси впиши / і довжину префікса від 0 до 32.',
-  'routing.static.dst-not-network': 'Це адреса пристрою, а не мережі. Адреса мережі — перша адреса блоку (для /24 закінчується на .0).',
+  'routing.static.dst-not-network': 'З такою маскою це не адреса мережі: вона має бути першою адресою блоку. Перевір адресу й маску.',
   'routing.static.wrong-destination': 'Це інша мережа. Подивись, яку мережу названо в цьому рядку.',
   'routing.static.mask-not-dotted': 'Впиши повну маску через крапки: /24 = 255.255.255.0, /30 = 255.255.255.252.',
   'routing.static.invalid-mask': 'Це не маска мережі. У двійковому записі спочатку йдуть усі одиниці, потім усі нулі.',
-  'routing.static.wrong-mask': 'Маска правильна за формою, але не для цієї мережі. Перевір її префікс на схемі.',
+  'routing.static.wrong-mask': 'Адреса мережі правильна, а маска інша: перевір її префікс на схемі.',
   'routing.static.gateway-is-self': 'Це адреса цього роутера. Потрібна адреса сусіда на спільному лінку.',
   'routing.static.gateway-off-link': 'Ця адреса не на спільному лінку. Знайди адресу сусіда на схемі.',
   'routing.static.gateway-not-host': 'Це адреса мережі або широкомовна адреса. Потрібна адреса інтерфейсу сусіда.',
@@ -36,6 +36,7 @@ export const copy = {
   'routing.static.objective-not-met': 'Зв’язок є, але форма маршруту ще не відповідає умові завдання.',
   'routing.static.could-use-default': 'Таблицю цього роутера можна скоротити маршрутом за замовчуванням.',
   'routing.static.could-summarise': 'Ці мережі можна об’єднати одним сумарним маршрутом.',
+  'routing.static.redundant-default': 'Цей default уже дає DHCP, тож його можна не писати.',
 };
 
 export function t(code, params = {}) {
@@ -68,7 +69,7 @@ export const ui = {
     },
     rulesDefaultDirection: 'Тому default пишемо лише вгору — до інтернету чи до центру, ніколи назустріч.',
     rulesDiscardSummary: 'Сумарний маршрут з невикористаним простором: якщо невідомі пакети можуть повернутися назад, на роутері, що тримає конкретні маршрути, додай discard для всього блоку (Cisco Null0, MikroTik blackhole). Конкретні маршрути довші, тож вони виграють.',
-    rulesExactSummary: 'Сумарний маршрут має точно охоплювати потрібні мережі.',
+    rulesExactSummary: 'Сумарний маршрут має охопити потрібні мережі й не завести чужий трафік не туди; точний збіг потрібен, лише коли цього вимагає умова.',
     rulesDefaultSafety: 'Default спрямовує невідомий трафік вгору. Перевір, що сусід не повертає його назад.',
     solved: 'розв’язано',
     // Task list (a drawer below 1440 px of content).
@@ -77,7 +78,7 @@ export const ui = {
     close: '✕ Закрити',
     levelsCaption: 'РІВЕНЬ',
     allLevels: 'Всі',
-    level: n => `Ур.${n}`,
+    level: n => `Рівень ${n}`,
     levelLabels: { 1: 'Легкий', 2: 'Базовий', 3: 'Середній', 4: 'Складний', 5: 'Експерт' },
     prevTask: 'Попередня задача',
     nextTask: 'Наступна задача',
@@ -107,15 +108,21 @@ export const ui = {
     linkTo: routers => `до ${routers.join(', ')}`,
     // Round 5 (R1): the action line above the routes.
     action: 'Заповни маршрут #1 і натисни «Перевірити».',
+    // Several rows on this router (Олена, A4): the line names them all.
+    actionRows: 'Заповни маршрути і натисни «Перевірити».',
+    actionNext: (done, next) => `На ${done} усе правильно. Тепер заповни маршрути на ${next}.`,
     // A long board's panel comes before the routes (task 15).
     actionBelow: 'Заповни маршрут #1 нижче і натисни «Перевірити».',
+    actionRowsBelow: 'Заповни маршрути нижче і натисни «Перевірити».',
     // Repair v2: a long task in a short window shows its first sentence; the rest opens here.
     detailsOpen: 'Уся умова',
     detailsShut: 'Згорнути умову',
-    dhcpNote: 'WAN отримує default по DHCP: тут default не пишемо, лише маршрути до внутрішніх мереж.',
+    dhcpNote: 'WAN отримує default по DHCP: свій default тут не потрібен, лише маршрути до внутрішніх мереж.',
     rowsCaption: router => `МАРШРУТИ — ${router}`,
     noRoutes: 'Маршрути не потрібні: усе підключено напряму.',
     routeTo: 'Маршрут до ',
+    // The bank's «лінк R2–R3» after «до»: the genitive; a LAN's name stays as it is.
+    routeLabel: label => label.replace(/^лінк /, 'лінка '),
     defaultRoute: 'Маршрут за замовчуванням',
     backup: 'резервний',
     primary: 'основний',
@@ -137,16 +144,16 @@ export const ui = {
     statusWords: { pass: 'пройшла', fail: 'не пройшла', advice: 'порада', pending: 'ще не перевіряли' },
     legendRequest: 'суцільна — запит',
     legendReply: 'пунктир — відповідь',
-    legend: 'Шлях пакета на схемі',
+    legend: 'Змодельований шлях пакета',
     linkDown: '⚡ впав',
-    pathTitle: 'Шлях пакета',
+    pathTitle: 'Шлях пакета (модель, не вивід tracert)',
     pathNone: 'Натисни «Перевірити», і тут буде шлях пакета.',
     // What a check opens, at the top of the work panel (each part folds).
     demoTitle: label => `Демонстрація: ${label}`,
     demoShow: '▶ Показати на схемі',
     otherSyntax: name => `Показати мовою ${name}`,
     otherSyntaxLabel: name => `Твої маршрути мовою ${name}`,
-    sameMeaning: 'Обидва записи означають те саме — один маршрут мовою різних роутерів.',
+    sameMeaning: 'Це ті самі маршрути, записані мовою іншого виробника.',
     copied: '✓ Скопійовано',
     copyFailed: 'Не вдалося скопіювати — команди виділено, натисни Ctrl+C.',
     // Round 4 (spec R1): the fields' own words (the syntax adapters keep the round 1 ones for tests of the logic).
@@ -169,7 +176,9 @@ export const ui = {
     referenceRows: router => `ВІДПОВІДЬ — ${router}`,
     // Task 15: what the check simulates, beside the task.
     failover: title => `Перевірка також моделює випадок «${title}»: тоді трафік має піти резервним шляхом.`,
-    successSummary: 'Мережа працює: усі пінги проходять в обидва боки.',
+    successSummary: 'Маршрути пройшли перевірки моделі: усі пінги проходять в обидва боки.',
+    // What the model takes as given (Astra 4); with an internet, NAT and the provider's way back too.
+    modelNote: internet => `Це модель: ${internet ? 'NAT, зворотний шлях у провайдера і фільтрація вважаються налаштованими, а ' : ''}шлях на схемі змодельовано, це не вивід tracert.`,
     formErrorsSummary: 'Спочатку виправ позначені поля.',
     // Polish: live conversion between syntaxes, and the success lap.
     convertNote: name => `У ${name} цей маршрут не дописано або в ньому помилка: доповни чи виправ його там — або введи тут.`,
@@ -242,7 +251,7 @@ export const networkUi = {
     'direct-neighbour': `${p.router} → ${p.to}`,
     'distance-order': `${p.router}: основний і резервний маршрути`,
   })[type] ?? p.router,
-  success: '✓ Мережа працює! Усі пінги проходять в обидва боки.',
+  success: '✓ Маршрути пройшли перевірки моделі: усі пінги проходять в обидва боки.',
   formErrors: 'Спочатку виправ позначені маршрути',
   failed: sentence => `• Ще ні. ${sentence}`,
   probe: {
@@ -253,7 +262,7 @@ export const networkUi = {
     'ttl-exceeded': p => `Пакет з ${p.from} до ${p.to} пройшов забагато роутерів і не дійшов. Перевір, чи маршрути не ведуть по колу.`,
     'return-path-failed': p => `Пакет з ${p.from} дійшов до ${p.to}, а відповідь — ні: вона зупинилась на ${p.router}.`,
     'missing-return-route': p => `Класична помилка: маршрут туди є, а назад — ні. ${p.router} не знає, як відповісти ${p.from}.`,
-    'unsupported-ecmp': p => p.supplied ? `${p.router} уже отримав маршрут за замовчуванням від провайдера по DHCP. Свій default тут не пишемо.` : `На ${p.router} два маршрути до одного призначення з однаковою distance. Тренажер не ділить трафік: залиш один або дай резервному більшу distance.`,
+    'unsupported-ecmp': p => p.supplied ? `У цій вправі default на ${p.router} дає провайдер по DHCP: другий default через іншого сусіда сюди не додаємо.` : `На ${p.router} два маршрути до одного призначення з однаковою distance. Тренажер не ділить трафік: залиш один або дай резервному більшу distance.`,
     'wrong-path': p => `${p.scenario}: пакет до ${p.to} пішов через ${p.actual}, а має — через ${p.expected}.`,
     'coverage-missing': p => `${p.allProbesPass ? 'Пінги проходять, але маршрут' : 'Маршрут'} на ${p.router} покриває не всю мережу ${p.to}: частина її адрес лишилась без маршруту.`,
     'unknown-space-loops': p => `Невідомий трафік ходить по колу ${p.cyclePath}.${p.cycleCause === 'defaults' ? `${p.cycleLength === 2 ? ' Два маршрути' : ' Маршрути'} за замовчуванням дивляться один на одного. Default веде лише вгору — до інтернету або до центру; з іншого боку пишуть конкретні маршрути.` : p.cycleCause === 'summary' ? ` Сумарний маршрут на ${p.summaryRouter} захоплює адреси, які ${p.summaryNext} повертає назад.` : ''}`,
@@ -265,6 +274,7 @@ export const networkUi = {
     'no-default': p => `Завдання просить на ${p.router} окремий маршрут до кожної мережі, без маршруту за замовчуванням.`,
     'direct-neighbour': p => `До ${p.to} з ${p.router} завдання просить іти через сусіда, за яким ця мережа стоїть напряму. Подивись на схему.`,
     'distance-order': () => 'Резервний маршрут має програвати основному: дай йому більшу distance, ніж основному.',
+    'redundant-default': p => `${p.router} вже отримав цей default по DHCP, тож його можна не писати. ${p.syntax === 'cisco' ? 'У Cisco маршрут від DHCP має distance 254, тому статичний просто переважає його.' : 'У MikroTik маршрут від DHCP має distance 1, як і статичний; шлюз той самий.'}`,
     'could-use-default': p => `Порада: таблицю ${p.router} можна скоротити маршрутом за замовчуванням. Default спрямовує невідомий трафік вгору. Перевір, що сусід не повертає його назад.`,
     'could-summarise': p => `Порада: на ${p.router} маршрути до ${p.lans} можна об'єднати в один сумарний.`,
   },
@@ -404,9 +414,10 @@ export const faultText = Object.freeze({
   scopeMove: 'Пінги перевіряють окремі адреси. Перевір маршрути до всього потрібного блоку та шлях невідомих адрес: вони не мають ходити по колу. Після змін перевір мережу ще раз.',
   wrongDestination: ({ router, dst, prefix, destination }) => `${router}: маршрут до ${dst}/${prefix} не охоплює ${destination}.`,
   otherCause: 'Ремонт правильний — залиш його. Причина була інша.',
-  chooseCause: 'Мережа працює. Що було не так?',
-  complete: 'Мережа працює, причину знайдено.',
+  chooseCause: 'Пінги проходять. Що було не так?',
+  complete: 'Пінги проходять, причину знайдено.',
   compare: 'Пінги проходять. Порівняй зміни з налаштуваннями на початку.',
+  look: ({ router, destination }) => `Відкрий таблицю ${router}. Який її рядок мав би вести пакет до адреси ${destination}?`,
   stopped: ({ direction, router, destination, code, next, lost = false }) => {
     const reply = direction === 'reply';
     const packet = reply ? 'Відповідь' : 'Пакет';
@@ -441,7 +452,7 @@ Object.assign(copy, {
   'routing-faults.fault-cause-required': faultText.chooseCause,
   'routing-faults.fault-cause-other': faultText.otherCause,
   'routing-faults.invalid-cause': 'Обери причину зі списку.',
-  'routing-faults.fault-hint-question': p => p.code ? faultText.stopped(p) : faultText.compare,
+  'routing-faults.fault-hint-question': p => p.look ? faultText.look(p) : p.code ? faultText.stopped(p) : faultText.compare,
   'routing-faults.fault-hint-evidence': p => p.fixed ? faultText.causeMove : p.noStop ? faultText.scopeMove : faultText.move,
   'routing-faults.fault-hint-example': p => p.example,
 });

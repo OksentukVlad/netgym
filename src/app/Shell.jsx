@@ -48,6 +48,7 @@ import { restoreSaved } from './saved.js';
 import StoreProvider from './StoreProvider.jsx';
 import Bar, { ThemeButton } from './Bar.jsx';
 import ScreenBoundary from './ScreenBoundary.jsx';
+import DoneMark, { earnedBy } from '../ui/components/DoneMark.jsx';
 import { BarSlotContext, SheetAreaContext } from '../ui/BarSlot.jsx';
 import { NavContext } from '../ui/useNav.js';
 import { usePref, useStore } from '../ui/useStore.js';
@@ -307,15 +308,23 @@ function ShellFrame({ target, boot }) {
 // build adds a note above the cards and a footer link to the notices page;
 // the Windows app shows neither (platform.js). Spec save v2: with something
 // to clear, the footer also has «Почати спочатку»; it goes once cleared.
+// Round 9 (B7): one line beside the name says what NetGym is (in the header, so
+// the nine cards still fit 1000 × 700 without scrolling), and a card takes
+// the quiet ✓ (DoneMark: no counts, no scores) once something in its section
+// was solved. A section's exercises are the ones its saved table lists; the
+// calculator has none, so its card never takes one.
 function StartScreen({ sections, theme, headingRef, onOpen, onClear }) {
   const web = webPreview();
   const { state } = useStore();
+  const solved = earnedBy(state.instances, identity => identity.exerciseId);
+  const doneIn = section => Object.keys(section.saved?.exercises ?? {}).some(id => solved.has(id));
   const clearable = Object.keys(state.instances).length > 0 || Object.keys(state.places).length > 0;
   return (
     <div className="ng-home" data-theme={theme}>
       <header className="ng-home-header">
         <div className="ng-home-column ng-home-head">
           <h1 className="ng-home-title" tabIndex={-1} ref={headingRef}>{uk.appName}</h1>
+          <p className="ng-home-tagline">{uk.tagline}</p>
           <ThemeButton />
         </div>
       </header>
@@ -327,7 +336,7 @@ function StartScreen({ sections, theme, headingRef, onOpen, onClear }) {
             <li key={s.id}>
               <button type="button" className="ng-card" onClick={() => onOpen(s.id)}>
                 <span className="ng-card-head">
-                  <span className="ng-card-title">{s.title}</span>
+                  <span className="ng-card-title">{s.title}<DoneMark done={doneIn(s)} /></span>
                   {i === 0 && <>{' '}<span className="ng-card-start">{uk.startHere}</span></>}
                 </span>{' '}
                 <span className="ng-card-blurb">{s.blurb}</span>

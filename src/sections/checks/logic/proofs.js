@@ -3,9 +3,11 @@ import { createScenario, clientState } from './probes.js';
 import { proofs as words, examples } from '../uk.js';
 
 export const id = 'checks-proof';
-export const version = 1;
+export const version = 2;
 export const generatorVersion = 1;
 export const requirementIds = Object.freeze(['address', 'remote', 'ssh', 'http', 'telnet', 'login']);
+/** What a setup deck configures (the `access` scope): no DHCP, internet or website. */
+export const accessRequirementIds = Object.freeze(['ssh', 'telnet', 'login']);
 /** The setup decks' new account names (setup/logic/deck.js) other than the
  * SSH requirement's netadmin; the account being retired is the default admin. */
 const newAccounts = Object.freeze(['operator', 'maintainer']);
@@ -14,7 +16,7 @@ const oldAccount = 'admin';
 /** Each option carries both the check/place and its expected outcome.
  * No live network is contacted. Choosing a check without the successful
  * outcome is intentionally insufficient. Requirements are independent. */
-export function createProof(seed = 0, { vendor = 'cisco', requirementId, example = false, otherAddresses = false } = {}) {
+export function createProof(seed = 0, { vendor = 'cisco', requirementId, example = false, otherAddresses = false, scope = null } = {}) {
   requirementId ??= makeRng(`checks:proof:${seed}`).pick(requirementIds);
   // Each requirement shuffles with its own stream: one stream for the whole
   // round put the right option at the same position on every card.
@@ -28,7 +30,7 @@ export function createProof(seed = 0, { vendor = 'cisco', requirementId, example
   // has to be read (Fable 4). Local commands run «на ПК», probes «з ПК».
   const account = rng.pick(newAccounts);
   const option = (id, place, command, expected, evidence = []) => ({ id, place, command, expected,
-    label: `${words.where[place](command)} → ${expected}`, evidence });
+    label: `${words.where[scope === 'access' && place === 'router' ? 'device' : place](command)} → ${expected}`, evidence });
   const vty = ros ? null : 'show run | section vty';
   const options = {
     address: [option('address', 'pc', 'ipconfig /all', words.address(gateway), [
@@ -51,15 +53,20 @@ export function createProof(seed = 0, { vendor = 'cisco', requirementId, example
       option('old-session', 'old', `ssh ${oldAccount}@${gateway}`, words.existing(oldAccount))],
   }[requirementId];
   const correctOptionId = options[0].id;
+  const correctOptionIds = requirementId === 'address' ? ['address', 'binding-only'] : [correctOptionId];
+  for (const o of options) o.reason = requirementId === 'telnet' && o.id === 'configuration' && !ros
+    ? words.telnetCiscoNote : words.reasons[requirementId][o.id];
+  if (example && requirementId === 'remote') options[0].reason = options[0].reason.replace('8.8.8.8', remote);
   const requirement = requirementId === 'remote' && example ? words.requirements.remote.replace('8.8.8.8', remote) : words.requirements[requirementId];
   return { id, version, generatorVersion, seed, vendor: s.vendor, requirementId, requirement,
-    options: rng.shuffle(options), correctOptionId,
-    explanation: words[`${requirementId}Note`] ?? words.feedback };
+    options: rng.shuffle(options), correctOptionId, correctOptionIds,
+    explanation: options[0].reason };
 }
 export function checkProof(task, optionId) {
-  return { ok: task.options.some(o => o.id === optionId) && optionId === task.correctOptionId, code: 'proof', text: task.explanation };
+  const option = task.options.find(o => o.id === optionId);
+  return { ok: Boolean(option && task.correctOptionIds.includes(optionId)), code: 'proof', text: option?.reason ?? words.feedback };
 }
-export function proofSet(seed = 0, options = {}) { return requirementIds.map(requirementId => createProof(seed, { ...options, requirementId })); }
+export function proofSet(seed = 0, options = {}) { return (options.scope === 'access' ? accessRequirementIds : requirementIds).map(requirementId => createProof(seed, { ...options, requirementId })); }
 export function proofExample({ vendor = 'cisco' } = {}) {
   const task = createProof('example', { vendor, requirementId: 'ssh', example: true });
   return { context: examples.proofContext, task, answer: task.correctOptionId, result: checkProof(task, task.correctOptionId) };

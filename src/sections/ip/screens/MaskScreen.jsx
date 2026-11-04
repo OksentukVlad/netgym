@@ -86,7 +86,7 @@ export function calculatorParams(ex) {
 /** An address task's ruler line (round 5 5b-2, spec D): the octet shown, the label spacing, the block size
  * for the task's prefix and the task's address; the block's ends once it is shown. */
 export function maskRulerCaption(task, ruler) {
-  const line = comprehension.maskRulerCaption({ k: ruler.octet, labelStep: Math.max(ruler.unit, 32), prefix: task.prefix, blockSize: blockSize(task.prefix), value: ruler.value });
+  const line = comprehension.maskRulerCaption({ k: ruler.octet, labelStep: Math.max(ruler.unit, 32), tick: Math.max(ruler.unit, 4), prefix: task.prefix, blockSize: blockSize(task.prefix), value: ruler.value });
   return ruler.block ? `${line} ${ui.rulerBlock(ruler.block)}` : line;
 }
 

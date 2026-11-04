@@ -16,7 +16,7 @@ The renderer's `profile` contains the source URLs and the 40 × 10 budget.
   repeated request results is shown; the four-packet summary is retained.
   An unreachable ICMP response can count as a received packet without being
   an Echo Reply. The reporting address stays visible. Long lines wrap into
-  stable selectable continuation lines.
+  stable continuation lines. In C2 a wrapped observation or split table entry is one selectable button; physical lines still obey the budget.
 - [tracert](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/tracert):
   increasing TTL, ICMP Time Exceeded, three probes per hop, silent routers.
   `-d` avoids incidental reverse lookup. Every hop occupies two lines: three
@@ -31,8 +31,12 @@ The renderer's `profile` contains the source URLs and the 40 × 10 budget.
 - [OpenSSH for Windows](https://learn.microsoft.com/en-us/windows-server/administration/openssh/openssh-server-configuration),
   [key authentication](https://learn.microsoft.com/en-us/windows-server/administration/openssh/openssh_keymanagement):
   representative session excerpts for a host-key prompt, authentication,
-  Access denied, refusal and timeout. Authentication success is an explicit
-  session status excerpt, not proof inferred from a TCP connection or prompt.
+  Access denied, refusal and timeout. Successful plain SSH shows a remote prompt, a clock command and its response;
+  verbose authentication diagnostics are not invented. A first-login key prompt
+  is normal and does not establish authentication. In C1 the learner explicitly
+  continues the modelled login after the fingerprint check.
+  [OpenSSH ssh(1)](https://man.openbsd.org/ssh.1#v) documents verbose diagnostics;
+  checked 4 November 2026 for usage-review item A7.
 - [curl manual](https://curl.se/docs/manpage.html): `curl -i` HTTP request,
   HTTP status/body and resolution/connection/timeout errors. This is a named
   HTTP transaction to an example host, not an assertion about every website

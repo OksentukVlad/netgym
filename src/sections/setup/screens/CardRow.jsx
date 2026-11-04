@@ -27,6 +27,7 @@ import { useId } from 'react';
 import Segmented from '../../../ui/components/Segmented.jsx';
 import Purpose from '../../../ui/components/Purpose.jsx';
 import { uk as shared } from '../../../ui/uk.js';
+import { usePhone } from '../../../ui/phone.js';
 import { comprehension, ui } from '../uk.js';
 
 /** A row's purpose as shown (its first line and its name in words): the bank's,
@@ -42,6 +43,7 @@ export const purposeOf = row => (row.kind === 'checkpoint' ? comprehension.check
  */
 export default function CardRow({ row, n, prompts, marked = false, modeInvalid = false, current = false, onPrompt = null }) {
   const markId = useId();
+  const phone = usePhone();
   const mark = marked && <span id={markId} className="ng-su-mark">• {shared.notYet}</span>;
   const checkpoint = row.kind === 'checkpoint';
   const main = checkpoint
@@ -52,7 +54,8 @@ export default function CardRow({ row, n, prompts, marked = false, modeInvalid =
     choice = (
       <span className={`ng-su-choice${row.prompt ? ' is-chosen' : ''}`}>
         {/* «• Ще ні» takes the empty state's place, so a mark never widens the row. */}
-        {mark || (!row.prompt && <span className="ng-su-empty" aria-hidden="true">{ui.noPrompt}</span>)}
+        {/* On a phone it would sit alone above the options, with nothing to say beside them (Fable 5). */}
+        {mark || (!row.prompt && !phone && <span className="ng-su-empty" aria-hidden="true">{ui.noPrompt}</span>)}
         <Segmented label={ui.promptOf({ n })} options={prompts.map(p => ({ value: p, label: p }))} value={row.prompt}
           onChange={onPrompt} invalid={modeInvalid} describedBy={modeInvalid ? markId : undefined} className="ng-su-prompts" />
       </span>

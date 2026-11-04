@@ -19,7 +19,7 @@ import { nextSeed } from './seeds.js';
 /** The exercise for useExercise: a round of the six requirements on one seed. */
 export const proofExercise = {
   id: proofs.id, version: proofs.version, generatorVersion: proofs.generatorVersion,
-  create: (_, { seed, vendor }) => ({ seed, vendor, cards: proofs.proofSet(seed, { vendor }) }),
+  create: (_, { seed, vendor, scope }) => ({ seed, vendor, cards: proofs.proofSet(seed, { vendor, scope }) }),
   check: () => ({ ok: false, complete: false }),
   solution: () => null,
 };
@@ -34,7 +34,8 @@ const EXAMPLE_HEAD = ['Вимога', 'Перевірка → результат
 /** @param {{ vendor: 'cisco'|'mikrotik', place: object, setPlace: Function }} props */
 export default function ProofView({ vendor, place, setPlace }) {
   const seed = place.proof?.seed ?? 0;
-  const ex = useExercise(proofExercise, null, { seed, vendor });
+  const scope = place.proof?.scope === 'access' ? 'access' : undefined;
+  const ex = useExercise(proofExercise, null, { seed, vendor, ...(scope ? { scope } : {}) });
   const { task, view } = ex;
   const total = task.cards.length;
   const position = Math.min(view.position ?? 0, total - 1);
@@ -44,7 +45,7 @@ export default function ProofView({ vendor, place, setPlace }) {
   const last = chosen.at(-1) ?? null;
   const result = last ? proofs.checkProof(card, last) : null;
   const right = Boolean(result?.ok);
-  const done = task.cards.every(c => (tries[c.requirementId] ?? []).includes(c.correctOptionId));
+  const done = task.cards.every(c => (tries[c.requirementId] ?? []).some(id => proofs.checkProof(c, id).ok));
   const cardRef = useRef(null);
   const cardFocus = useNewCard(cardRef, position);
   const marks = Object.fromEntries(chosen.map(id => [id, proofs.checkProof(card, id).ok ? 'ok' : 'no']));
@@ -54,7 +55,7 @@ export default function ProofView({ vendor, place, setPlace }) {
     if (right) return;
     const next = { ...tries, [card.requirementId]: [...chosen, id] };
     const outcome = proofs.checkProof(card, id);
-    const complete = outcome.ok && task.cards.every(c => (next[c.requirementId] ?? []).includes(c.correctOptionId));
+    const complete = outcome.ok && task.cards.every(c => (next[c.requirementId] ?? []).some(id => proofs.checkProof(c, id).ok));
     ex.check({ tries: next }, { result: { ok: outcome.ok, complete } });
     ex.setView({ tries: next, checks: (view.checks ?? 0) + 1 });
   }
@@ -63,7 +64,7 @@ export default function ProofView({ vendor, place, setPlace }) {
 
   const verdict = result ? {
     tone: right ? 'ok' : 'no', scope: done ? 'task' : 'part', stamp: view.checks ?? 0,
-    summary: done ? screen.proofDone : right ? result.text : words.feedback,
+    summary: done ? screen.proofDone : result.text,
     summaryNode: done ? <p className="ng-ck-after">{result.text}</p> : null,
   } : null;
 
@@ -71,7 +72,7 @@ export default function ProofView({ vendor, place, setPlace }) {
     <ExerciseLayout
       heading={modes.proof}
       question={<>
-        <p className="ng-ck-task">{screen.proofTask}</p>
+        <p className="ng-ck-task">{scope ? screen.proofTaskAccess : screen.proofTask}</p>
         <section ref={cardRef} tabIndex={-1} className="ng-ck-card" aria-label={ui.requirement(position + 1, total)}>
           <p className="ng-ck-progress">{ui.requirement(position + 1, total)}</p>
           <p className="ng-ck-requirement">{card.requirement}</p>

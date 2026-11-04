@@ -67,7 +67,7 @@ export function RowHeader({ facts, index, syntax, id }) {
   return (
     <h4 className="ng-rt-row-head" id={id} tabIndex={id ? -1 : undefined}>
       <span className="ng-rt-row-n">#{index + 1}</span>{' '}
-      {!facts.isDefault && !facts.discard && ui.shared.routeTo}<span className="ng-rt-dest">{facts.label}</span>
+      {!facts.isDefault && !facts.discard && ui.shared.routeTo}<span className="ng-rt-dest">{facts.isDefault || facts.discard ? facts.label : ui.shared.routeLabel(facts.label)}</span>
       {facts.isDefault && syntax.id === 'routeros' && <> {ui.routeros.defaultAll}</>}
       {facts.role && <span className="ng-rt-role"> · {ui.shared[facts.role]}</span>}
       {facts.suggestion && <span className="ng-rt-role"> · {ui.shared.summarySuggestion}</span>}

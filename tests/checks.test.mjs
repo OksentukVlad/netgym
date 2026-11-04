@@ -137,7 +137,7 @@ test('every Windows terminal outcome and vendor ping fits the phone budget', () 
   }
   for (const outcome of ['authenticated', 'denied', 'refused', 'timeout', 'host-key']) {
     const o = out.ssh({ destination: '192.168.255.254', outcome }); budget(o);
-    assert.match(o.text, { authenticated: /Authenticated/, denied: /Access denied/, refused: /Connection refused/, timeout: /timed out/, 'host-key': /fingerprint/ }[outcome]);
+    assert.match(o.text, { authenticated: /R1> show clock/, denied: /Access denied/, refused: /Connection refused/, timeout: /timed out/, 'host-key': /fingerprint/ }[outcome]);
   }
   for (const outcome of ['ok', 'http-error', 'dns-failure', 'refused', 'timeout']) budget(out.http({ name: 'www.example.com', outcome }));
 });
@@ -209,7 +209,7 @@ test('L1 Next always advances, last offers Stop only, early/late stop names earl
   assert.equal(ladder.canAdvance(task, state), false); assert.equal(ladder.advance(task, state), state);
   const late = ladder.gradeStop(task, state.evidence, 'link'); assert.equal(late.earliest.id, 'config'); assert.equal(late.stoppedAtEarliest, false); assert.equal(late.placeAccepted, true);
   state = ladder.stopLadder(state); assert.equal(ladder.advance(task, state), state);
-  const dns = ladder.createLadder(1, 'cisco', 0, { faultId: 'dns' });
+  const dns = ladder.createLadder(1, 'cisco', 0, { faultId: 'dns', example: true });
   const one = ladder.startLadder(dns); const result = ladder.gradeStop(dns, one.evidence, 'more');
   assert.equal(result.earliest.id, 'dns'); assert.equal(result.stoppedAtEarliest, false); assert.match(result.foldedNext, /^ping /);
 });
@@ -217,8 +217,8 @@ test('C1 accepted places use collected evidence, including address/gateway ambig
   const task = ladder.createLadder(1, 'cisco', 0, { faultId: 'static-gateway' });
   const rows = allRungs(task);
   assert.deepEqual(ladder.acceptedPlaces([]), ['link', 'address', 'gateway', 'exit', 'dns', 'more']);
-  assert.deepEqual(ladder.acceptedPlaces(rows.slice(0, 2)), ['address', 'gateway', 'more']);
-  for (const place of ['address', 'gateway', 'more']) assert.equal(ladder.gradeStop(task, rows.slice(0, 2), place).placeAccepted, true);
+  assert.deepEqual(ladder.acceptedPlaces(rows.slice(0, 2)), ['gateway']);
+  for (const place of ['gateway']) assert.equal(ladder.gradeStop(task, rows.slice(0, 2), place).placeAccepted, true);
   assert.equal(ladder.gradeStop(task, rows.slice(0, 2), 'dns').placeAccepted, false);
   const nat = ladder.createLadder(1, 'cisco', 0, { faultId: 'nat' }), route = ladder.createLadder(1, 'cisco', 0, { faultId: 'route' });
   assert.deepEqual(ladder.acceptedPlaces(allRungs(nat).slice(0, 3)), ['exit']);
@@ -276,10 +276,10 @@ function expectedClaimKeys(templateId, outcome, vendor) {
     'gateway-dhcp': ['gateway', 'dhcp-enabled', 'dhcp-server'], reply: ['result'], 'dns-from-ping': [],
     'dns-answer': ['name', ...(['answer', 'wrong-answer'].includes(outcome) ? ['answer'] : ['result'])],
     'ssh-login': ['result'], 'icmp-service': ['0.result', '1.result'],
-    'binding-options': ros ? ['binding', 'status'] : ['binding'],
-    'route-choice': outcome === 'present' ? ['default', 'default-next'] : ros ? ['route-0', 'route-1'] : ['last-resort'],
-    'nat-state': ros ? outcome === 'empty' ? ['flags'] : ['entry', 'src', 'reply-dst']
-      : outcome === 'srcnat' ? ['inside-global', 'inside-local'] : ['inside-columns', 'outside-columns'],
+    'binding-options': ['binding'],
+    'route-choice': outcome === 'present' ? ['default'] : ros ? ['route-0', 'route-1'] : ['last-resort'],
+    'nat-state': ros ? outcome === 'empty' ? [] : ['connection']
+      : outcome === 'srcnat' ? ['translation'] : [],
   };
   return keys[templateId].sort();
 }
@@ -310,7 +310,8 @@ test('C2 expected line sets are frozen semantic evidence, including no lines', (
   ];
   for (const [level, templateId, outcome, ids] of cases) assert.deepEqual(claims.createClaim(level, 'cisco', 1, { templateId, outcome }).expectedLineIds, ids);
   const a = claims.createClaim(1, 'cisco', 0, { templateId: 'reply', outcome: 'unreachable' });
-  assert.ok(a.expectedLineIds.includes('result:2'), 'both wrapped lines are evidence');
+  assert.deepEqual(a.expectedLineIds, ['result']);
+  assert.match(a.lines.find(l => l.id === 'result').text, /Destination\s+host unreachable/);
   const noLines = claims.createClaim(1, 'cisco', 0, { templateId: 'dns-from-ping' });
   assert.equal(claims.checkVerdict(noLines, 'insufficient', []).ok, true);
   assert.equal(claims.checkVerdict(noLines, 'yes', []).ok, false);
@@ -323,12 +324,12 @@ test('C2 seeded draws reproduce and respect Windows/router levels', () => {
     assert.equal(a.outputs.some(o => o.command.startsWith('show ') || o.command.startsWith('/ip')), level === 2);
   }
 });
-test('C3 each independent requirement has one correct outcome among 3–4 explicit options', () => {
+test('C3 each independent requirement has explicit correct outcomes among 3–4 explicit options', () => {
   for (const vendor of vendors) {
     const set = proofs.proofSet(17, { vendor, otherAddresses: true }); assert.equal(set.length, 6);
     for (const task of set) {
       assert.ok(task.options.length >= 3 && task.options.length <= 4);
-      assert.equal(task.options.filter(o => proofs.checkProof(task, o.id).ok).length, 1);
+      assert.equal(task.options.filter(o => proofs.checkProof(task, o.id).ok).length, task.requirementId === 'address' ? 2 : 1);
       for (const o of task.options) { assert.ok(o.place); assert.ok(o.command); assert.ok(o.expected); assert.ok(o.label.includes('→')); }
       assert.equal(proofs.checkProof(task, 'unknown').ok, false);
     }

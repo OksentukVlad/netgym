@@ -5,6 +5,8 @@ export const uk = {
   appName: 'NetGym',
   sectionsCaption: 'Розділи',
   open: 'Відкрити',
+  // Round 9 (B7): what NetGym is, under its name.
+  tagline: 'Тренажер з комп’ютерних мереж: адреси, маршрути, VLAN, фаєрвол і перше налаштування, з перевіркою на кожному кроці.',
   // Round 4 (A7): a chip on the first card, inside its button (part of its name).
   startHere: 'Почни тут',
   backToSections: '← Розділи',

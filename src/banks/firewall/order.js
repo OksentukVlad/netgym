@@ -7,7 +7,7 @@ export const orderRecords = [{
   id: 'fw-order', version: 1,
   variants: [
     { id: 'input', title: 'Лише до роутера', policyId: 'home-basic', cardIds: [...cards, ...orderWitnessCards].map(c => c.id), text: 'Упорядкуй правила для пакетів до роутера.' },
-    { id: 'all', title: 'Увесь фільтр', policyId: 'home-basic', cardIds: [...cards, ...orderWitnessCards].map(c => c.id), text: 'Упорядкуй правила input і forward в одному списку.' },
+    { id: 'all', title: 'Увесь фільтр', policyId: 'home-basic', cardIds: [...cards, ...orderWitnessCards].map(c => c.id), text: 'Упорядкуй правила кожного ланцюжка: input і forward.' },
   ],
 }];
 

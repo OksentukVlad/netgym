@@ -45,7 +45,7 @@ import { useMemo } from 'react';
 import routing, { compactRoutes, guidedView, putRoute, slotId, slotDestination } from '../logic/static.js';
 import { syntaxList, syntaxes } from '../syntax/index.js';
 import { strictIp, isNull0 } from '../../../engine/vendors/fields.js';
-import { fieldOfCode, formCode, hasText, rowCheck, rowCheckReasons } from './rowCheck.js';
+import { fieldOfCode, formCode, hasText, rowCheck, rowCheckReasons, rowFormCode } from './rowCheck.js';
 
 /** A route with a destination (a free-mode placeholder has none yet). */
 const routable = r => Boolean(r) && typeof r.dst === 'string';
@@ -90,6 +90,8 @@ export function canonicalOf(syntax, values) {
 
 /** The fields a form code marks: the one it names, or the empty / malformed ones. */
 export function fieldsOfCode(code, syntax, values = {}) {
+  // Without a row's network to compare, the address or the mask may be the wrong one.
+  if (code === 'dst-not-network' && syntax.id === 'cisco') return ['net', 'mask'];
   const field = fieldOfCode(code, syntax.id);
   if (field) return [field];
   const names = syntax.fields.map(f => f.name).filter(n => n !== 'dist' && !(n === 'gw' && values.blackhole === true));
@@ -225,11 +227,13 @@ export function useRouteAnswers(ex, syntax, mode = 'guided') {
    * shows the route that check bound to it (all its fields may be marked).
    * Pure: it records nothing. null before a check, after a form-error check
    * or a passing one, or once the row was edited. A row left blank is graded
-   * (every field empty). */
+   * (every field empty) only on the router the check was pressed on: another
+   * router the check opened has not been touched yet (Олена). */
   function networkResultOf(a, b) {
     const item = asItem(a, b);
     if (item.kind !== 'slot' || !ex.result || passed || ex.result.code === 'form-errors') return null;
     const values = valuesOf(item);
+    if (!hasText(values) && ex.view.checkedOn !== item.router) return null;
     // An entirely blank row is graded too: a failing check marks its fields.
     if (hasText(values) && (!item.route || !sameRoute(syntax.toRoute(values), item.route))) return null;
     const { detail, override } = rowCheck(task, item.router, item.index, values, syntax);
@@ -269,7 +273,7 @@ export function useRouteAnswers(ex, syntax, mode = 'guided') {
     const all = items();
     const formErrors = all.flatMap(item => {
       const values = valuesOf(item);
-      const code = hasText(values) ? formCode(syntax, task.network, item.router, values) : null;
+      const code = !hasText(values) ? null : item.kind === 'slot' ? rowFormCode(task, item.router, item.index, values, syntax) : formCode(syntax, task.network, item.router, values);
       return code ? [{ routerId: item.router, code, key: item.key, values: trimmed(values) }] : [];
     });
     if (formErrors.length) {

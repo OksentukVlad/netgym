@@ -385,6 +385,13 @@ button.ng-vl-choice::before {
 
 .ng-vl-evidence tbody + tbody { border-top: 1px solid var(--ng-stroke); }
 
+/* «PC5 надсилає» on its row's one line: three switches' ports fit a 1000 × 700 first view (a phone may wrap it). */
+@media (min-width: 640px) {
+  .ng-vl-ev-host { white-space: nowrap; }
+  .ng-vl-evidence th,
+  .ng-vl-evidence td { padding-inline: 4px; }
+}
+
 .ng-vl-ev-switch {
   vertical-align: top !important;
   padding-top: 2px !important;
@@ -1455,6 +1462,9 @@ tr.is-marked > th,
 }
 
 .ng-vl-cmds-head .ng-vl-caption { display: inline; }
+/* «Куди дійде кадр»: the given configuration's fold (round 9, Fable 9): a 44 px row of its own. */
+.ng-vl-given .ng-vl-cmds > summary { min-height: var(--ng-target); display: list-item; line-height: 40px; }
+.ng-vl-given-title { margin: 0; }
 
 .ng-vl-more-host:empty { display: none; }
 
@@ -1753,6 +1763,11 @@ tr.is-marked > th,
   .ng-vl[data-mode="narrow"] .ng-vl-frame {
     height: min(var(--ng-vl-natural, 340px), 156px);
     min-height: 0;
+  }
+
+  /* Round 9: «Куди дійде кадр» answers from the port table, and the worked example's row needs the room. */
+  .ng-vl[data-mode="narrow"][data-exercise="predict"] .ng-vl-frame {
+    height: min(var(--ng-vl-natural, 340px), 112px);
   }
 
   /* Round 8: «Текстом» and «Розгорнути схему» share one row. */

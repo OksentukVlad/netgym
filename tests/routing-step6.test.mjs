@@ -381,12 +381,20 @@ test('restored route ids cannot be reused after deletion; task identity survives
   assert.equal(s.taskId, 'routing.task-03'); assert.equal(s.session.earned.solved, true);
 });
 
-test('student duplicate of the supplied DHCP default is diagnosed even with the same next hop', () => {
+test('a default on the DHCP default\'s own gateway passes with vendor-worded advice (Astra 2)', () => {
   const { task, answer } = setup(2);
   answer.R1.push({ ...task.network.supplied.R1[0], id: 'student' });
-  const view = presentCheck(task, routing.check(task, answer));
+  const result = routing.check(task, answer);
+  assert.equal(result.ok, true, 'IOS prefers it (DHCP is 254), RouterOS ties (1): the same gateway either way');
+  assert.deepEqual(result.findings.filter(f => f.code === 'redundant-default').map(f => f.entity), ['R1']);
+  assert.match(presentCheck(task, result, 'cisco').advice.find(a => a.code === 'redundant-default').text, /Cisco.*254/);
+  assert.match(presentCheck(task, result, 'routeros').advice.find(a => a.code === 'redundant-default').text, /MikroTik.*distance 1/);
+  // A second default through another neighbour stays a stated exercise limit, not a claim about devices.
+  const other = setup(2);
+  other.answer.R1.push({ dst: '0.0.0.0', prefix: 0, via: other.answer.R1[0].via, id: 'other' });
+  const view = presentCheck(other.task, routing.check(other.task, other.answer));
   assert.equal(view.firstFailure.code, 'unsupported-ecmp');
-  assert.equal(view.firstFailure.params.supplied, true);
+  assert.match(view.firstFailure.text, /У цій вправі/);
 });
 
 test('hints do not read references or scaffold; too-wide summaries explain the overreach', () => {

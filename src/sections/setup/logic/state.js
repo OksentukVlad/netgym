@@ -1,5 +1,5 @@
 import { clone, initialAnswer, capabilities } from './model.js';
-import { check } from './rules.js';
+import { check, orderFinding } from './rules.js';
 import { checkTyped } from './typed.js';
 
 export function initialState(task) {
@@ -7,7 +7,15 @@ export function initialState(task) {
     typedFeedback: {}, revealed: false, recallRevealed: false, showOwn: false, hintIndex: 0, assisted: false, earned: false };
 }
 
-/** Kept under instanceKey; the web version saves it without the typed lines
+/** What the session records when the order passes on a deck with modes: a step, not the task. */
+export const orderPassed = Object.freeze({ ok: false, complete: false, code: 'order-ok', findings: Object.freeze([]) });
+
+/** The decks with modes take one decision at a time (round 9, B1): `sorting`
+ * checks the order alone, and only a passing order opens `modes`, where the
+ * order is locked and the whole answer is checked. A deck without modes goes
+ * from `sorting` straight to `sorted`.
+ *
+ * Kept under instanceKey; the web version saves it without the typed lines
  * (screens/saved.js). `revealed` means sorting reveal only:
  * recall assistance must never revoke a sorting completion in the shared session.
  * `lastFinding` is a snapshot with board positions; edits retain it for hints.
@@ -20,15 +28,22 @@ export function transition(task, state, action) {
       if (state.phase !== 'sorting' || !Array.isArray(action.order) || action.order.length !== task.cards.length || new Set(action.order).size !== task.cards.length || action.order.some(id => !task.cards.some(c => c.id === id))) return state;
       return edit({ ...state.answer, order: [...action.order] });
     case 'prompt':
-      if (state.phase !== 'sorting' || !capabilities(task).prompts.length || !task.cards.some(c => c.id === action.id) || (action.prompt !== null && !capabilities(task).prompts.includes(action.prompt))) return state;
+      if (state.phase !== 'modes' || !task.cards.some(c => c.id === action.id) || (action.prompt !== null && !capabilities(task).prompts.includes(action.prompt))) return state;
       return edit({ ...state.answer, prompts: { ...state.answer.prompts, [action.id]: action.prompt } });
     case 'check': {
-      if (state.phase !== 'sorting') return state;
+      if (!['sorting', 'modes'].includes(state.phase)) return state;
+      // The first step of a deck with modes: only the order is asked for, so only the order answers.
+      if (state.phase === 'sorting' && capabilities(task).prompts.length) {
+        const wrong = orderFinding(task, state.answer.order);
+        if (!wrong) return { ...state, phase: 'modes', feedback: null, stale: false, lastFinding: null, hintIndex: 0 };
+        const finding = { severity: 'blocks', ...wrong, positions: wrong.cards.map(id => state.answer.order.indexOf(id) + 1) };
+        return { ...state, feedback: { ok: false, complete: false, code: wrong.code, findings: [finding] }, stale: false, lastFinding: finding };
+      }
       const result = check(task, state.answer);
       const finding = result.ok ? null : { ...result.findings[0], positions: result.findings[0].cards.map(id => state.answer.order.indexOf(id) + 1) };
       const feedback = finding ? { ...result, findings: [finding] } : result;
       return { ...state, feedback, stale: false, lastFinding: finding,
-        phase: feedback.ok ? 'sorted' : 'sorting', earned: state.earned || (feedback.ok && !state.revealed) };
+        phase: feedback.ok ? 'sorted' : state.phase, earned: state.earned || (feedback.ok && !state.revealed) };
     }
     case 'continue':
       if (!['sorted', 'sorted-shown'].includes(state.phase) || !task.typedIds.length) return state;
@@ -54,7 +69,7 @@ export function transition(task, state, action) {
         return { ...state, phase: 'done-shown', recallRevealed: true, assisted: true,
           typedFeedback: {}, answer: { ...state.answer, typed, assisted: [...task.typedIds] } };
       }
-      if (state.phase !== 'sorting') return state;
+      if (!['sorting', 'modes'].includes(state.phase)) return state;
       return { ...state, phase: 'sorted-shown', revealed: true, assisted: true, feedback: null, stale: false, showOwn: false };
     case 'show-own':
       return state.phase === 'sorted-shown' ? { ...state, showOwn: !state.showOwn } : state;

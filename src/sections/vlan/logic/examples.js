@@ -28,6 +28,27 @@ export function portsExample({ syntax = 'cisco' } = {}) {
   };
 }
 
+/** «Куди дійде кадр» (round 9, B3): one switch, two VLANs of its own; who gets PC1's broadcast. */
+export function predictExample({ syntax = 'cisco' } = {}) {
+  syntaxCheck(syntax);
+  const hosts = ['PC1', 'PC2', 'PC3'];
+  const topology = {
+    devices: [{ id: 'SW1', kind: 'switch', ports: [port('a1', 'fa0/1', 'ether2'), port('a2', 'fa0/2', 'ether3'), port('a3', 'fa0/3', 'ether4')] },
+      ...hosts.map(id => ({ id, kind: 'host', ports: [port('nic', 'nic', 'nic')] }))],
+    links: hosts.map((id, i) => link('SW1', `a${i + 1}`, id, 'nic')),
+    hosts: [host('PC1', '192.0.2.10'), host('PC2', '192.0.2.11'), host('PC3', '192.0.2.12')],
+  };
+  const ports = { syntax, vids: [310, 320], goals: { PC1: 310, PC2: 310, PC3: 320 }, objective: null, topology };
+  return {
+    context: 'PC1 у VLAN 310 надсилає широкомовний кадр на SW1.',
+    columns: ['ПК', 'VLAN', 'Отримає кадр'],
+    rows: [['PC2', '310', 'так'], ['PC3', '320', 'ні']],
+    note: 'Кадр виходить лише з портів свого VLAN.',
+    task: { identity: { taskId: 'example' }, vendor: syntax, topology, configurations: portsSolution(ports, syntax), rounds: [{ id: 'round', from: 'PC1' }] },
+    answer: { round: ['PC2'] },
+  };
+}
+
 export function interVlanExample({ syntax = 'cisco' } = {}) {
   syntaxCheck(syntax);
   const networks = [{ vid: 310, network: '192.0.2.0', prefix: 26, gateway: '192.0.2.1' }, { vid: 320, network: '198.51.100.0', prefix: 26, gateway: '198.51.100.1' }];

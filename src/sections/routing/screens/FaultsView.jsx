@@ -31,8 +31,8 @@
 //     cause; the hints (rung 1 reads the stop on screen, rung 3 the worked
 //     example marks the instance assisted), «Показати відповідь» (the
 //     cause, the one changed route before → after, the pings before and
-//     after it, each traceable), and «Далі →» (the next level the logic
-//     offers, staying at the last), primary once solved. A wrong cause after
+//     after it, each traceable), and «Далі →» (another task at this level),
+//     primary once solved. A wrong cause after
 //     a passing repair: «Ремонт правильний — залиш його. Причина була
 //     інша.» The verdict stays, «до змін», after an edit.
 //   - what the message is about carries data-evidence: the cause question
@@ -86,7 +86,7 @@ import { routerClass } from './theme.js';
 import { fieldsOfCode } from './useRouteAnswers.js';
 import { hasText } from './rowCheck.js';
 import { useLayoutMode, useStageHeight } from './layoutMode.js';
-import { fieldsAnswer, initialRows, marksOf, nextLevel, routeAfterEdit, rowValues, sameValues, usesDistance } from './faultsRows.js';
+import { fieldsAnswer, initialRows, marksOf, routeAfterEdit, rowValues, sameValues, usesDistance } from './faultsRows.js';
 import { comprehension, faultText, faultsUi, ui } from '../uk.js';
 import '../../../ui/tokens.css';
 import './routing.css';
@@ -194,9 +194,9 @@ export default function FaultsView({ bank, exerciseSwitch = null }) {
     if (instance?.view?.earned !== true) return [];
     try { const id = JSON.parse(key); return id?.exerciseId === faults.id && Number.isInteger(id.level) ? [id.level] : []; } catch { return []; }
   }));
-  // «Ще одна»: the next level the logic offers, staying at the last. A level
+  // «Далі» and «Пропустити»: another task at this level (Олена: a skip must not raise it). A level
   // is picked on its switch, which keeps focus (arrow keys move on).
-  const onAgain = () => { if (slot && !building) build(nextLevel(slot.level, levels), { focus: true }); };
+  const onAgain = () => { if (slot && !building) build(slot.level, { focus: true }); };
   const chooseLevel = level => { if (level !== shownLevel) build(level); };
 
   return (
@@ -464,7 +464,7 @@ function FaultsWork({ bank, record, slot, syntax, layout, root, building, onAgai
     const next = S.showHint(task, { ...rf, snapshot: snaps[from] }, rung);
     ex.setView({ rf: { ...next, snapshot: rf.snapshot }, ...(rung === 1 ? { hintSnap: from } : {}) });
   }
-  const onReveal = () => { ex.setView({ rf: S.reveal(task, rf) }); };
+  const onReveal = () => { ex.setView({ rf: S.reveal(task, rf), revealedRows: JSON.stringify(displayed.answer) }); };
   const pingsHead = useRef(null);
   // «Ще одна» goes with the instance it ends: focus moves to the new pings.
   useEffect(() => {
@@ -529,7 +529,8 @@ function FaultsWork({ bank, record, slot, syntax, layout, root, building, onAgai
       stepKey={causeStep ? 'cause' : 'fix'}
       className="ng-rf-help"
       boardRef={boardRef}
-      check={done ? null : { onCheck }}
+      // Right after a reveal the table is still the learner's: «Перевірити» comes back with their first edit (Олена 1).
+      check={done || (rf.reveal && view.revealedRows === JSON.stringify(displayed.answer)) ? null : { onCheck }}
       verdict={verdict}
       stale={stale}
       hints={{ texts: hintTexts, shown: Math.min(rf.hintRung, hintTexts.length), onMore: moreHint }}

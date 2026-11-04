@@ -231,3 +231,13 @@ test('E4 worked example: its own network only (192.0.2.0/24, 198.51.100.0/24), t
     assert.deepEqual(rows[1].slice(1), ['3 з 4 ✓', '4 з 4 ✓']);
   }
 });
+
+// Keep the final /27 tick far enough from the broadcast label at phone width.
+test('R9 /27 scale labels leave space before the broadcast label', () => {
+  const task = { ...server.generateScenario({ seed: 3, level: 2 }), network: '192.168.88.160', prefix: 27, router: '192.168.88.162', statics: [] };
+  const props = h.stripProps(task, {});
+  assert.equal(props.unit, 8);
+  const html = h.renderRuler(props);
+  assert.ok(html.includes('>184</text>') && html.includes('>191</text>'));
+  assert.ok(!html.includes('>188</text>'));
+});

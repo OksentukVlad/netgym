@@ -598,7 +598,7 @@ scenario('WorkedExample', () => h.mountExample({ taskKey: 't1' }), m => {
   const before = JSON.stringify(m.store.state);
   check('WorkedExample: closed by default: aria-expanded="false", the live region there and empty, nothing of the example in the page', toggle().getAttribute('aria-expanded') === 'false'
     && region.getAttribute('aria-live') === 'polite' && region.childNodes.length === 0 && toggle().getAttribute('aria-controls') === region.getAttribute('id') && !text(q('.example-screen')).includes('192.0.2'));
-  check('WorkedExample: closed: the toggle reads «Приклад ▸ готова відповідь (інші числа)», the arrow aria-hidden', text(toggle()) === 'Приклад ▸ готова відповідь (інші числа)' && q('.ng-wex-toggle [aria-hidden="true"]').textContent === '▸');
+  check('WorkedExample: closed: the toggle reads «Приклад: як це розв’язують ▸», the arrow aria-hidden', text(toggle()) === 'Приклад: як це розв’язують ▸' && q('.ng-wex-toggle [aria-hidden="true"]').textContent === '▸');
   check('WorkedExample: closed: expectWorkedExample passes', passes(() => expectWorkedExample(document.body)) === true, passes(() => expectWorkedExample(document.body)));
   check('WorkedExample: the slot: directly under the action line, before the first control', q('.ng-action-line').nextSibling === q('[data-worked-example]') && q('[data-worked-example]').nextSibling === q('.answer'));
   click(toggle());

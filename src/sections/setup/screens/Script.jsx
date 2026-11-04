@@ -119,3 +119,18 @@ export function OwnDeck({ rows, prompts }) {
     </ol>
   );
 }
+
+/** The Cisco decks' second step (round 9, B1): the order passed and is locked; each card takes its mode. */
+export function ModesDeck({ rows, prompts, marked, modeInvalid, current, onPrompt }) {
+  return (
+    <ol className="ng-su-own ng-su-modes-deck" aria-label={ui.deck}>
+      {rows.map((row, i) => (
+        <li key={row.id} className={`ng-su-own-item${marked.has(row.id) ? ' is-marked' : ''}`}>
+          <span className="ng-su-own-n" aria-hidden="true">{i + 1}</span>
+          <CardRow row={row} n={i + 1} prompts={prompts} marked={marked.has(row.id)} modeInvalid={modeInvalid && marked.has(row.id)}
+            current={row.id === current} onPrompt={prompt => onPrompt(row.id, prompt)} />
+        </li>
+      ))}
+    </ol>
+  );
+}

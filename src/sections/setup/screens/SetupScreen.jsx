@@ -1,23 +1,28 @@
 // «Налаштування з нуля» (DR-1 Cisco router, DR-2 Cisco 2960, DR-3 MikroTik;
 // round 4 spec S with its v2 and v3 sections, on the shared parts of spec A).
-// The learner puts a deck of command cards in a working order and, on the
-// Cisco decks, chooses each card's mode (prompt). Any order that keeps the
-// deck's dependencies passes.
+// The learner puts a deck of command cards in a working order and then, on
+// the Cisco decks, chooses each card's mode (prompt). Any order that keeps
+// the deck's dependencies passes.
 //
-// The flow (logic/state.js): sorting → sorted → recall → done.
+// The flow (logic/state.js): sorting → modes (Cisco) → sorted → recall → done.
+// Round 9 (B1): one decision at a time. Modes were a wall: 60 radios on the
+// first view, and no word on the order until all 12 were set.
 //   - sorting: the action line (round 5, R1) above the deck (ReorderList: ≡
 //     and ↑ ↓, keyboard grab); each card's purpose first, its command under
-//     it (R2, the bank's data; 5b-2 F), each row's prompt as one quiet group
-//     with «режим?» until chosen; on the Cisco decks one «?» at the end of
-//     the action line (after «режим.») opens the modes in words
-//     (ModeHelp.jsx). Right under the action line, the folded worked example
-//     (5b-2 A: one finished card with its mode on Cisco, two cards in
-//     create-before-use order on MikroTik; commands in no deck,
-//     logic/examples.js), closed again on new values or another deck.
-//     «Перевірити» gives one finding: missing modes first, then one rule; only its cards
+//     it (R2, the bank's data; 5b-2 F). Right under the action line, the
+//     worked example (5b-2 A: three cards in order with their modes on Cisco,
+//     two cards in create-before-use order on MikroTik; commands in no deck,
+//     logic/examples.js), closed again on new values or another deck; it
+//     starts open on the first visit to the section (B3).
+//     «Перевірити» gives one finding, one rule; only its cards
 //     get «• Ще ні», and the first of them is the evidence the panel names.
 //     An edit keeps that verdict, dimmed («до змін»), and marks the edited
 //     row, so the panel anchors right after it. «Далі →» skips (secondary).
+//   - modes (the order passed; Cisco decks): the cards locked in the learner's
+//     order (Script.jsx ModesDeck), each row's prompt as one quiet group with
+//     «режим?» until chosen; one «?» at the end of the action line opens the
+//     modes in words (ModeHelp.jsx). «Перевірити» now checks the whole
+//     answer: missing modes first, then one wrong mode.
 //   - sorted (the check passed, the deck's ✓ earned unless revealed): the
 //     deck is locked and becomes the script it gives (Script.jsx: prompts,
 //     mode changes tagged «перехід», RouterOS split at the login check, one
@@ -49,8 +54,9 @@
 // Help (spec A1): one HelpPanel for the deck, a long board (`boardRef`): in
 // two columns at the top of the right column, in one column before the deck
 // (after a short one); anchored after a flagged row it can't fit beside.
-// First-visit asides (spec A8): the CLI modes (Cisco) and how to arrange the
-// cards (keys, several valid orders), folded after the first check or «Далі».
+// First-visit asides (spec A8): how to arrange the cards (keys, several valid
+// orders) on the order step, the CLI modes (Cisco) from the modes step on,
+// folded after the deck's last check is tried, or «Далі».
 //
 // Layout by the screen's own width (setup.css): desk (≥ 1200) puts the board
 // on the left and the panel with the asides on the right; narrow is one
@@ -59,25 +65,26 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import drill from '../logic/deck.js';
 import { capabilities } from '../logic/model.js';
 import { recallRows, render, scriptForState } from '../logic/render.js';
-import { initialState, transition } from '../logic/state.js';
+import { initialState, orderPassed, transition } from '../logic/state.js';
 import { explanation, hints as hintsOf, tips } from '../logic/hints.js';
 import { setupExample } from '../logic/examples.js';
 import { useExercise } from '../../../ui/useExercise.js';
 import { usePlace, usePref, useStore } from '../../../ui/useStore.js';
 import { useNav } from '../../../ui/useNav.js';
+import { usePhone } from '../../../ui/phone.js';
 import { SheetChoice } from '../../../ui/BarSlot.jsx';
 import ReorderList from '../../../ui/components/ReorderList.jsx';
 import HelpPanel, { bringIntoView } from '../../../ui/components/HelpPanel.jsx';
 import MoreMenu from '../../../ui/components/MoreMenu.jsx';
 import Aside, { useAside, useAsideFold } from '../../../ui/components/Aside.jsx';
 import ActionLine from '../../../ui/components/ActionLine.jsx';
-import WorkedExample from '../../../ui/components/WorkedExample.jsx';
+import WorkedExample, { useFirstVisit } from '../../../ui/components/WorkedExample.jsx';
 import DoneMark, { earnedBy } from '../../../ui/components/DoneMark.jsx';
 import { uk as shared } from '../../../ui/uk.js';
 import CardRow, { purposeOf } from './CardRow.jsx';
 import ModeHelp, { ModesWords } from './ModeHelp.jsx';
 import Recall, { lineSummary } from './Recall.jsx';
-import Script, { OwnDeck } from './Script.jsx';
+import Script, { ModesDeck, OwnDeck } from './Script.jsx';
 import copy, { deckUi, modesExample, text, ui } from '../uk.js';
 import '../../../ui/tokens.css';
 import './setup.css';
@@ -152,6 +159,8 @@ export default function SetupScreen({ bank }) {
   const state = saved?.phase ? saved : initialState(task);
   const { phase, answer } = state;
   const sorting = phase === 'sorting';
+  const moding = phase === 'modes';
+  const onDeck = sorting || moding;   // still answering on the cards
   const recalling = RECALL.includes(phase);
   const prompted = caps.prompts.length > 0;
   // The worked example: display data only (its own task and answer stay in examples.js).
@@ -160,12 +169,14 @@ export default function SetupScreen({ bank }) {
   const okCode = `ok.${deckId}` in copy ? `ok.${deckId}` : 'ok';
   const fold = useAsideFold(SCREEN);
   const modesAside = useAside(SCREEN, 'modes');
+  const phone = usePhone();
+  const firstVisit = useFirstVisit('setup');
   const earned = earnedBy(store.instances, identity => (identity.exerciseId === drill.id ? identity.taskId : null));
 
   const root = useRef(null);
   const boardRef = useRef(null);
   const fields = useRef([]);
-  const focusAfter = useRef(null);   // 'first-card', 'modes' (the CLI example), or a recall line's index
+  const focusAfter = useRef(null);   // 'first-card', 'modes' (the CLI example), 'modes-step', or a recall line's index
   const keepInView = useRef(false);   // an edit made the verdict stale: the panel anchors after the edited row
   const layout = useLayout(root);
 
@@ -174,7 +185,7 @@ export default function SetupScreen({ bank }) {
   const assist = next => { if (next.assisted && !session.assisted) ex.act({ type: 'session', action: { type: 'assist' } }); };
 
   // ── Sorting ──
-  const feedback = sorting ? state.feedback : null;
+  const feedback = onDeck ? state.feedback : null;
   const failed = feedback && !feedback.ok ? feedback.findings[0] : null;
   const live = failed && !state.stale ? failed : null;           // the checked board is still on screen
   const marked = new Set(live?.cards ?? []);
@@ -183,7 +194,7 @@ export default function SetupScreen({ bank }) {
   // The row the panel's message is about: the edited row once the verdict is
   // stale, else the first flagged row (the smallest board position at the check).
   const flaggedId = live?.positions?.length ? answer.order[Math.min(...live.positions) - 1] : null;
-  const cardEvidence = !sorting ? null : state.stale && failed ? edited : flaggedId;
+  const cardEvidence = !onDeck ? null : state.stale && failed ? edited : flaggedId;
   const rows = render(task, state);
 
   function edit(action, id) {
@@ -194,10 +205,13 @@ export default function SetupScreen({ bank }) {
   }
   function onCheck() {
     const next = transition(task, state, { type: 'check' });
+    const toModes = sorting && next.phase === 'modes';
     assist(next);
-    ex.check(next.answer, { result: next.feedback });
+    ex.check(next.answer, { result: toModes ? orderPassed : next.feedback });
+    if (toModes) focusAfter.current = 'modes-step';
     save(next, { setupEdited: null });
-    fold();
+    // Asides fold once the deck's last check has been tried: the CLI modes are for the step that asks for them.
+    if (!prompted || moding) fold();
   }
 
   // ── Recall ──
@@ -232,17 +246,17 @@ export default function SetupScreen({ bank }) {
   }
 
   // ── Both ──
-  const hintList = sorting || phase === 'recall' ? hintsOf(task, state) : [];
+  const hintList = onDeck || phase === 'recall' ? hintsOf(task, state) : [];
   function onHint() {
     if (state.hintIndex >= hintList.length) return;
-    if (sorting) ex.hint(caps.hints.length);
+    if (onDeck) ex.hint(caps.hints.length);
     // The hint is the newest message now (about the first line still to type).
     save(transition(task, state, { type: 'hint' }), recalling ? { setupHintAt: lineCheck?.stamp ?? 0 } : {});
   }
   function onReveal() {
     const next = transition(task, state, { type: 'reveal' });
     if (next === state) return;
-    if (sorting) ex.reveal();
+    if (onDeck) ex.reveal();
     else assist(next);
     save(next);
   }
@@ -253,7 +267,7 @@ export default function SetupScreen({ bank }) {
     fold();
     setPlace({ seeds: { ...place.seeds, [deckId]: nextSeed(seed) } });
   }
-  const onDeck = id => { if (id !== deckId) setPlace({ deck: id }); };
+  const chooseDeck = id => { if (id !== deckId) setPlace({ deck: id }); };
   // The mode help's «Повний приклад»: the CLI example's aside, open, and the focus on it.
   function onFullExample() {
     if (!modesAside.open) { focusAfter.current = 'modes'; modesAside.toggle(); } else showModes();
@@ -274,6 +288,7 @@ export default function SetupScreen({ bank }) {
     focusAfter.current = null;
     if (want === 'first-card') root.current?.querySelector('.ng-reorder-handle')?.focus();
     else if (want === 'modes') showModes();
+    else if (want === 'modes-step') showModesStep();
     else fields.current[want]?.focus();
   });
 
@@ -285,8 +300,15 @@ export default function SetupScreen({ bank }) {
     aside.querySelector('.ng-aside-q')?.focus({ preventScroll: true });
   }
 
+  /** The order passed: the task line that says so and the second step's action line into view, the focus on the first card's modes. */
+  function showModesStep() {
+    const scope = root.current;
+    bringIntoView([scope?.querySelector('.ng-su-task'), scope?.querySelector('.ng-su-action')].filter(Boolean), 'auto');
+    scope?.querySelector('.ng-su-modes-deck [role="radio"]')?.focus({ preventScroll: true });
+  }
+
   // ── The script on the board ──
-  const script = sorting ? null : scriptForState(task, state);
+  const script = onDeck ? null : scriptForState(task, state);
   const shownBoard = state.revealed && !state.showOwn;
   const pathOf = cardId => task.cards.find(c => c.id === cardId)?.secondary ?? null;
   const moreItems = script ? script.parts.map(part => ({
@@ -300,6 +322,9 @@ export default function SetupScreen({ bank }) {
     // The flagged cards' positions first (spec S2); missing modes name them in their own sentence.
     const lead = failed.code === 'mode-missing' || !failed.positions?.length ? '' : `${ui.cardsAt({ positions: [...failed.positions].sort((a, b) => a - b) })} `;
     verdict = { tone: 'no', scope: 'task', stamp: ex.presses, summary: `${lead}${text(lesson.code, lesson.params)}` };
+  } else if (moding) {
+    // `stay`: the next step is at the top of the deck, and the screen goes there itself (showModesStep).
+    verdict = { tone: 'ok', scope: 'part', stamp: ex.presses, stay: true, summary: text('order-ok') };
   } else if (phase === 'sorted' && state.feedback?.ok) {
     const { lead, more } = successTips(task, state.feedback);
     const advice = [...new Map(state.feedback.findings.filter(f => f.severity === 'advice').map(f => [f.code, f])).values()];
@@ -326,7 +351,7 @@ export default function SetupScreen({ bank }) {
     verdict = { tone: result.ok ? 'ok' : 'no', scope: finished ? 'task' : 'part', stamp: `line-${stamp}`,
       summary: finished ? `${lineSummary(n, value, result)} ${ui.recallDone}` : lineSummary(n, value, result) };
   }
-  const reveal = sorting || phase === 'sorted-shown'
+  const reveal = onDeck || phase === 'sorted-shown'
     ? { revealed: phase === 'sorted-shown', onReveal, render: () => null, applied: ui.applied }
     : phase === 'recall' || phase === 'done-shown'
       ? { revealed: phase === 'done-shown', onReveal, render: () => null, applied: ui.recallApplied }
@@ -334,16 +359,21 @@ export default function SetupScreen({ bank }) {
   const continueAction = ['sorted', 'sorted-shown'].includes(phase) && task.typedIds.length > 0 ? { label: ui.continue, onClick: onContinue } : null;
 
   // Closed again on every new deck or values (the instance), never in the store.
-  const workedExample = <WorkedExample taskKey={task.instanceKey} context={example.context} head={example.columns} rows={example.rows} />;
+  const workedExample = <WorkedExample taskKey={task.instanceKey} context={example.context} head={example.columns} rows={example.rows} tag={shared.example.tagCards} autoOpen={firstVisit} />;
+  const modesFold = (
+    <Aside screen={SCREEN} id="modes" title={ui.modesTitle} className="ng-su-aside ng-su-aside-modes">
+      <ModesExample values={task.values} />
+    </Aside>
+  );
 
   const deckOptions = decks.map(deck => ({ value: deck.id, label: <>{deck.label}<DoneMark done={earned.has(deck.id)} /></>, step: deck.label }));
-  const taskLine = recalling ? ui.recallTask : phase === 'sorted' ? ui.sortedTask : phase === 'sorted-shown' ? ui.shownTask : ui.task;
+  const taskLine = recalling ? ui.recallTask : phase === 'sorted' ? ui.sortedTask : phase === 'sorted-shown' ? ui.shownTask : moding ? ui.modesTask : ui.task;
 
   return (
     <div ref={root} className={`ng-su is-${phase}`} data-theme={themeName} data-layout={layout}>
       <header className="ng-su-head">
         <h1 className="ng-su-h1" tabIndex={-1}>{words.heading}</h1>
-        <SheetChoice stepper label={ui.decks} value={deckId} onChange={onDeck} className="ng-su-decks" options={deckOptions} />
+        <SheetChoice stepper label={ui.decks} value={deckId} onChange={chooseDeck} className="ng-su-decks" options={deckOptions} />
         {moreItems.length > 0 && <MoreMenu items={moreItems} className="ng-su-more-menu" />}
       </header>
       <div className="ng-su-intro">
@@ -355,25 +385,25 @@ export default function SetupScreen({ bank }) {
       </div>
 
       <div className="ng-su-work">
-        <section ref={boardRef} className="ng-su-board" aria-label={sorting ? ui.deck : recalling ? ui.recallLabel : shownBoard ? ui.answerHeading : ui.scriptHeading}>
-          {sorting && (prompted
-            ? <ModeHelp sentence={ui.action} onFull={onFullExample}>{workedExample}</ModeHelp>
-            : <div className="ng-su-action"><ActionLine>{ui.actionOrder}</ActionLine>{workedExample}</div>)}
+        <section ref={boardRef} className="ng-su-board" aria-label={onDeck ? ui.deck : recalling ? ui.recallLabel : shownBoard ? ui.answerHeading : ui.scriptHeading}>
+          {sorting && <div className="ng-su-action"><ActionLine>{ui.actionOrder}</ActionLine>{workedExample}</div>}
+          {moding && <ModeHelp sentence={ui.actionModes} onFull={onFullExample}>{workedExample}</ModeHelp>}
+          {/* On a phone the CLI modes come before the cards that need them (Fable 5). */}
+          {moding && phone && modesFold}
           {sorting && (
             <ReorderList items={rows} label={ui.deck} name={purposeOf} showHelp={false}
               onReorder={(order, moved) => edit({ type: 'order', order }, moved)}
               rowClassName={row => (marked.has(row.id) ? 'is-marked' : '')}>
-              {(row, index) => (
-                <CardRow row={row} n={index + 1} prompts={caps.prompts} marked={marked.has(row.id)} modeInvalid={modeMark && marked.has(row.id)}
-                  current={row.id === cardEvidence} onPrompt={prompt => edit({ type: 'prompt', id: row.id, prompt }, row.id)} />
-              )}
+              {(row, index) => <CardRow row={row} n={index + 1} prompts={[]} marked={marked.has(row.id)} current={row.id === cardEvidence} />}
             </ReorderList>
           )}
+          {moding && <ModesDeck rows={rows} prompts={caps.prompts} marked={marked} modeInvalid={modeMark} current={cardEvidence}
+            onPrompt={(id, prompt) => edit({ type: 'prompt', id, prompt }, id)} />}
           {recalling && (
             <Recall rows={lines} readOnly={phase === 'done-shown'} current={lineEvidence}
               onChange={onTyped} onEnter={onEnter} fieldRef={i => el => { fields.current[i] = el; }} />
           )}
-          {!sorting && (
+          {!onDeck && (
             <div className="ng-su-result">
               <div className="ng-su-result-head">
                 <h2 className="ng-su-caption">{state.revealed ? (state.showOwn ? ui.ownHeading : ui.answerHeading) : ui.scriptHeading}</h2>
@@ -394,27 +424,23 @@ export default function SetupScreen({ bank }) {
           boardRef={boardRef}
           // Round 6 (P3): while the cards are sorted the check row follows the deck (task, cards, then
           // «Перевірити»); recall and the script keep the panel before a long board, as before.
-          placement={sorting ? 'after' : 'auto'}
-          check={sorting ? { label: ui.check, onCheck } : null}
+          placement={onDeck ? 'after' : 'auto'}
+          check={onDeck ? { label: ui.check, onCheck } : null}
           verdict={verdict}
-          stale={sorting ? state.stale : lineStale}
+          stale={onDeck ? state.stale : lineStale}
           hints={hintList.length ? { texts: hintList.map(h => text(h.code, h.params)), shown: state.hintIndex, onMore: onHint } : null}
           reveal={reveal}
           continueAction={continueAction}
           // Round 7: a finished deck (passed, shown, recalled): proving the router works is «Перевірка мережі»'s «Що це доводить».
-          link={!sorting && phase !== 'recall' && nav?.has('checks') ? { label: ui.checksLink, onClick: () => nav.go({ section: 'checks', params: { ex: 'proof' } }) } : null}
-          next={{ onNext, ...(continueAction ? { destination: ui.nextWhere } : {}) }}
+          link={!onDeck && phase !== 'recall' && nav?.has('checks') ? { label: deckId === 'dr-2' ? ui.checksLinkSwitch : ui.checksLink, onClick: () => nav.go({ section: 'checks', params: { ex: 'proof', scope: 'access', syntax: prompted ? 'cisco' : 'routeros' } }) } : null}
+          next={{ onNext, skipLabel: onDeck ? ui.skipDeck : undefined, ...(continueAction ? { destination: ui.nextWhere } : {}) }}
           // Recall has no check: «Далі →» (skip) stays secondary until the lines are done.
           primary={phase === 'recall' ? 'none' : undefined}
           className="ng-su-help"
         />
 
         <div className="ng-su-side">
-          {prompted && (
-            <Aside screen={SCREEN} id="modes" title={ui.modesTitle} className="ng-su-aside ng-su-aside-modes">
-              <ModesExample values={task.values} />
-            </Aside>
-          )}
+          {prompted && !sorting && !(moding && phone) && modesFold}
           {sorting && (
             <Aside screen={SCREEN} id="arrange" title={ui.arrangeTitle} className="ng-su-aside">
               <p>{shared.reorder.help}</p>

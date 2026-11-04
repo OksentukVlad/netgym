@@ -4,7 +4,7 @@ import * as out from './outputs.js';
 import { ladder as words, places, examples } from '../uk.js';
 
 export const id = 'checks-ladder';
-export const version = 1;
+export const version = 2;
 export const generatorVersion = 1;
 export const fixedRungs = Object.freeze(['config', 'gateway', 'remote', 'dns']);
 export const placeIds = Object.freeze(['link', 'address', 'gateway', 'exit', 'dns', 'more']);
@@ -70,11 +70,11 @@ export function requirements(task) {
   }
   const t = s.topology;
   return { network: t.network, prefix: t.prefix, gateway: t.router, record: { name: s.websiteName, address: t.website },
-    remote: s.remoteIp, checks: task.level === 2 ? ['remote', 'http', 'ssh'] : [] };
+    remote: s.remoteIp, dns: [...t.providerDns], checks: task.level === 2 ? ['remote', 'http', 'ssh'] : [] };
 }
 export function requirementLines(task) {
   const r = requirements(task);
-  return [words.lan(`${r.network}/${r.prefix}`, r.gateway), ...(r.record ? [words.record(r.record.name, r.record.address)] : []),
+  return [words.lan(`${r.network}/${r.prefix}`, r.gateway), ...(r.dns ? [words.dns(r.dns)] : []), ...(r.record ? [words.record(r.record.name, r.record.address)] : []),
     ...(r.checks.length ? [words.mustWork(r.checks.map(id => words.must[id](id === 'remote' ? r.remote : id === 'http' ? r.record.name : r.gateway)))] : [])];
 }
 
@@ -119,7 +119,7 @@ function routerTableFacts(task, rungId, evidence) {
  * facts are normalized observations compared only with requirements(task),
  * which the screen shows first; they are not diagnoses. Screens render
  * output only, and pass collected rows to grading. */
-export function runRung(task, rungId, argument, evidence = []) {
+export function runRung(task, rungId, argument, evidence = [], { trustHostKey = false } = {}) {
   const rung = rungs(task).find(r => r.id === rungId);
   if (!rung) return { ok: false, code: 'rung', text: words.unknownRung };
   let target = rung.target;
@@ -146,14 +146,17 @@ export function runRung(task, rungId, argument, evidence = []) {
     result = clientState(s); output = out.ipconfig(s);
     const addressValid = contains(req.network, req.prefix, result.address) === true && result.prefix === req.prefix;
     const gatewayValid = result.gateway === req.gateway;
-    expected = s.linkUp && addressValid && gatewayValid;
-    facts = { ...facts, linkUp: s.linkUp, addressValid, gatewayValid };
+    const dnsValid = !req.dns || result.dns.length > 0 && result.dns.every(ip => req.dns.includes(ip));
+    expected = s.linkUp && addressValid && gatewayValid && dnsValid;
+    facts = { ...facts, linkUp: s.linkUp, addressValid, gatewayValid, dnsValid };
   } else if (['gateway', 'remote', 'routerPing', 'ssh'].includes(rungId)) {
     const service = rungId === 'ssh' ? 'ssh' : undefined;
-    result = withDns(probe(s, { destination, source: rungId === 'routerPing' ? 'router' : 'pc', protocol: service ? 'tcp' : 'icmp', service }));
-    output = service ? out.ssh(result) : out.ping(result, rungId === 'routerPing' ? s.vendor : 'windows');
+    const knownKey = service && trustHostKey && evidence.some(e => e.id === 'ssh' && e.result.outcome === 'host-key' && e.result.destination === destination);
+    const checkedScenario = knownKey ? { ...s, services: { ...s.services, ssh: 'authenticated' } } : s;
+    result = withDns(probe(checkedScenario, { destination, source: rungId === 'routerPing' ? 'router' : 'pc', protocol: service ? 'tcp' : 'icmp', service }));
+    output = service ? out.ssh(result, 'netadmin', s.vendor) : out.ping(result, rungId === 'routerPing' ? s.vendor : 'windows');
     const reach = reachOf(task, result, destination);
-    expected = result.ok;
+    expected = result.ok || result.outcome === 'host-key';
     facts = { ...facts, scope: service ?? reach, reach, destination, success: result.ok, outcome: result.outcome,
       outbound: reach === 'remote' || !!dns };
   } else if (rungId === 'dns') {
@@ -199,10 +202,12 @@ export function acceptedPlaces(evidence) {
   const config = facts.find(f => f.scope === 'config');
   if (config?.linkUp === false) return withMore(['link']);
   if (config?.addressValid === false) return withMore(['address']);
+  if (config?.gatewayValid === false) return withMore(['gateway']);
+  if (config?.dnsValid === false) return withMore(['dns']);
   const gatewayOk = facts.some(f => f.scope === 'gateway' && f.success);
   // Any delivered PC check beyond the LAN also shows the link and gateway work.
   const pathOk = gatewayOk || facts.some(f => f.success && (f.scope === 'remote' || f.scope === 'http' || (f.reach === 'remote' && f.scope === 'ssh')));
-  const failures = facts.filter(f => f.success === false);
+  const failures = facts.filter(f => f.success === false && f.outcome !== 'host-key');
   const observedService = facts.some(f => ['ssh', 'http'].includes(f.scope));
   let possible = new Set(['link', 'address', 'gateway', 'exit', 'dns', ...(observedService ? ['service'] : [])]);
   if (config?.linkUp || pathOk || facts.some(f => f.scope === 'local' && f.success)) possible.delete('link');
@@ -262,7 +267,7 @@ export function gradeStop(task, evidence, place) {
     foldedNext,
     // A stop elsewhere is about the stop only: the place's sentence would read as half a pass (Fable 2).
     text: [first ? words.earliest(first.command) : words.noneUnexpected, first ? stoppedAtEarliest ? words.stoppedThere : words.stoppedElsewhere : '',
-      first && !stoppedAtEarliest ? ''
+      !stoppedAtEarliest ? ''
         : place === 'more' ? (placeAccepted ? words.more : words.moreNotNeeded(places[accepted[0]]))
           : placeAccepted ? words.consistent : words.inconsistent].filter(Boolean).join(' '),
   };

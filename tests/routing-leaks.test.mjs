@@ -220,7 +220,7 @@ test('routing leak gate, step 6: the check area, hints, the list, the path text 
         // Round 4: the panel's verdict sentence (presentCheck's words) is what the strip was.
         const strip = rest.match(/<p class="ng-help-summary[^"]*">([\s\S]*?)<\/p>/)[1];
         inspect(task, strip, 'strip', `${syntax.id} ${mode} strip`);
-        assert.ok(normalise(strip).includes(normalise(view.ok ? 'Мережа працює' : view.firstFailure?.text || view.strip)), 'the verdict says presentCheck’s words');
+        assert.ok(normalise(strip).includes(normalise(view.ok ? 'Маршрути пройшли перевірки моделі' : view.firstFailure?.text || view.strip)), 'the verdict says presentCheck’s words');
         assert.equal(rest.includes('class="ng-rt-success"'), result.ok, 'the success block only on success');
         for (const demo of view.demonstrations) {
           assert.ok(normalise(rest).includes(normalise(demo.text)), 'the demonstration is on the screen');

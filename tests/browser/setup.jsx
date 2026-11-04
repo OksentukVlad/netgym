@@ -8,6 +8,8 @@ import StoreProvider from '../../src/app/StoreProvider.jsx';
 import { useStore } from '../../src/ui/useStore.js';
 import SetupScreen from '../../src/sections/setup/screens/SetupScreen.jsx';
 import setupBank from '../../src/banks/setup/index.js';
+import drill from '../../src/sections/setup/logic/deck.js';
+import { initialState, transition } from '../../src/sections/setup/logic/state.js';
 
 let store = null;
 function Expose() {
@@ -21,5 +23,11 @@ window.setup = {
     const root = createRoot(host);
     flushSync(() => root.render(<StoreProvider prefs={{ theme }}><Expose /><SetupScreen bank={setupBank} /></StoreProvider>));
     flushSync(() => store.dispatch({ type: 'place', scope: 'setup', patch: { deck, seeds: Object.fromEntries(setupBank.decks.map(d => [d.id, 1])) } }));
+  },
+  /** `deck` on its modes step: the reference order, passed. */
+  toModes(deck) {
+    const task = drill.create(setupBank.decks.find(d => d.id === deck), { seed: 1 });
+    const state = transition(task, transition(task, initialState(task), { type: 'order', order: task.referenceOrder }), { type: 'check' });
+    flushSync(() => store.dispatch({ type: 'instance', key: task.instanceKey, action: { type: 'view', patch: { setup: state } } }));
   },
 };

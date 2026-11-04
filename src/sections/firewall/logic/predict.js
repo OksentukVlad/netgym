@@ -184,11 +184,7 @@ export function hints(task, answer, { cardId } = {}) {
   const card = task.cards.find(c => c.id === cardId) ?? task.cards[0];
   const routerAddresses = task.topology.router.interfaces.map(i => i.address).join(' · ');
   if (chainOnly(task)) {
-    const params = {
-      to: card.packet.dstIp, routerAddresses,
-      routerIp: task.cards.find(c => classify(task.topology, c).hook === 'input').packet.dstIp,
-      otherIp: task.cards.find(c => classify(task.topology, c).hook === 'forward').packet.dstIp,
-    };
+    const params = { to: card.packet.dstIp, routerAddresses };
     return ['hint-chain-look', 'hint-chain-move', 'hint-chain-example'].map((code, i) => ({ code, params: { ...params }, rung: i + 1 }));
   }
   return ['hint-door', 'hint-order', 'hint-example'].map((code, i) => ({ code, params: i === 0 && cardId ? {

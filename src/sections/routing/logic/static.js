@@ -12,7 +12,7 @@ import { assessObjective, assessUnknownSpace } from './objectives.js';
 
 export const id = 'routing.static';
 export const version = 1;
-export const codes = ['ok', 'unsupported', 'legacy-hint', 'no-route', 'no-device', 'discarded', 'loop', 'ttl-exceeded', 'return-path-failed', 'unsupported-ecmp', 'wrong-path', 'coverage-missing', 'objective-not-met', 'internet-coverage-missing', 'unknown-space-loops', 'distance-order', 'form-errors', 'missing-return-route', 'hint-question', 'hint-evidence', 'hint-example', 'could-use-default', 'could-summarise', 'duplicate-route', 'route-to-connected', 'same-in-fewer', 'no-destination-route', 'shorter-known', ...reasonCodes];
+export const codes = ['ok', 'unsupported', 'legacy-hint', 'no-route', 'no-device', 'discarded', 'loop', 'ttl-exceeded', 'return-path-failed', 'unsupported-ecmp', 'wrong-path', 'coverage-missing', 'objective-not-met', 'internet-coverage-missing', 'unknown-space-loops', 'distance-order', 'redundant-default', 'form-errors', 'missing-return-route', 'hint-question', 'hint-evidence', 'hint-example', 'could-use-default', 'could-summarise', 'duplicate-route', 'route-to-connected', 'same-in-fewer', 'no-destination-route', 'shorter-known', ...reasonCodes];
 
 /** Resolve a string stored verbatim per syntax. */
 export function textFor(value, syntax = 'cisco') {
@@ -100,6 +100,11 @@ function assess(task, answer, withAdvice) {
       const tested = assess(task, candidate, false);
       if (tested.ok && tested.evidence.objectives.every(o => o.ok)) genericAdvice.push({ code: 'could-use-default', severity: 'advice', entity: device.id, params: { routerId: device.id } });
     }
+  }
+  // A default the DHCP lease already gives: it works, and needn't be written.
+  for (const [routerId, supplied] of Object.entries(withAdvice ? task.network.supplied ?? {} : {})) {
+    const given = (supplied ?? []).filter(r => r.prefix === 0);
+    if ((answer?.[routerId] ?? []).some(r => r?.prefix === 0 && r.discard !== true && given.some(g => g.via === r.via))) genericAdvice.push({ code: 'redundant-default', severity: 'advice', entity: routerId, params: { routerId } });
   }
   const findings = [
     ...Object.entries(answer ?? {}).flatMap(([routerId, rows]) => (rows ?? []).filter(r => r && (!Number.isInteger(r.distance ?? 1) || (r.distance ?? 1) < 1 || (r.distance ?? 1) > 254)).map(() => ({ code: 'invalid-distance', severity: 'blocks', entity: routerId, params: { routerId } }))),

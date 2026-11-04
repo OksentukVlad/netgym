@@ -67,9 +67,6 @@ export const copy = {
 const chainCopy = {
   'hint-chain-look': ({ to, routerAddresses }) => `Подивись на «Куди»${to ? `: ${to}` : ''} і знайди на схемі «адреси цього роутера»${routerAddresses ? `: ${routerAddresses}` : ''}.`,
   'hint-chain-move': () => 'Порівняй «Куди» з «адреси цього роутера»: збігається — input; належить іншому пристрою — forward. Для відповіді порівнюй так само.',
-  'hint-chain-example': ({ routerIp, otherIp }) => routerIp && otherIp
-    ? `У цьому завданні «Куди: ${routerIp}» — адреса самого роутера → input; «Куди: ${otherIp}» — адреса іншого пристрою → forward.`
-    : 'У цьому завданні порівняй «Куди» з «адреси цього роутера»: збіг означає input, адреса іншого пристрою — forward.',
   'hint-door': ({ to, routerAddresses, dstNat, natFrom }) => to
     ? `${dstNat ? `Після dst-NAT${natFrom ? ` з ${natFrom}` : ''} адреса «Куди» — ${to}. Порівняй саме цю адресу` : `Порівняй «Куди»: ${to}`} з «адреси цього роутера»: ${routerAddresses}. Самому роутеру — input; іншому пристрою — forward.`
     : 'Порівняй адресу «Куди», яку бачить фільтр (після dst-NAT, якщо він є), з «адреси цього роутера» на схемі.',
@@ -165,7 +162,6 @@ export const ui = {
   check: 'Перевірити',
   next: 'Наступний пакет →',
   // «Далі →» beside «Наступний пакет →»: where it goes (A1 v2).
-  toLevel2: 'рівень 2 · Яке правило',
   newRound: 'новий раунд',
   yours: 'твій вибір',
   filterChose: 'так вирішив фільтр',
@@ -205,6 +201,9 @@ export const ui = {
   decidedEnd: chain => `Вирішує кінець списку ${chain}.`,
   roundOk: 'Усі пакети раунду передбачено правильно.',
   roundEnd: 'Раунд завершено. «Далі» — новий набір пакетів.',
+  roundEndL1: 'Раунд завершено. «Далі» — рівень 2, новий набір пакетів.',
+  // «Пропустити» here drops the whole round (Андрій), and says so.
+  skipRound: 'Пропустити раунд',
   // Walk controls.
   replay: 'Показати ще раз',
   steps: 'По кроках',
@@ -287,7 +286,7 @@ export const ui = {
 // FW-2 has a separate vocabulary: FW-1's closed code/copy contract stays exact.
 export const orderGoals = {
   input: 'Відповіді проходять. Некоректні пакети відкидаються, навіть із LAN або як ICMP.\nРоутер відповідає на ping і дозволяє доступ із LAN.\nКожне правило має отримувати пакети, для яких воно призначене.',
-  all: 'Відповіді проходять. Некоректні пакети відкидаються, навіть із LAN або як ICMP.\nРоутер відповідає на ping і дозволяє доступ із LAN. Нові з’єднання з WAN не проходять крізь роутер без прокидання порту.\nПроброс порту: 100.64.0.2:443 → Сервер:443.\nКожне правило має отримувати пакети, для яких воно призначене.',
+  all: 'Відповіді проходять. Некоректні пакети відкидаються, навіть із LAN або як ICMP.\nРоутер відповідає на ping і дозволяє доступ із LAN. Нові з’єднання з WAN не проходять крізь роутер без прокидання порту.\nПрокидання порту: 100.64.0.2:443 → Сервер:443.\nКожне правило має отримувати пакети, для яких воно призначене.',
 };
 export const orderCopy = {
   'order-shadowed': ({ ruleNumber, blockerNumber, rule, blocker, action }) => `Правило ${blockerNumber} (${blocker}) ${action === 'drop' ? 'відкинуло' : 'пропустило'} пакет раніше, тому правило ${ruleNumber} (${rule}) його не побачило.`,
@@ -315,7 +314,9 @@ export const orderUi = {
   // The screen (OrderView.jsx): the level switch, the list, the walk toggle.
   level: 'Рівень',
   // Round 5 (R1; 5b-2 A): the action line over the list (the worked example sits under it).
-  action: 'Перетягни правила (або ↑ ↓) у робочий порядок.',
+  action: 'Постав правила в робочий порядок кнопками ↑ ↓.',
+  // «Увесь фільтр»: the two chains' lists (round 9, B4), after each chain's pill.
+  chainHeads: { input: 'пакети до самого роутера', forward: 'пакети крізь роутер' },
   actionDone: 'Порядок прийнято.',
   list: 'Правила фільтра',
   packet: 'Пакет',

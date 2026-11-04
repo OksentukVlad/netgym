@@ -101,6 +101,16 @@ function scenario(name, fn, { reducedMotion = true, ...options } = {}) {
 
 // ── «Куди дійде кадр» ────────────────────────────────────────────────────
 
+// Round 9 (Андрій): a skip says what it drops, and stays on its level.
+scenario('round 9: predict skip', m => {
+  step(() => m.store.dispatch({ type: 'place', scope: 'vlan', patch: predictPlace('p2') }));
+  check('A21: the quiet link names the network', /^Пропустити всю мережу/.test(text(nextBtn())), text(nextBtn()));
+  const before = place(m).predict['p2|cisco'];
+  click(nextBtn());
+  const after = place(m).predict['p2|cisco'];
+  check('A21: a new network at the same level', after.level === before.level && after.seed !== before.seed, { before, after });
+});
+
 scenario('predict: commit and lock', m => {
   step(() => m.store.dispatch({ type: 'place', scope: 'vlan', patch: predictPlace('p2') }));
   const task = taskOf(m), round = task.rounds[0];
@@ -218,6 +228,11 @@ scenario('predict: the intro folds; the switch tabs and the diagram pick a switc
   check('intro: open at first, four lines, named «Як рухається кадр»', toggle().getAttribute('aria-expanded') === 'true' && toggle().getAttribute('aria-label') === ui.intro && all('.ng-vl-intro .ng-aside-body li').length === 4);
   click(toggle());
   check('intro: folds behind «?» (its title beside it)', toggle().getAttribute('aria-expanded') === 'false' && q('.ng-vl-intro .ng-aside-body') === null && text(toggle()).includes(ui.intro));
+  // Round 9 (Fable 9): the listing starts folded; a press on another switch asks for it, so it opens.
+  check('given: the configuration starts folded, under its heading', !q('.ng-vl-given details').hasAttribute('open') && text(q('.ng-vl-given summary')) === ui.given);
+  click(all('.ng-vl-switch')[1]);
+  check('given: a press on another switch in the drawing opens it', q('.ng-vl-given details').hasAttribute('open'));
+  click(all('.ng-vl-switch')[0]);
   click(radio('.ng-vl-switches', 'SW2'));
   const sw2 = /interface/.test(text(q('.ng-vl-pre')));
   check('switch tabs: SW2’s configuration', sw2 && radio('.ng-vl-switches', 'SW2').getAttribute('aria-checked') === 'true');
@@ -255,6 +270,16 @@ function fillCisco(task, sw, config) {
     blur(input);
   }
 }
+
+// Round 9 (Андрій 1): a task with no trunk doesn't ask for rows it doesn't need, and says why.
+scenario('round 9: MikroTik ports without a trunk', m => {
+  step(() => m.store.dispatch({ type: 'pref', name: 'syntax', value: 'routeros' }));
+  step(() => m.store.dispatch({ type: 'place', scope: 'vlan', patch: portsPlace(bank.ports[0].id) }));
+  check('A16: the action line leaves out Bridge → VLANs', text(q('#ng-vl-ports-action')) === ui.portsAction.routerosAccess, text(q('#ng-vl-ports-action')));
+  check('A16: the table says the rows are optional here, and why', text(q('.ng-vl-vlans')).includes(ui.accessRowsOptional));
+  step(() => m.store.dispatch({ type: 'place', scope: 'vlan', patch: portsPlace(bank.ports[1].id) }));
+  check('A16: with a trunk it asks for them', text(q('#ng-vl-ports-action')) === ui.portsAction.routeros, text(q('#ng-vl-ports-action')));
+});
 
 scenario('ports: Cisco form, failure, success', m => {
   step(() => m.store.dispatch({ type: 'place', scope: 'vlan', patch: portsPlace('vlan.ports-2') }));
@@ -501,8 +526,7 @@ scenario('route 1: Cisco, a down parent, no route, success; MikroTik its own for
     && q('.ng-vl-head .ng-vl-why') === null, all('.ng-vl-variants [role="radio"]').map(text));
   check('route 1: R1’s form opens first; the parent starts shut down; no subinterface rows', text(q('.ng-vl-form-head h2')) === 'Налаштування R1'
     && radioIn('.ng-vl-states', 'вимкнено (shutdown)').getAttribute('aria-checked') === 'true' && text(q('.ng-vl-device-form')).includes('Підінтерфейсів ще немає.'));
-  check('route 1: the live commands are the student’s own (the parent shut), with the parent note', lines(q('.ng-vl-pre')) === `interface ${parent}\n shutdown`
-    && text(q('.ng-vl-cmds .ng-vl-note')) === 'Підінтерфейс не працює, поки фізичний інтерфейс вимкнено (shutdown).', lines(q('.ng-vl-pre')));
+  check('route 1: no router commands before its first subinterface (Fable 8)', !q('.ng-vl-cmds'));
   check('route 1: the diagram: a router box listing only its parent’s state; each PC’s gateway', JSON.stringify(boxLines('R1')) === JSON.stringify([`${parent} · shutdown`])
     && all('.ng-vl-host-fourth').map(text).join(',') === task.topology.hosts.map(h => `шлюз ${h.gateway}`).join(','), [boxLines('R1'), all('.ng-vl-host-fourth').map(text)]);
   // A down parent: the frame reaches R1's port and stops there.
@@ -539,7 +563,7 @@ scenario('route 1: Cisco, a down parent, no route, success; MikroTik its own for
   // MikroTik: its own blank form; no verdict across.
   click(radio('.ng-vl-controls', 'MikroTik'));
   const ros = routeTaskOf(m, 'routeros'), port = labelIn(ros, 'R1', 'r', 'routeros');
-  check('route 1 MikroTik: its own blank form, no verdict, no walk', all('.ng-vl-rows li').length === 0 && status() === '' && !q('.ng-vl-steps') && text(q('.ng-vl-no-commands')) === 'Команд ще немає: заповни форму.', status());
+  check('route 1 MikroTik: its own blank form, no verdict, no walk', all('.ng-vl-rows li').length === 0 && status() === '' && !q('.ng-vl-steps') && !q('.ng-vl-cmds'), status());
   check('route 1 MikroTik: task 4 offered; no Cisco-only line', all('.ng-vl-variants [role="radio"]').length === 4 && !q('.ng-vl-why'));
   addVlanIf('R1', 0, `office${a}`, a, port);
   addVlanIf('R1', 1, `office${b}`, b, port);
@@ -635,6 +659,7 @@ scenario('route 3: Cisco management cut off by the trunk (X7), then success', m 
     && text(q('.ng-vl-device-form')).includes('Порти доступу задано умовою.') && Boolean(q('#vl-SW1-ports-t-allowed')));
   check('route 3: the notes under SW1’s commands: nonegotiate, the SVI, moving management', all('.ng-vl-cmds .ng-vl-note').map(text).join('|').includes('Якщо show ip interface brief покаже Vlan… як administratively down — no shutdown.')
     && all('.ng-vl-cmds .ng-vl-note').some(n => text(n).startsWith('Переносячи керування: залиш доступ через консоль')), all('.ng-vl-cmds .ng-vl-note').map(text));
+  click(q('.ng-vl-intro .ng-aside-q'));
   check('route 3: the task in one sentence; its full words (both limits) in the aside «Умова повністю»', text(q('.ng-vl-task-text')).includes(routeUi.taskOne[3]) && /не захищає його/.test(text(q('.ng-vl-intro .ng-aside-body'))) && /не доступ через SSH чи Winbox/.test(text(q('.ng-vl-intro .ng-aside-body'))));
   fill('vl-SW1-svi-vid', String(mg.vid));
   fill('vl-SW1-svi-address', ciscoAddress(mgmtIp));
@@ -1110,9 +1135,9 @@ scenario('5b-2: the worked examples open by their toggle only and close on a new
   document.body.className = bodyClass;
   Object.assign(document.body, { clientHeight: 0 });
   delete globalThis.ResizeObserver;
-  // A tall window: it starts open, as ever.
+  // Round 9 (Fable 8): a tall window too: the task, the drawing and the first action come first.
   const tall = mountVlan({ place: routePlace('vlan.route-1') });
-  check('tall window (or unmeasured): «Умова повністю» starts open', q('.ng-vl-intro .ng-aside').className.includes('is-open'));
+  check('tall window (or unmeasured): «Умова повністю» starts folded too', !q('.ng-vl-intro .ng-aside').className.includes('is-open'));
   tall.unmount();
 }
 

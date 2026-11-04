@@ -2,7 +2,7 @@
 // generated output (or two) and one claim, in two steps in place:
 //   1. tap the lines that bear on the claim, or «жоден рядок», then
 //      «Перевірити рядки» (several lines can be needed; the logic checks the
-//      exact set, order-free);
+//      evidence groups, order-free);
 //   2. once the lines are right they lock, and «так / ні / недостатньо
 //      даних» answers at once; a wrong verdict stays marked ✗.
 // Level 1: Windows outputs; level 2: the router's, in the chosen vendor's
@@ -45,16 +45,17 @@ export default function ClaimsView({ vendor, place, setPlace }) {
   const level = slot.level ?? 1;
   const seed = slot.tasks?.[level]?.seed ?? 0;
   const ex = useExercise(claimsExercise, null, { seed, level, vendor });
-  const { task, view } = ex;
+  const { task, view, session } = ex;
+  const revealed = session.revealed;
   const example = useMemo(() => claims.claimExample({ vendor }), [vendor]);
   const earned = earnedBy(state.instances, id => (id.exerciseId === claims.id ? id.level : null));
   const selected = view.selected ?? [];
   const none = Boolean(view.none);
-  const linesOk = Boolean(view.linesOk);
+  const linesOk = revealed || Boolean(view.linesOk);
   const tried = view.verdicts ?? [];
   const lastVerdict = tried.at(-1) ?? null;
   const verdictResult = lastVerdict ? claims.checkVerdict(task, lastVerdict, view.checkedLines ?? []) : null;
-  const done = Boolean(verdictResult?.ok);
+  const done = revealed || Boolean(verdictResult?.ok);
   const outputs = outputsOf(task);
 
   const toggle = id => {
@@ -75,6 +76,10 @@ export default function ClaimsView({ vendor, place, setPlace }) {
     ex.check({ lines: view.checkedLines, verdict: id }, { result: { ok: r.ok, complete: r.ok } });
     ex.setView({ verdicts: [...tried, id], checks: (view.checks ?? 0) + 1 });
   }
+  const onReveal = () => {
+    ex.reveal();
+    ex.setView({ selected: task.expectedLineIds, checkedLines: task.expectedLineIds, none: !task.expectedLineIds.length, linesOk: true, verdicts: [task.verdict] });
+  };
   const another = () => setPlace({ claims: { ...slot, tasks: { ...slot.tasks, [level]: { seed: nextSeed(seed) } } } });
   const chooseLevel = next => setPlace({ claims: { ...slot, level: next } });
 
@@ -125,6 +130,7 @@ export default function ClaimsView({ vendor, place, setPlace }) {
         check={linesOk ? null : { label: screen.checkLines, onCheck: onCheckLines, disabled: !none && !selected.length }}
         primary={done ? 'next' : linesOk ? 'none' : 'check'}
         verdict={verdict}
+        reveal={{ revealed, onReveal, render: () => <><p>{screen.revealedClaim}</p><p>{task.explanation}</p></> }}
         next={{ onNext: another }}
       />}
     />

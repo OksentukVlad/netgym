@@ -5,7 +5,8 @@ import { routingExample } from '../src/sections/routing/logic/examples.js';
 import { maskExample } from '../src/sections/ip/logic/examples.js';
 import { setupExample } from '../src/sections/setup/logic/examples.js';
 import { orderExample } from '../src/sections/firewall/logic/examples.js';
-import { portsExample, interVlanExample } from '../src/sections/vlan/logic/examples.js';
+import { portsExample, interVlanExample, predictExample } from '../src/sections/vlan/logic/examples.js';
+import * as predict from '../src/sections/vlan/logic/predict.js';
 import * as routing from './helpers/routing.mjs';
 import * as mask from '../src/sections/ip/logic/mask.js';
 import * as setup from '../src/sections/setup/logic/deck.js';
@@ -21,7 +22,7 @@ import routeRecords from '../src/banks/vlan/route.js';
 import { resolveOrderRecord } from '../src/banks/firewall/order.js';
 
 const syntaxes = ['cisco', 'routeros'];
-const factories = [routingExample, maskExample, setupExample, orderExample, portsExample, interVlanExample];
+const factories = [routingExample, maskExample, setupExample, orderExample, portsExample, interVlanExample, predictExample];
 const addresses = value => JSON.stringify(value).match(/(?<![\d.])(?:\d{1,3}\.){3}\d{1,3}(?![\d.]\d)/g) ?? [];
 
 test('R4: examples have only reserved addresses (apart from explicitly exempt masks/defaults), and factories return independent state', () => {
@@ -81,15 +82,16 @@ test('mask: /26 ruler agrees with its own checker, and complete answer fails eve
   assert.deepEqual([...kinds].sort(), ['block', 'fit']);
 });
 
-test('setup: Cisco show running-config is in no deck and requires #; MikroTik is create-before-use without a mode selector', () => {
+test('setup: Cisco three cards in order, each with its mode, the banner in no deck; MikroTik is create-before-use without a mode selector', () => {
   for (const syntax of syntaxes) {
     const e = setupExample({ syntax });
     assert.equal(setup.check(e.task, e.answer).ok, true);
     if (syntax === 'cisco') {
-      assert.deepEqual(e.rows[0].slice(1), ['show running-config', '#']);
-      const wrong = structuredClone(e.answer); wrong.prompts['example-show'] = '(config)#';
-      assert.equal(setup.check(e.task, wrong).ok, false);
-      for (const deck of decks) assert.ok(deck.cards.every(c => !c.template?.includes('show running-config')));
+      assert.deepEqual(e.rows.map(row => row.slice(1)), [['enable', '>'], ['configure terminal', '#'], ['banner motd #Demo#', '(config)#']]);
+      const wrong = structuredClone(e.answer); wrong.prompts['example-banner'] = '#';
+      assert.equal(setup.check(e.task, wrong).ok, false, 'each card needs its own mode');
+      assert.equal(setup.check(e.task, { ...e.answer, order: [...e.answer.order].reverse() }).ok, false, 'and the order matters');
+      for (const deck of decks) assert.ok(deck.cards.every(c => !e.rows.some(row => c.template === row[1]) && !c.template?.startsWith('banner')), 'no example card in a deck');
     } else {
       assert.match(e.rows[0][1], /bridge add name=bridge-example/);
       assert.match(e.rows[1][1], /bridge port add bridge=bridge-example/);
@@ -100,6 +102,14 @@ test('setup: Cisco show running-config is in no deck and requires #; MikroTik is
       const task = setup.create(deck, { seed: 19 }), before = structuredClone(task);
       assert.equal(setup.check(task, e.answer).ok, false); assert.deepEqual(task, before);
     }
+  }
+});
+
+test('«Куди дійде кадр»: the example agrees with the real flood, for both vendors, and no bank VLAN is in it', () => {
+  for (const syntax of syntaxes) {
+    const e = predictExample({ syntax });
+    assert.deepEqual(predict.solution(e.task), e.answer, 'PC1\'s frame reaches its own VLAN only');
+    assert.deepEqual(e.rows.map(row => row[2]), e.task.topology.hosts.slice(1).map(h => (e.answer.round.includes(h.device) ? 'так' : 'ні')));
   }
 });
 

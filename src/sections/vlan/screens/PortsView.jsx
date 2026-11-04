@@ -53,6 +53,7 @@
 // only the submitted answer's facts, and the commands are the student's own.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import ports from '../logic/ports.js';
+import { isTrunk, switches as switchesOf } from '../logic/model.js';
 import { useExercise } from '../../../ui/useExercise.js';
 import { useStore } from '../../../ui/useStore.js';
 import Segmented from '../../../ui/components/Segmented.jsx';
@@ -135,6 +136,8 @@ export default function PortsView({ records, syntax, place, setPlace, head, skip
   const previousSeed = place.portsPrevious?.[record.id] ?? null;
   const ex = useExercise(ports, record, { variantId: record.variants[0].id, seed, syntax });
   const { task } = ex;
+  // Without a trunk Bridge → VLANs adds nothing the PVIDs don't: the action line doesn't ask for it (Андрій 1).
+  const trunked = switchesOf(task.topology).some(d => d.ports.some(p => isTrunk(task.topology, d.id, p.id)));
   const { state } = useStore();
   const foldAsides = useAsideFold(SCREEN);
   const earned = earnedBy(state.instances, identity => (identity.exerciseId === ports.id ? identity.taskId : null));
@@ -402,7 +405,7 @@ export default function PortsView({ records, syntax, place, setPlace, head, skip
           <PortsForm key={`${ex.key}|${syntax}|${device.id}`} device={device} syntax={syntax} form={form} raw={raw} marks={marks[device.id] ?? []} edit={edit} onCheck={onCheck}
             topology={task.topology} note={note} highlight={facts.highlight} onFact={facts.onFact}
             action={<>
-              <ActionLine id="ng-vl-ports-action">{ui.portsAction[syntax]}</ActionLine>
+              <ActionLine id="ng-vl-ports-action">{ui.portsAction[syntax === 'routeros' && !trunked ? 'routerosAccess' : syntax]}</ActionLine>
               {/* The worked example (5b-2 A): one configured port of its own instance, in this syntax. */}
               <WorkedExample taskKey={`${task.instanceKey}:${syntax}`} context={example.context} rows={exampleLines(example)} />
             </>}

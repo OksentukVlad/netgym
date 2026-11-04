@@ -20,7 +20,8 @@ const flowId = 51000;
 export function createScenario(seed = 0, { level = 1, vendor = 'cisco', faultId, otherAddresses = false, example = false } = {}) {
   if (![1, 2].includes(level)) throw new RangeError('invalid-checks-level');
   const choices = level === 1 ? l1Faults : l2Faults;
-  faultId ??= makeRng(`checks:${level}:${seed}`).pick(choices);
+  const rng = makeRng(`checks:${level}:${seed}`);
+  faultId ??= level === 2 && rng.int(0, 3) === 0 ? 'healthy' : rng.pick(choices.filter(id => id !== 'healthy'));
   if (!choices.includes(faultId)) throw new RangeError('invalid-checks-fault');
   const dhcp = createFault(2, vendor, seed, { otherAddresses, faultId: dhcpFaults.includes(faultId) ? faultId : 'dns' });
   if (example) {
@@ -125,7 +126,7 @@ export function probe(s, { source = 'pc', destination = s.remoteIp, service, pro
   if (!sourceValid || parseIp(sourceAddress) === null || parseIp(destination) === null || !['icmp', 'udp', 'tcp'].includes(protocol)
     || (['ssh', 'http'].includes(service) && protocol !== 'tcp') || (service === 'dns' && protocol !== 'udp')
     || !Number.isInteger(ttl) || ttl < 1) return finish('invalid');
-  if (!routerSource && !s.linkUp) return finish('unreachable', { reporter: sourceAddress });
+  if (!routerSource && !s.linkUp) return finish('general-failure');
   const sourceEndpoint = net.endpoints.find(e => e.id === pcId);
   const known = net.endpoints.find(e => e.ip === destination) ?? rows.find(f => f.address?.ip === destination);
   if (!routerSource) {

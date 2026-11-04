@@ -34,12 +34,18 @@ export function hints(task, state) {
     const finding = state?.lastFinding;
     const positions = finding?.positions ?? [];
     const card = task?.cards.find(card => card.id === finding?.cards[0]);
-    entries = finding ? [
-      { code: finding.code === 'mode-missing' ? 'hint-mode-missing' : 'hint-cards', params: { positions } },
-      ['mode-missing', 'wrong-mode'].includes(finding.code)
-        ? { code: 'hint-mode-rule', params: { prompt: card?.mode } }
-        : { code: finding.why ?? finding.code },
+    const modes = { code: 'hint-modes-where' }, shape = { code: 'hint-modes-shape' };
+    entries = finding?.code === 'mode-missing' ? [
+      // Round 9 (B1): the first card still without a mode, and where it belongs, not the question again.
+      { code: 'hint-mode-missing', params: { positions, prompt: card?.mode } }, modes, shape,
+    ] : finding?.code === 'wrong-mode' ? [
+      { code: 'hint-cards', params: { positions } }, { code: 'hint-mode-rule', params: { prompt: card?.mode } }, shape,
+    ] : finding ? [
+      { code: 'hint-cards', params: { positions } },
+      { code: finding.why ?? finding.code },
       { code: 'hint-shape', params: { example: example(task, card) } },
+    ] : state?.phase === 'modes' ? [
+      { code: task?.values.mgmt ? 'hint-modes-switch' : 'hint-modes-router' }, modes, shape,
     ] : [
       { code: task?.profile.family === 'RouterOS' ? 'hint-start-routeros' : task?.values.mgmt ? 'hint-start-switch' : 'hint-start-router' },
       { code: task?.profile.family === 'RouterOS' ? 'hint-objects' : 'hint-evidence' },

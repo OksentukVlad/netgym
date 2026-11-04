@@ -40,7 +40,7 @@ const cases = [
   ['pass oldpass', L, 'unsafe-command', 0], ['logi', L, 'unsafe-command', 0],
   ['trans in tel', L, 'unsafe-command', 2], ['trans in al', L, 'unsafe-command', 2],
   ['ip ssh ver 1', G, 'unsafe-command', 3],
-  ['cry key gen rsa', G, 'unsafe-command', 0],
+  ['cry key gen rsa', G, 'unsafe-command', 4],
   ['cry key gen rsa mod', G, 'missing-part', 5],
   ['hostname R1;write memory', G, 'extra-part', 1],
   ['hostname R1\nwrite memory', G, 'extra-part', 2],

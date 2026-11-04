@@ -88,7 +88,7 @@ test('M3: the comparison evidence is shown, and grading uses exactly what is sho
     const gw = ladder.createLadder(1, vendor, 4, { faultId: 'gateway' }), config = ladder.runRung(gw, 'config');
     assert.equal(config.expected, false);
     assert.ok(!config.output.lines.find(l => l.key === 'gateway').text.endsWith(ladder.requirements(gw).gateway));
-    assert.deepEqual(ladder.acceptedPlaces([config]), ['address', 'gateway', 'more']);
+    assert.deepEqual(ladder.acceptedPlaces([config]), ['gateway']);
   }
 });
 
@@ -147,7 +147,7 @@ test('Fable 1–2: «потрібно більше даних» only while the e
     assert.match(more.text, /вже вказують на одне місце: кабель \/ адаптер/);
     assert.equal(ladder.gradeStop(link, config, 'link').ok, true);
     // Two consistent places: «потрібно більше даних» is a fair answer.
-    const dns = ladder.createLadder(1, vendor, 0, { faultId: 'dns' }), rows = ladder.fixedRungs.map(id => ladder.runRung(dns, id));
+    const dns = ladder.createLadder(1, vendor, 0, { faultId: 'dns', example: true }), rows = ladder.fixedRungs.map(id => ladder.runRung(dns, id));
     assert.equal(ladder.gradeStop(dns, rows, 'more').ok, true);
     // A stop on an expected rung: the verdict names the stop only, no place sentence.
     const early = ladder.gradeStop(dns, rows.slice(0, 1), 'more');

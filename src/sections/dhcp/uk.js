@@ -39,7 +39,7 @@ export const labels = {
   wanAddress: ip => `${ip} — WAN-адресу роутера`,
   lanAddress: ip => `${ip} — LAN-адресу роутера`,
   toPc: ip => `на ПК ${ip}`, keepReply: 'залишить собі', noReply: 'нікуди — адреса приватна',
-  trainingPublic: '203.0.113.x — публічні адреси для навчання',
+  trainingPublic: '203.0.113.x — адреси для документації; у цій моделі позначають публічний бік',
   viaIsp: '.53 і .80 розташовані поза WAN /30; шлях до них — через шлюз провайдера.',
 };
 export const verdicts = {
@@ -67,7 +67,7 @@ export const findings = {
   boundary: (ip, broadcast) => `Діапазон містить ${broadcast ? 'широкомовну адресу' : 'адресу мережі'} (${ip}).`,
   static: (name, ip) => `Діапазон містить адресу ${name} (${ip}).`,
   router: ip => `Діапазон містить адресу роутера (${ip}).`,
-  capacity: (count, needed) => `Доступно ${count} адрес, а потрібно ${needed}.`,
+  capacity: (count, needed) => `Доступно адрес: ${count}, потрібно: ${needed}.`,
   gateway: ip => `Шлюз для ПК — LAN-адреса роутера (${ip}).`,
   dns: 'Вкажи один або кілька DNS із наведених у задачі.',
   dnsWithRouter: 'Вкажи DNS із задачі або LAN-адресу роутера: він відповідає на DNS-запити ПК.',
@@ -106,7 +106,8 @@ export const sideCards = {
   'wan-client': { purpose: 'отримує WAN-адресу від провайдера', why: 'DHCP-клієнт працює на боці провайдера — WAN.' },
   'wan-route': {
     purpose: 'отримує шлях назовні від провайдера',
-    why: 'Маршрут через WAN з’явиться, якщо провайдер його дає (опція router) і клієнту дозволено його додати. У Cisco вивчений маршрут має distance 254, тому статичний маршрут за замовчуванням виграє.',
+    why: 'Маршрут через WAN з’явиться, якщо провайдер його дає (опція router) і клієнту дозволено його додати.',
+    ciscoNote: 'У Cisco вивчений маршрут має distance 254, тому звичайний статичний маршрут за замовчуванням виграє.',
     cisco: 'приходить разом з ip address dhcp, якщо провайдер його дає (опція router)',
     mikrotik: 'add-default-route=yes — якщо провайдер його дає',
   },
@@ -155,7 +156,8 @@ export const screen = {
   ciscoGiven: 'вже налаштовано',
   fromTo: n => `Рядок ${n}`,
   removeRow: n => `Прибрати рядок ${n}`,
-  rangeHint: base => `повна адреса: ${base}.…`,
+  nextServerLevel: level => `До рівня ${level} →`,
+  rangeHint: base => `Впиши всю IPv4-адресу в обох полях, наприклад ${base}.10, а не лише 10.`,
   dnsHint: 'одна адреса або кілька через пробіл',
   rangesHint: base => `від-до: ${base}.…-${base}.…`,
   gatewayTerm: 'default-router', dnsTerm: 'dns-server',
@@ -220,14 +222,15 @@ export const screen = {
 
 // E4: stable keys are also the row/form/cause contract for the screen.
 export const fault = {
-  task: pc => `${pc} не має мережі.`,
+  task: pc => `${pc}: одна з перевірок мережі не проходить.`,
   actions: ['Подивись, що показує ПК і що показує R1.', 'Виправ R1 і натисни «Перевірити».', 'Що було не так?'],
   assumptions: 'WAN і провайдер працюють; ICMP і пересилання дозволені; у провайдера немає зворотного маршруту до LAN. DNS — сервер провайдера; кешу немає; іншого виходу й DNS-проксі немає.',
   linkLocal: 'ПК не отримав адресу від DHCP і призначив собі адресу 169.254… — з нею він бачить лише сусідів у цьому сегменті.',
   rows: { address: 'Адреса ПК', gateway: 'Шлюз ПК і пінг до нього', remote: ip => `пінг ${ip}`, dns: 'ім’я → адреса' },
+  disabledYes: 'yes — вимкнено', disabledNo: 'no — увімкнено',
   none: 'немає', enabled: 'так', disabled: 'ні', evidenceTitle: 'Що показує R1',
   fields: {
-    enabled: 'Сервер увімкнено', interface: 'Інтерфейс сервера', ranges: 'Діапазон', exclusions: 'Виключення',
+    enabled: 'Сервер увімкнено', serverDisabled: 'Сервер вимкнено', interface: 'Інтерфейс сервера', ranges: 'Діапазон', exclusions: 'Виключення',
     poolNetwork: 'Мережа пулу', poolPrefix: 'Маска мережі пулу', gateway: 'Шлюз для ПК', dns: 'DNS для ПК',
     natEnabled: 'NAT увімкнено', outInterface: 'Вихідний інтерфейс NAT', acl: 'Мережа і wildcard ACL для NAT',
     roles: 'Ролі інтерфейсів NAT', dhcpDefault: 'Маршрут за замовчуванням від WAN DHCP', staticDefault: 'Статичний шлюз за замовчуванням',
@@ -238,7 +241,7 @@ export const fault = {
     router: ip => `R1 сам (з WAN-адреси): пінг ${ip}`,
     bridge: ports => `порти bridge: ${ports.join(', ')}`,
     lease: (pc, ip) => `${pc}: ${ip ?? 'немає оренди'}`,
-    dnsNone: 'dns-none=yes; без резервного DNS',
+    dnsNone: 'dns-none=yes: брати DNS лише з цього поля, без резервного DNS роутера',
     route: (net, prefix, gateway, source, iface) => `${net}/${prefix} → ${gateway} · ${source} · ${iface}`,
     sources: { connected: 'підключено', static: 'статичний', dhcp: 'WAN DHCP' },
   },

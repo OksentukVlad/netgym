@@ -213,6 +213,8 @@ test('DR-1 accepted scripts keep learner order, abbreviations, alternative key s
 test('DR-1 lifecycle: sorting locks, recall editing rechecks, reveal and restore are explicit', () => {
   let state = { ...initialState(task), answer: answer() };
   state = transition(task, state, { type: 'check' });
+  assert.equal(state.phase, 'modes'); assert.equal(state.earned, false);
+  state = transition(task, state, { type: 'check' });
   assert.equal(state.phase, 'sorted'); assert.equal(state.earned, true);
   assert.equal(transition(task, state, { type: 'prompt', id: key('hostname'), prompt: '>' }), state);
   state = transition(task, state, { type: 'continue' });

@@ -35,9 +35,9 @@
 // card, applied on the table and the diagram, the board marked «показано»,
 // the learner's draft under «Моя відповідь»), and after a commit «Наступний
 // пакет →» (continueAction). At the round's end «Далі →» (a new round; from
-// level 1, level 2); before it «Далі →» is a quiet skip (stage-1 decision
-// Q6). Which chain and row decided shows with the verdict once the walk has
-// shown it. «Що означають стани» and «Команда RouterOS» are in «⋯»; the rule
+// level 1, a new round of level 2); before it the quiet «Пропустити раунд →»
+// (stage-1 decision Q6), a new round at this level. Which chain and row decided
+// shows with the verdict once the walk has shown it. «Що означають стани» and «Команда RouterOS» are in «⋯»; the rule
 // reading is a first-visit aside.
 //
 // State (ARCHITECTURE §6, spec S3): the store owns the drafts, the position,
@@ -288,6 +288,13 @@ function PredictView({ bank }) {
   const illustrate = Boolean(frame?.end && walk?.verdict === 'accept' && firstAccept === card.id);
 
   const roundState = roundOf(task, commitState, round.revealed);
+  // Hints belong to the packet on screen (Андрій): the next one starts its own ladder.
+  // A saved round from before this has only the session's count, kept for its first open card.
+  const hintsShown = ex.view.cardHints ? ex.view.cardHints[card.id] ?? 0 : ex.session.hintIndex;
+  function moreHint() {
+    ex.hint(3);
+    ex.setView({ cardHints: { ...ex.view.cardHints, [card.id]: Math.min(3, hintsShown + 1) } });
+  }
   const dots = dotsOf(task, commitState, round.revealed, position);
   const earned = earnedVariants(state.instances);
   const earnedLevel = earnedLevels(state.instances);
@@ -394,11 +401,11 @@ function PredictView({ bank }) {
     focusCard.current = true;
     show(i);
   }
-  /** «Далі →»: a new round (a new seed); from level 1, level 2. */
+  /** «Далі →»: a new round (a new seed); a finished level 1 opens a new round of level 2. A skip stays on its level. */
   function onAgain() {
     focusCard.current = true;
     foldAsides();
-    if (level === 1) setPlace({ level: 2 });
+    if (level === 1 && roundState.complete) setPlace({ level: 2, seeds: { ...place.seeds, [ruleSet.id]: nextSeed(place.seeds?.[ruleSet.id]) } });
     else setPlace({ seeds: { ...place.seeds, [variant.id]: nextSeed(seed) } });
     clearWalk();
   }
@@ -421,7 +428,8 @@ function PredictView({ bank }) {
   const hookSaid = !committed && level === 2 ? (draft.retry ?? draft.said ?? null) : null;
   const shownWalk = !walk || frame?.end;
   const later = fb && level === 2 && shownWalk ? fb.later : [];
-  const roundEnd = roundState.complete && shownWalk ? (roundState.allRight ? ui.roundOk : ui.roundEnd) : null;
+  const endWords = level === 1 ? ui.roundEndL1 : ui.roundEnd;
+  const roundEnd = roundState.complete && shownWalk ? (roundState.allRight && level === 2 ? ui.roundOk : roundState.allRight ? `${ui.roundOk} ${endWords}` : endWords) : null;
   // Level 1's verdict: two lines, the ✗ or ✓ line, then whose address «Куди» is (spec v2 F).
   const ownerLine = level1Hook ? ownerWords(predictStep.owner) : null;
   const verdict = committed ? {
@@ -445,8 +453,8 @@ function PredictView({ bank }) {
   // verdict, the packet card for rung 1 and the chain after it.
   const evidenceRow = committed && level === 2 ? decidingId(walk)
     : step === 'rule' ? draft.decidedBy ?? rows?.[0]?.id ?? null : null;
-  const chainEvidence = (committed && level === 1) || (!committed && Boolean(draft.retry)) || (step === 'hook' && !hookSaid && ex.session.hintIndex > 1);
-  const cardEvidence = step === 'hook' && !hookSaid && ex.session.hintIndex === 1;
+  const chainEvidence = (committed && level === 1) || (!committed && Boolean(draft.retry)) || (step === 'hook' && !hookSaid && hintsShown > 1);
+  const cardEvidence = step === 'hook' && !hookSaid && hintsShown === 1;
   const draftShown = mine === cardKey && revealedCard && (draft.hook || draft.decidedBy);
   const tableValue = draftShown ? draft.decidedBy ?? null : selection.decidedBy ?? null;
 
@@ -525,13 +533,13 @@ function PredictView({ bank }) {
         {level === 2 && view.requestOf && <p className="ng-fw-reply">{predictStep.reply}</p>}
         {!rows && <ActionLine id="ng-fw-action">{committed ? predictStep.action.l1Done : level === 1 ? predictStep.action.l1 : predictStep.action.hook}</ActionLine>}
         <DoorChoice value={(draftShown ? draft.hook : selection.hook) ?? null} onChange={chooseHook} locked={committed || accepted}
-          decided={committed && (level === 1 || frame?.frame >= 2) ? evidenceOf.hook : null} evidence={chainEvidence}
+          decided={committed && (level === 1 || frame?.frame >= 2) ? evidenceOf.hook : null} coming={committed && !stepping ? evidenceOf.hook : null} evidence={chainEvidence}
           mine={committed && level === 1 && !revealedCard} level={level} labelledBy={rows || committed ? null : 'ng-fw-action'} />
         {rows && (
           <div ref={tableRef}>
             <ActionLine id="ng-fw-action">{committed ? predictStep.action.ruleDone : predictStep.action.rule}</ActionLine>
             <RuleTable rows={rows} value={tableValue} onChange={chooseRule} locked={committed} labelledBy={committed ? null : 'ng-fw-action'}
-              outcomes={draftShown ? null : outcomes} lit={frame?.lit ?? 0} end={Boolean(frame?.end)} deciding={walk ? decidingId(walk) : null}
+              outcomes={draftShown ? null : outcomes} hold={!stepping} lit={frame?.lit ?? 0} end={Boolean(frame?.end)} deciding={walk ? decidingId(walk) : null}
               rowRef={(i, el) => { rowEls.current[i] = el; }} notes={notes} folded={chain.folded} evidence={evidenceRow} mine={!revealedCard || Boolean(draftShown)} />
           </div>
         )}
@@ -551,12 +559,12 @@ function PredictView({ bank }) {
           check={committed || step === 'hook' && level === 2 ? null : { label: ui.check, onCheck, disabled: !ready }}
           primary={committed ? undefined : 'check'}
           verdict={verdict}
-          hints={committed ? null : { texts: ex.hints({ cardId: card.id }).map(h => chainText(h.code, h.params)), shown: ex.session.hintIndex, onMore: () => ex.hint(3) }}
+          hints={committed ? null : { texts: ex.hints({ cardId: card.id }).map(h => chainText(h.code, h.params)), shown: hintsShown, onMore: moreHint }}
           reveal={committed && !revealedCard ? null : { revealed: revealedCard, onReveal, render: () => null,
             // The round's end is said with the applied line when the last card was revealed.
-            applied: `${(draft.hook || draft.decidedBy) ? uk.help.applied : ui.appliedPlain}${roundState.complete ? ` ${ui.roundEnd}` : ''}` }}
+            applied: `${(draft.hook || draft.decidedBy) ? uk.help.applied : ui.appliedPlain}${roundState.complete ? ` ${endWords}` : ''}` }}
           continueAction={committed && !roundState.complete ? { label: ui.next, onClick: onNext } : null}
-          next={{ onNext: onAgain, ready: roundState.complete, ...(committed && !roundState.complete ? { destination: level === 1 ? ui.toLevel2 : ui.newRound } : {}) }}
+          next={{ onNext: onAgain, ready: roundState.complete, skipLabel: ui.skipRound, ...(committed && !roundState.complete ? { destination: ui.newRound } : {}) }}
         />
         <div ref={moreHost} className="ng-fw-more-host" />
       </section>

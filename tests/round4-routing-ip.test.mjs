@@ -146,7 +146,7 @@ test('R2: wrong-destination feedback comes from the checked visible table, never
   const edited = F.check(task, answer);
   assert.match(F.feedback(task, edited), /маршрут до 203\.0\.113\.0\/24 не охоплює/);
   const hints = F.hints(task, null, { result, rung: 3, assisted: true });
-  assert.equal(hints[0].text, faultText.stopped(hints[0].params));
+  assert.equal(hints[0].text, faultText.look(hints[0].params));
   assert.equal(hints[1].text, faultText.move);
   assert.match(hints[2].text, /^Приклад \(інші числа\)/);
   for (const hint of hints) assert.equal(routeText(`routing-faults.${hint.code}`, hint.params), hint.text);

@@ -38,6 +38,9 @@ export function routingTable(net, routes, deviceId, options = {}) {
 
 /** Longest prefix, then connected, then lowest distance. Ambiguous next hops
  * are returned as a diagnostic row so callers cannot silently choose an ECMP leg.
+ * A learner's default on the supplied DHCP default's own next hop is not one:
+ * IOS prefers the static (DHCP is 254), RouterOS ties (both 1), and either way
+ * the packet leaves by the same gateway. A different next hop stays diagnosed.
  */
 export function lookup(net, routes, deviceId, dst, options = {}) {
   const rows = routingTable(net, routes, deviceId, options).filter(row => contains(row.dst, row.prefix, dst));
@@ -45,8 +48,7 @@ export function lookup(net, routes, deviceId, dst, options = {}) {
   if (!best) return null;
   const equal = rows.filter(r => r.prefix === best.prefix && distance(r) === distance(best));
   const supplied = equal.some(r => r.source === 'supplied');
-  const duplicateDefault = best.prefix === 0 && supplied && equal.some(r => r.source === 'answer') && equal.some(r => r.discard !== true);
-  if (duplicateDefault || new Set(equal.map(r => r.discard === true ? 'discard' : `${r.egressId}/${r.via ?? ''}`)).size > 1) {
+  if (new Set(equal.map(r => r.discard === true ? 'discard' : `${r.egressId}/${r.via ?? ''}`)).size > 1) {
     return { ...best, code: 'unsupported-ecmp', routeIds: equal.map(r => r.id), supplied };
   }
   return best;

@@ -1,5 +1,7 @@
 export const copy = {
-  'route-port-location': ({ device = '', port = '', host = null, vid = null }) => `Дивись ${device}, порт ${port}${host && vid !== null ? `: ${host} у VLAN ${vid}` : ''}.`,
+  'route-port-location': ({ device = '', port = '', host = null, vid = null, gateway = null }) => (gateway
+    ? `Дивись ${device}: адреса шлюзу ${gateway} не належить жодному його інтерфейсу.`
+    : `Дивись ${device}, порт ${port}${host && vid !== null ? `: ${host} у VLAN ${vid}` : ''}.`),
   'hint-port-move': ({ device = '', port = '', host = '', vid = '', syntax = 'cisco', trunk = false, vids = [] }) => trunk
     ? syntax === 'routeros'
       ? `${device}, порт ${port}: дозволь кадри з тегами й додай цей порт до tagged для VLAN ${vids.join(', ')}; перевір обидва кінці транку.`
@@ -107,6 +109,8 @@ export const ui = {
   next: 'Наступний раунд →',
   // «Далі →» beside «Наступний раунд →»: where it goes (A1 v2).
   newRounds: 'нова мережа',
+  // «Пропустити» here drops all the rounds of this network (Андрій), and says so.
+  skipNetwork: 'Пропустити всю мережу',
   progressLabel: 'Раунди',
   progress: ({ n, total }) => `Раунд ${n} з ${total}`,
   dot: ({ n, status }) => `Раунд ${n}${status ? `: ${status}` : ''}`,
@@ -183,7 +187,11 @@ export const ui = {
   portsAction: {
     cisco: 'Для кожного порту обери режим, потім VLAN.',
     routeros: 'Задай портам PVID і Frame Types, заповни Bridge → VLANs; filtering — останнім.',
+    // No trunk on this task (Андрій 1): the table adds nothing the PVIDs don't.
+    routerosAccess: 'Задай портам PVID і Frame Types; filtering — останнім.',
   },
+  // RouterOS adds a port to its PVID's VLAN as untagged by itself; a trunk's tagged VLANs need their rows.
+  accessRowsOptional: 'Для портів доступу рядки необов’язкові: RouterOS сам додає порт у VLAN його PVID. Рядок потрібен для tagged-порту на транку.',
   // A port with no mode, under its row (the DTP explanation is the verdict's, once).
   modeNotSet: 'Режим не задано: обери access або trunk.',
   mode: ({ port }) => `${port}: режим`,
@@ -565,7 +573,7 @@ export const vlanTeaching = {
   createVlans: 'створити на комутаторі (один раз)',
   portVlan: 'VLAN цього порту',
   filteringOff: 'vlan-filtering вимкнено',
-  evidenceColumns: ['комутатор', 'порт', 'ПК', 'налаштований VLAN / PVID'],
+  evidenceColumns: ['комутатор', 'порт', 'ПК', 'VLAN / PVID'],
 };
 
 export const interVlanActions = {
@@ -595,7 +603,7 @@ export const introduction = [
 
 export const comprehension = {
   vlansPlaceholder: 'номери VLAN через кому',
-  frameAction: 'Познач ПК, яким комутатор віддасть цей кадр — за VLAN у таблиці, не за IP-адресами.',
+  frameAction: 'Познач ПК за VLAN, не за IP-адресами.',
   routerOnStick: '„На паличці": у цій схемі один транк до комутатора; на роутері — логічний інтерфейс з адресою шлюзу для кожного VLAN, між якими маршрутизуємо.',
   adminStateLabel: 'Адміністративний стан інтерфейсу',
   adminStateOptions: [{ value: false, label: 'вимкнено', command: 'shutdown' }, { value: true, label: 'увімкнено', command: 'no shutdown' }],

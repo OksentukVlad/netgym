@@ -4,10 +4,10 @@
 // itself is driven in tests/helpers/mounted-firewall.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { create, prepareOrder } from '../src/sections/firewall/logic/order.js';
+import { create, forRecord, prepareOrder } from '../src/sections/firewall/logic/order.js';
 import { resolveOrderRecord } from '../src/banks/firewall/order.js';
 import { orderGoals, orderText, orderUi, t, ui } from '../src/sections/firewall/uk.js';
-import { TIPS, hint2Text, orderRows, orderScene, orderTextSections, quoted, taskLines, walkRows } from '../src/sections/firewall/screens/orderView.js';
+import { TIPS, byChain, hint2Text, orderRows, orderScene, orderTextSections, quoted, taskLines, walkRows } from '../src/sections/firewall/screens/orderView.js';
 import { natRuleOf } from '../src/sections/firewall/screens/walkView.js';
 
 const record = resolveOrderRecord();
@@ -21,6 +21,21 @@ test('orderView: taskLines splits the level\'s sentence from the goal lines (B3)
     assert.deepEqual(goals, orderGoals[v.id].split('\n'));
     assert.equal([sentence, ...goals].join('\n'), task.text);
     assert.match(goals.at(-1), /Кожне правило має отримувати пакети/);
+  }
+});
+
+test('orderView: byChain reads an order chain by chain and changes no verdict (B4: two lists for one answer)', () => {
+  const logic = forRecord(record), reference = seed => logic.solution(create(record, { variantId: 'all', seed })).order;
+  for (let seed = 1; seed <= 25; seed++) {
+    const task = create(record, { variantId: 'all', seed }), start = task.rules.map(r => r.id);
+    for (const order of [start, [...start].reverse(), reference(seed), [...reference(seed)].reverse()]) {
+      const split = byChain(task, order), chain = id => task.rules.find(r => r.id === id).chain;
+      assert.deepEqual(split.map(chain), [...Array(5).fill('input'), ...Array(4).fill('forward')]);
+      for (const name of ['input', 'forward']) assert.deepEqual(split.filter(id => chain(id) === name), order.filter(id => chain(id) === name), 'each chain keeps its own order');
+      const [before, after] = [order, split].map(o => logic.check(task, { order: o }));
+      assert.equal(after.ok, before.ok, `seed ${seed}`);
+      assert.equal(after.feedback?.code, before.feedback?.code, `seed ${seed}: the same kind of finding`);
+    }
   }
 });
 

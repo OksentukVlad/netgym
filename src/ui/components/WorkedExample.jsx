@@ -1,23 +1,26 @@
 // A worked example (round 5, spec 5b-2 A with v2 and v2.1): one finished
-// answer of the same task shape, on other values, folded behind a quiet
-// link. The learner opens it when they want to see what a finished answer
-// looks like; it never opens by itself.
+// answer of the same task shape, on other values, folded behind a button.
+// The learner opens it when they want to see how such a task is solved.
+// Round 9 (B3): it reads as help, not as cheating: «Приклад: як це
+// розв'язують», with a button's weight; on the first visit to the three hard
+// screens it starts open (`autoOpen`, from useFirstVisit), and never again.
 //
 // Contract:
-//   - its own state: closed on mount, closed again whenever `taskKey`
-//     changes (task, level, vendor: anything that changes the example). Not
-//     in the store, not part of first-visit folding (Aside), never opened by
-//     a check, a hint or a reveal;
+//   - its own state: closed on mount (unless `autoOpen`), and again whenever
+//     `taskKey` changes (task, level, vendor: anything that changes the
+//     example). Not in the store, not part of first-visit folding (Aside),
+//     never opened by a check, a hint or a reveal;
 //   - the slot: directly under the screen's action line (its next sibling),
 //     above the first control, in the work column. ExerciseLayout has an
 //     `example` slot for this; other layouts render it right after
 //     <ActionLine>. One per screen. Never an essential (tools/shots.mjs
 //     checks the folded row, its place, and that it is closed on every state
 //     but the gate-only `example-open`);
-//   - the toggle is a <button> with aria-expanded: «Приклад ▸ готова
-//     відповідь (інші числа)» (the arrow is aria-hidden);
+//   - the toggle is a <button> with aria-expanded: «Приклад: як це
+//     розв'язують ▸» (the arrow is aria-hidden);
 //   - the content is plain read-only text: muted, a ✓ per row, the tag
-//     «приклад · інші числа», one sentence of context, the rows (or the
+//     («приклад · інші числа», or the screen's own where there are no
+//     numbers), one sentence of context, the rows (or the
 //     screen's own static drawing as `children`) and an optional reason.
 //     Nothing in it is focusable: no inputs, buttons, links or tabindex.
 //     It sits in a polite live region that is always there, so opening it
@@ -29,8 +32,23 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { uk } from '../uk.js';
 import { usePhone } from '../phone.js';
+import { useStore } from '../useStore.js';
 import '../tokens.css';
 import './WorkedExample.css';
+
+/**
+ * True on the first visit to a hard screen (`id`; null on any other screen),
+ * and never after: the visit is remembered in `places.examples` at once, so a
+ * refresh, a later task or coming back finds the example folded. Under 640 px
+ * it stays folded too: on a phone the task and the first control come first.
+ */
+export function useFirstVisit(id) {
+  const { state, dispatch } = useStore();
+  const phone = usePhone();
+  const first = Boolean(id) && !phone && !state.places.examples?.[id];
+  useEffect(() => { if (first) dispatch({ type: 'place', scope: 'examples', patch: { [id]: true } }); }, [first, id]);
+  return first;
+}
 
 /** The rows: arrays of cells as a table (with `head` as column labels), strings as lines.
  * `marks: false` (round 7, Fable 3): lines without a ✓ each, for an answer whose rows are
@@ -86,14 +104,16 @@ function Rows({ head, rows, marks = true, numbered = false }) {
  *   note?: string,                    // optional, one sentence: why (the order, the mode)
  *   marks?: boolean,                  // false: lines without a ✓ each (evidence rows, not checked steps)
  *   numbered?: boolean,               // with marks false: the lines as a numbered list
+ *   tag?: string,                     // the card's tag, where «інші числа» isn't true (no numbers)
+ *   autoOpen?: boolean,               // starts open on this task (useFirstVisit)
  *   children?: any,                   // instead of rows: a static, read-only drawing (the mask's ruler)
  *   className?: string,
  * }} props
  */
-export default function WorkedExample({ taskKey, context, rows, head, note, children, marks = true, numbered = false, className = '' }) {
+export default function WorkedExample({ taskKey, context, rows, head, note, children, marks = true, numbered = false, tag = uk.example.tag, autoOpen = false, className = '' }) {
   // A new taskKey closes it during render (no effect, no flash), so going back to an earlier task finds it closed too.
-  const [state, setState] = useState({ key: taskKey, open: false });
-  if (!Object.is(state.key, taskKey)) setState({ key: taskKey, open: false });
+  const [state, setState] = useState({ key: taskKey, open: autoOpen });
+  if (!Object.is(state.key, taskKey)) setState({ key: taskKey, open: autoOpen });
   const open = state.open && Object.is(state.key, taskKey);
   const bodyId = useId();
   // Round 6: opened by its toggle, the card comes into view whole where it can (`nearest`: no move when it
@@ -118,12 +138,12 @@ export default function WorkedExample({ taskKey, context, rows, head, note, chil
   return (
     <div className={`ng-wex${open ? ' is-open' : ''}${className ? ` ${className}` : ''}`} data-worked-example="">
       <button type="button" className="ng-wex-toggle" aria-expanded={open} aria-controls={bodyId} onClick={() => { asked.current = !open; setState({ key: taskKey, open: !open }); }}>
-        <span className="ng-wex-label"><span className="ng-wex-words">{uk.example.toggle}</span> <span aria-hidden="true">{open ? '▾' : '▸'}</span> <span className="ng-wex-words">{uk.example.toggleRest}</span></span>
+        <span className="ng-wex-label">{uk.example.toggle} <span aria-hidden="true">{open ? '▾' : '▸'}</span></span>
       </button>
       <div id={bodyId} className="ng-wex-body" aria-live="polite">
         {open && (
           <div ref={card} className="ng-wex-card">
-            <p className="ng-wex-tag">{uk.example.tag}</p>
+            <p className="ng-wex-tag">{tag}</p>
             {context && <p className="ng-wex-context">{context}</p>}
             {rows ? <Rows head={head} rows={rows} marks={marks} numbered={numbered} /> : children}
             {note && <p className="ng-wex-note">{note}</p>}

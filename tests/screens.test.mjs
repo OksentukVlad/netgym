@@ -95,7 +95,7 @@ test('mask screen: the ruler shows the address, and the block only after success
   const task = h.mask.create(null, params);
   const key = h.instanceKeyOf(h.mask, task, params);
   // Round 5 5b-2 (spec D): an address task's ruler says the octet, the label spacing, the block size for its prefix and the address.
-  const ruler = 'Лінійка: 4-те число адреси, від 0 до 255; позначки через 32, блок для /27 — 32 адрес. Твоя адреса: 11.';
+  const ruler = 'Лінійка: 4-те число адреси, від 0 до 255; поділки через 32, блок для /27 — 32 адреси. Твоя адреса: 11.';
   let html = unescape(store.render(h.MaskScreen));
   assert.ok(html.includes(`<figcaption class="ng-ruler-text">${ruler}</figcaption>`), 'before an answer: strip, ticks, address');
   assert.ok(html.includes('<svg class="ng-ruler-svg" viewBox="0 0 328 96" aria-hidden="true"'));
@@ -116,7 +116,7 @@ test('mask screen: the ruler shows the address, and the block only after success
   const t3 = h.mask.create(null, p3);
   store.dispatch({ type: 'place', scope: 'ip.mask', patch: { level: 3, seeds: { 1: 4821, 3: 5 } } });
   html = unescape(store.render(h.MaskScreen));
-  const ruler3 = `Лінійка: 3-те число адреси, від 0 до 255; позначки через 64, блок для /${t3.prefix} — ${2 ** (32 - t3.prefix)} адрес. Твоя адреса: 167.`;
+  const ruler3 = `Лінійка: 3-те число адреси, від 0 до 255; поділки через 64, блок для /${t3.prefix} — ${2 ** (32 - t3.prefix)} адреси (у цьому числі це 64). Твоя адреса: 167.`;
   assert.ok(html.includes(`${ruler3}</figcaption>`));
   store.dispatch({ type: 'instance', key: h.instanceKeyOf(h.mask, t3, p3), action: { type: 'session', action: { type: 'reveal' } } });
   html = unescape(store.render(h.MaskScreen));

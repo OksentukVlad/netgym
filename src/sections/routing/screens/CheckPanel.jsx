@@ -153,12 +153,13 @@ function Tip({ tip, onTip }) {
  * demonstrations, «Показати ще раз», and the quiet links to the other
  * syntax and the shortest known table.
  * @param {{ presented: object, submitted: object|null, other: object, onDemo: Function, onReplay?: Function|null,
- *   tips?: object[], onTip?: Function, best?: null|object, syntax: object }} props
+ *   tips?: object[], onTip?: Function, best?: null|object, syntax: object, note?: string|null }} props
  */
-export function SuccessDetail({ presented, submitted, other, onDemo, onReplay = null, tips = [], onTip = () => {}, best = null, syntax }) {
+export function SuccessDetail({ presented, submitted, other, onDemo, onReplay = null, tips = [], onTip = () => {}, best = null, syntax, note = null }) {
   const improve = presented.advice.length > 0 || tips.length > 0;
   return (
     <div className="ng-rt-success">
+      {note && <p className="ng-rt-note ng-rt-model-note">{note}</p>}
       {improve && (
         <section className="ng-rt-improve" aria-labelledby="ng-rt-improve-head">
           <h4 id="ng-rt-improve-head" className="ng-rt-improve-head">{s.improveTitle}</h4>

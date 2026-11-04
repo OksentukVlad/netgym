@@ -41,7 +41,7 @@ export const ladderExercise = {
 export function evidenceOf(task, view) {
   if (task.level === 1) return ladder.fixedRungs.slice(0, (view.index ?? 0) + 1).map(id => ladder.runRung(task, id));
   return (view.rows ?? []).reduce((rows, r) => {
-    const row = ladder.runRung(task, r.id, r.arg, rows);
+    const row = ladder.runRung(task, r.id, r.arg, rows, { trustHostKey: r.trustHostKey === true });
     return row.ok ? [...rows, row] : rows;
   }, []);
 }
@@ -91,7 +91,7 @@ function ArgumentField({ rung, value, error, onChange, onRun }) {
       <div className="ng-field-head"><label className="ng-field-label" htmlFor={id}>{screen.argument(verb)}</label></div>
       <div ref={row} className="ng-ck-argument-row">
         <code className="ng-ck-verb" aria-hidden="true">{before.trimEnd()}</code>
-        <input id={id} className="ng-field-input" type="text" inputMode="url" autoComplete="off" autoCapitalize="off" spellCheck={false}
+        <input id={id} className="ng-field-input" type="text" inputMode="url" autoFocus autoComplete="off" autoCapitalize="off" spellCheck={false}
           aria-invalid={Boolean(error)} aria-describedby={error ? `${id}-error` : undefined} value={value}
           onChange={event => onChange(event.target.value)}
           onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); onRun(); } }} />
@@ -137,19 +137,19 @@ export default function LadderView({ vendor, place, setPlace }) {
   const advance = () => ex.setView({ index: Math.min((view.index ?? 0) + 1, ladder.fixedRungs.length - 1) });
   const stop = () => ex.setView({ stopped: true, places: [] });
   // Level 2: a rung without an argument runs at once; with one, its field opens.
-  function run(rung, arg) {
+  function run(rung, arg, trustHostKey = false) {
     // The whole command typed: say that only the argument goes in the field (Fable s2).
     const verb = commandParts(rung).verb;
     if (arg !== undefined && new RegExp(`^\\s*${verb}(\\s|$)`, 'i').test(arg)) { setArgError(screen.withoutVerb(verb)); return; }
     const parsed = arg === undefined ? null : ladder.parseArgument(arg);
     if (parsed && !parsed.ok) { setArgError(parsed.text); return; }
-    const row = ladder.runRung(task, rung.id, parsed ? parsed.value : undefined, evidence);
+    const row = ladder.runRung(task, rung.id, parsed ? parsed.value : undefined, evidence, { trustHostKey });
     if (!row.ok) { setArgError(row.text); return; }
     setPending(null); setDraft(''); setArgError(null);
-    ex.setView({ rows: [...(view.rows ?? []), { id: rung.id, ...(parsed ? { arg: parsed.value } : {}) }], healthy: 0 });
+    ex.setView({ rows: [...(view.rows ?? []), { id: rung.id, ...(parsed ? { arg: parsed.value } : {}), ...(trustHostKey ? { trustHostKey: true } : {}) }], healthy: 0 });
   }
   const onRung = rung => {
-    if (rung.argument) { setPending(rung.id === pendingId ? null : rung.id); setDraft(''); setArgError(null); } else run(rung);
+    if (rung.argument) { setPending(rung.id === pendingId ? null : rung.id); setDraft(rung.target ?? ''); setArgError(null); } else run(rung);
   };
   function choosePlace(id) {
     if (placesLocked) return;
@@ -202,6 +202,8 @@ export default function LadderView({ vendor, place, setPlace }) {
     action = done ? screen.committed : latest ? screen.chooseMore : screen.chooseRung;
     answer = (
       <div className="ng-ck-choose">
+        {latest?.result.outcome === 'host-key' && !done && <div className="ng-ck-key"><p>{screen.keyNormal}</p>
+          <button type="button" className="ng-ck-decide" onClick={() => run(rungList.find(r => r.id === 'ssh'), latest.target, true)}>{screen.trustKey}</button></div>}
         {latest && !done && (
           <div className="ng-ck-turn" role="group" aria-label={screen.decide}>
             <button type="button" className="ng-ck-decide is-stop" aria-describedby="ng-ck-stop-meaning" onClick={stop}>{ui.stop}</button>
@@ -229,7 +231,7 @@ export default function LadderView({ vendor, place, setPlace }) {
         </section>
         {(folded.length > 0 || latest) && (
           <section className="ng-ck-collected" aria-label={screen.collected}>
-            {folded.length > 0 && <ol className="ng-ck-folded">{folded.map((row, i) => <li key={`${row.id}-${i}`}><code>{row.folded}</code></li>)}</ol>}
+            {folded.length > 0 && <ol className="ng-ck-folded">{folded.map((row, i) => <li key={`${row.id}-${i}`}><details><summary><code>{row.folded}</code></summary><Terminal output={row.output} /></details></li>)}</ol>}
             {latest && <Terminal output={latest.output} caption={screen.latest} className="ng-ck-latest" />}
           </section>
         )}

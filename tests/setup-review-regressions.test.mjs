@@ -179,7 +179,7 @@ test('Small 10: per-seed opaque ids cover every screen-facing identity and lifec
   assert.ok(failure.findings[0].cards.every(key => ids.has(key)));
   assert.deepEqual(checkTyped(task, 'enable-secret', 'enable secret StrongOwn!9').code, 'invalid-answer');
   let state = { ...initialState(task), answer: { ...a, typed: {} } };
-  state = transition(task, state, { type: 'check' });
+  state = transition(task, transition(task, state, { type: 'check' }), { type: 'check' });
   state = transition(task, state, { type: 'continue' });
   state = transition(task, state, { type: 'typed', id: id('enable-secret'), text: 'enable secret tiny' });
   state = transition(task, state, { type: 'check-typed', id: id('enable-secret') });

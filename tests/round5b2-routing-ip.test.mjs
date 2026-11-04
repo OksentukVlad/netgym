@@ -143,7 +143,7 @@ test('D: the mask\'s address tasks say what the ruler shows; fit tasks keep thei
     const task = mask.create(null, { seed, level });
     if (task.kind === 'fit') continue;
     const ruler = h.rulerFor(task.ip, task.prefix, false);
-    const expected = ip.maskRulerCaption({ k: ruler.octet, labelStep: Math.max(ruler.unit, 32), prefix: task.prefix, blockSize: blockSize(task.prefix), value: ruler.value });
+    const expected = ip.maskRulerCaption({ k: ruler.octet, labelStep: Math.max(ruler.unit, 32), tick: Math.max(ruler.unit, 4), prefix: task.prefix, blockSize: blockSize(task.prefix), value: ruler.value });
     assert.equal(h.maskRulerCaption(task, ruler), expected);
     assert.ok(expected.includes(`блок для /${task.prefix} — ${2 ** (32 - task.prefix)} адрес`) && expected.endsWith(`Твоя адреса: ${task.ip.split('.')[ruler.octet - 1]}.`), expected);
     const shown = h.rulerFor(task.ip, task.prefix, true);

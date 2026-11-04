@@ -161,7 +161,7 @@ export function presentCheck(task, result, syntax = 'cisco') {
     ?? lines.find(l => l.status === 'fail') ?? null;
   const advice = (evidence.advice ?? []).map(a => {
     const definition = task.variant.objectives.find(o => o.id === a.entity);
-    const params = { router: deviceName(net, a.params.routerId), lans: definition ? destinationNames(net, definition) : '', reason: a.params.reason, loops: a.params.loops };
+    const params = { router: deviceName(net, a.params.routerId), lans: definition ? destinationNames(net, definition) : '', reason: a.params.reason, loops: a.params.loops, syntax: adapter(syntax).id };
     return { code: a.code, params, text: sentence(a.code, params, definition?.type) };
   });
   const groups = [...new Set(lines.map(l => l.kind === 'probe' ? l.scenarioId : 'goal'))].map(id => ({ id, label: id === 'goal' ? text.goal : scenarioName(task, id), lines: lines.filter(l => (l.kind === 'probe' ? l.scenarioId : 'goal') === id) }));

@@ -89,6 +89,9 @@
    under the line, from its start, over the deck (nothing moves). */
 .ng-su-action { position: relative; }
 
+/* The «?» is a 44 px target overhanging its line by 11 px: the worked example's button under it keeps clear. */
+.ng-su-action > .ng-action-line:has(.ng-su-modes-q) { margin-bottom: 12px; }
+
 .ng-su-modes-q {
   display: inline-flex;
   align-items: center;
@@ -219,6 +222,7 @@
 
 /* Anchored after a flagged row: the panel inside the deck's list, framed so
    it reads as a note on that row. */
+.ng-su .ng-su-own > .ng-help-host,
 .ng-su .ng-reorder > .ng-help-host {
   margin: 2px 0 6px;
   padding: 8px 10px;
@@ -302,6 +306,7 @@
 
 /* After a failed check: amber edge and «• Ще ні» in words (never colour alone).
    An outline, painted above the row's ↑ ↓, so their edges never break it. */
+.ng-su-own-item.is-marked,
 .ng-reorder-item.is-marked {
   border-left-color: var(--ng-amber);
   outline: 1px solid var(--ng-amber);
@@ -519,7 +524,7 @@
 
 .ng-su-part-label { letter-spacing: 1px; }
 
-/* The learner's own order after a reveal. */
+/* The learner's own order after a reveal, and the locked cards of the modes step. */
 .ng-su-own {
   display: flex;
   flex-direction: column;
@@ -779,27 +784,24 @@
     flex: 1 1 calc(100% - 30px);   /* room for its ✓ on the same line */
   }
 
-  /* The action line wraps here, and its «?» (a 44 px target overhanging its
-     line by 11 px) would reach into the worked example's row under it. */
-  .ng-su-action > .ng-action-line {
-    margin-bottom: 12px;
-  }
-
-  /* The five prompts at their own widths with an even gap, wrapping from the
-     left (round 6 repair, Fable): no stretched or centred lone option. */
+  /* The five prompts in two even rows (Fable 5): `>`, `#` and `(config)#`, then
+     `(config-if)#` and `(config-line)#`, so no option is orphaned on a line.
+     */
   .ng-su-prompts .ng-segmented-options {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    gap: 4px 6px;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 4px;
     width: 100%;
   }
 
   .ng-su-prompts .ng-segmented-option {
-    flex: 0 0 auto;
+    grid-column: span 3;
     min-width: var(--ng-target);
     min-height: var(--ng-target);
-    padding: 0 8px;
+    padding: 0 4px;
     white-space: nowrap;
   }
+
+  .ng-su-prompts .ng-segmented-option:nth-child(-n + 2) { grid-column: span 1; }
+  .ng-su-prompts .ng-segmented-option:nth-child(3) { grid-column: span 4; }
 }

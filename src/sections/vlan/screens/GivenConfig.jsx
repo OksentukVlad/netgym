@@ -56,28 +56,35 @@ export function WinboxTables({ device, config, syntax = 'routeros' }) {
  */
 export default function GivenConfig({ task, syntax, commands, switchId, onSwitch }) {
   const [showCommands, setShowCommands] = useState(false);
+  // Round 9 (Fable 9): folded. The evidence table holds the first decision's facts, and a full listing
+  // read as a skill the learner lacked. A press on a switch in the drawing asks for it, so that opens it.
+  const [open, setOpen] = useState(false);
+  const [pressed, setPressed] = useState(switchId);
+  if (pressed !== switchId) { setPressed(switchId); setOpen(true); }
   const switches = task.topology.devices.filter(d => d.kind === 'switch');
   const device = switches.find(d => d.id === switchId) ?? switches[0];
   const config = task.configurations[device.id];
   return (
     <section className="ng-vl-given" aria-label={ui.given}>
-      <div className="ng-vl-given-head">
-        <h2 className="ng-vl-caption">{ui.given}</h2>
-        {switches.length > 1 && (
-          <Segmented label={ui.switchTabs} value={device.id} onChange={onSwitch} className="ng-vl-switches"
-            options={switches.map(d => ({ value: d.id, label: d.id }))} />
+      <details className="ng-vl-cmds" open={open} onToggle={e => { const now = e.currentTarget.open; if (now !== open) setOpen(now); }}>
+        <summary className="ng-vl-cmds-head"><h2 className="ng-vl-caption ng-vl-given-title">{ui.given}</h2></summary>
+        <div className="ng-vl-given-head">
+          {switches.length > 1 && (
+            <Segmented label={ui.switchTabs} value={device.id} onChange={onSwitch} className="ng-vl-switches"
+              options={switches.map(d => ({ value: d.id, label: d.id }))} />
+          )}
+          {switches.length === 1 && <span className="ng-vl-switch-one">{device.id}</span>}
+        </div>
+        {syntax === 'routeros' ? (
+          <>
+            <WinboxTables device={device} config={config} />
+            <button type="button" className="ng-vl-btn ng-vl-show-commands" aria-pressed={showCommands} onClick={() => setShowCommands(s => !s)}>{ui.commands}</button>
+            {showCommands && <Commands device={device.id} text={commands[device.id]} copy={false} />}
+          </>
+        ) : (
+          <Commands device={device.id} text={commands[device.id]} copy={false} />
         )}
-        {switches.length === 1 && <span className="ng-vl-switch-one">{device.id}</span>}
-      </div>
-      {syntax === 'routeros' ? (
-        <>
-          <WinboxTables device={device} config={config} />
-          <button type="button" className="ng-vl-btn ng-vl-show-commands" aria-pressed={showCommands} onClick={() => setShowCommands(s => !s)}>{ui.commands}</button>
-          {showCommands && <Commands device={device.id} text={commands[device.id]} copy={false} />}
-        </>
-      ) : (
-        <Commands device={device.id} text={commands[device.id]} copy={false} />
-      )}
+      </details>
     </section>
   );
 }

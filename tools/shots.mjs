@@ -28,7 +28,8 @@ const standard = ['first', 'wrong', 'hint', 'done'];
 // The setup decks' recall step and the reveal's «Моя відповідь» (spec S v2 shots table).
 // Recall's line checks are panel events (repair v1): a repeated Enter, a late line failing after the
 // hints, an edit after a check («до змін») and its recheck are gated too, apart from the locked sort.
-const setupRecallStates = ['shown-own', 'recall-first', 'recall-wrong', 'recall-repeat', 'recall-mistake', 'recall-partial', 'recall-hint', 'recall-hints-all',
+// Round 9 (B1): the Cisco decks' second step, where the modes are asked for.
+const setupRecallStates = ['modes-first', 'modes-wrong', 'modes-hint', 'shown-own', 'recall-first', 'recall-wrong', 'recall-repeat', 'recall-mistake', 'recall-partial', 'recall-hint', 'recall-hints-all',
   'recall-late', 'recall-edit', 'recall-recheck', 'recall-solved', 'recall-done', 'recall-skip'];
 const exercises = [
   { id: 'home', section: 'home', title: 'Список розділів', states: ['first'] },
@@ -158,7 +159,7 @@ export function expectedTargets(id, raw) {
   // level) has its base state's targets.
   const state = id === 'mask-type' ? raw.replace(/^(?:choices|fit)-/, '') : id === 'binary' ? raw.replace(/^l[12]-/, '') : raw;
   // Round 5 (spec 5b-2 A): the worked example opened by its toggle, a view the learner asks for (gate-only).
-  if (raw === 'example-open') {
+  if (['example-open', 'first-visit'].includes(raw)) {
     return { kind: null, row: false, evidence: [], targets: ['[data-worked-example] .ng-wex-card'], waive: {
       evidence: 'opening the worked example is a view toggle, not a check: its declared target is the opened example itself (full checks)',
       message: 'opening the worked example is not an event of the help panel: nothing scrolls to it',
@@ -300,6 +301,9 @@ const routerSwitch = id => ['rt-guided', 'rt-free', 'rt-mikrotik'].includes(id);
  */
 function setupTargets(state) {
   const deck = 'the deck is the board: ';
+  if (state === 'modes-first') return { kind: null, row: true, evidence: [], waive: { evidence: `${deck}the passed order opens the next step at its action line, no single card is current`, message: 'the order\'s verdict is in the panel after the cards; the screen goes to the action line of the step it opens', row: 'the check row follows the cards, and the screen goes to the top of the new step' } };
+  if (state === 'modes-wrong') return { kind: 'verdict', row: true, evidence: ['.ng-su-board .is-marked, .ng-su-board .ng-su-own-item'] };
+  if (state === 'modes-hint') return { kind: 'hint', row: true, evidence: [], waive: { evidence: `${deck}a hint before any modes check is about two cards of the deck, not one` } };
   if (['hints-all', 'hint2'].includes(state)) return { kind: 'hint', row: true, evidence: [], waive: { evidence: `${deck}a hint before any check is about where to start, not one card` } };
   if (['solved', 'checkpoint'].includes(state)) return { kind: 'verdict', row: true, evidence: [], expect: 'success', waive: { evidence: `${deck}a passing check is about the whole deck, no single card is current` } };
   if (state === 'shown-own') return { kind: 'reveal', row: true, evidence: [] };
@@ -362,12 +366,20 @@ const fwPredictEssentials = level => [
  * sizes), cards 1–3 each with its purpose (first line), its command and (Cisco) its prompt
  * group, and «Перевірити». The folded worked example under the action line is never one. */
 // Round 6 (P3): the check row comes after the deck at every width, so «Перевірити» is reachable, not first-view.
-const setupEssentials = prompted => [
+const setupEssentials = () => [
   { sel: '.ng-su-intro .ng-su-task', count: 1 },
   { sel: '.ng-su-board .ng-action-line', count: 1 },
-  ...(prompted ? [{ sel: '.ng-su-board .ng-action-line .ng-su-modes-q', count: 1 }] : []),
-  ...[1, 2, 3].flatMap(n => ['[data-purpose]', '.ng-su-term', ...(prompted ? ['.ng-su-choice'] : [])]
+  ...[1, 2, 3].flatMap(n => ['[data-purpose]', '.ng-su-term']
     .map(part => ({ sel: `.ng-su-board .ng-reorder > .ng-reorder-item:nth-child(${n}) ${part}`, count: 1 }))),
+  { sel: '.ng-help-check', count: 1, reach: true },
+];
+/** The modes step's first view (round 9, B1): the action line with its «?», cards 1–3 each with its prompt group. */
+const setupModesEssentials = () => [
+  { sel: '.ng-su-intro .ng-su-task', count: 1 },
+  { sel: '.ng-su-board .ng-action-line', count: 1 },
+  { sel: '.ng-su-board .ng-action-line .ng-su-modes-q', count: 1 },
+  ...[1, 2, 3].flatMap(n => ['[data-purpose]', '.ng-su-term', '.ng-su-choice']
+    .map(part => ({ sel: `.ng-su-board .ng-su-modes-deck > .ng-su-own-item:nth-child(${n}) ${part}`, count: 1 }))),
   { sel: '.ng-help-check', count: 1, reach: true },
 ];
 /**
@@ -490,7 +502,7 @@ const fwOrderEssentials = () => [
   { sel: '.ng-fwo-goal [data-nat]', count: 1 },
   { sel: '.ng-fwo-list .ng-action-line', count: 1 },
   ...[1, 2, 3, 4, 5].flatMap(n => ['.ng-fwo-chain', '.ng-fwo-desc', '.ng-fwo-native']
-    .map(part => ({ sel: `.ng-fwo-list .ng-reorder > .ng-reorder-item:nth-child(${n}) ${part}`, count: 1 }))),
+    .map(part => ({ sel: `.ng-fwo-list .ng-reorder[aria-label$=": input"] > .ng-reorder-item:nth-child(${n}) ${part}`, count: 1 }))),
 ];
 // «DHCP і NAT» (round 6, spec v2.1): the task, the action line, the first control, and what the first
 // decision reads. E1: the card's purpose and native line, both sides, the drawing's two port labels. E2:
@@ -563,7 +575,7 @@ export const essentialRecipes = new Set(['fw-predict', 'fw-order2', 'setup-route
 /** Gate-only first views of later cards: each destination's card is measured fresh (level 1 and level 2). */
 const laterCard = /^l[12]-card\d$/;
 /** The first views of a recipe. */
-export const isFirstView = state => ['first', 'l1-first'].includes(state) || laterCard.test(state);
+export const isFirstView = state => ['first', 'l1-first', 'modes-first'].includes(state) || laterCard.test(state);
 /** A state's declared essentials (selectors or { sel, count }), or null. */
 export function essentialsOf(id, state) {
   if (id.startsWith('dhcp-') && isFirstView(state)) return dhcpEssentials(id);
@@ -574,7 +586,8 @@ export function essentialsOf(id, state) {
   if (id === 'fw-predict' && (state === 'first' || /^l2-card\d$/.test(state))) return fwPredictEssentials(2);
   if (id === 'fw-predict' && (state === 'l1-first' || /^l1-card\d$/.test(state))) return fwPredictEssentials(1);
   if (id === 'fw-order2' && state === 'first') return fwOrderEssentials();
-  if (id.startsWith('setup-') && state === 'first') return setupEssentials(id !== 'setup-mikrotik');
+  if (id.startsWith('setup-') && state === 'first') return setupEssentials();
+  if (id.startsWith('setup-') && state === 'modes-first') return setupModesEssentials();
   if (['rt-guided', 'rt-free', 'rt-hard'].includes(id) && state === 'first') return rtEssentials(id, 3);
   if (id === 'rt-mikrotik' && state === 'first') return rtEssentials(id, 2);
   if (id === 'rt-fault' && state === 'first') return rtFaultEssentials();
@@ -605,13 +618,13 @@ const svgLabel = entry => /-svg\b/.test(typeof entry === 'string' ? entry : entr
 const selOf = entry => (typeof entry === 'string' ? entry : entry.sel);
 /** The phone's first-view entries per recipe (the rest of the desktop list becomes `reach`). */
 function phoneFirstView(id, state, raw = id) {
-  const prompted = id !== 'setup-mikrotik';
   const firstItem = '.ng-reorder > .ng-reorder-item:nth-child(1)';
   if (id === 'home') return [{ sel: '.ng-home-title', count: 1 }, { sel: '.ng-cards > li:first-child .ng-card-title', count: 1 }];
   if (id === 'fw-predict') return [{ sel: '.ng-fw-variant-text', count: 1 }, { sel: '.ng-fw-work .ng-action-line', count: 1 }, { sel: '.ng-fw-door-option', count: 2 }];
-  if (id === 'fw-order2') return [{ sel: '.ng-fwo-task', count: 1 }, { sel: '.ng-fwo-list .ng-action-line', count: 1 }, { sel: `.ng-fwo-list ${firstItem} .ng-reorder-handle`, count: 1 }];
+  if (id === 'fw-order2') return [{ sel: '.ng-fwo-task', count: 1 }, { sel: '.ng-fwo-list .ng-action-line', count: 1 }, { sel: `.ng-fwo-list .ng-reorder[aria-label$=": input"] > .ng-reorder-item:nth-child(1) .ng-reorder-handle`, count: 1 }];
+  if (id.startsWith('setup-') && state === 'modes-first') return [{ sel: '.ng-su-board .ng-action-line', count: 1 }, { sel: '.ng-su-board .ng-su-modes-deck > .ng-su-own-item:nth-child(1) .ng-su-choice', count: 1 }];
   if (id.startsWith('setup-')) return [{ sel: '.ng-su-intro .ng-su-task', count: 1 }, { sel: '.ng-su-board .ng-action-line', count: 1 },
-    { sel: `.ng-su-board ${firstItem} ${prompted ? '.ng-su-choice' : '.ng-reorder-handle'}`, count: 1 }];
+    { sel: `.ng-su-board ${firstItem} .ng-reorder-handle`, count: 1 }];
   if (['rt-guided', 'rt-free', 'rt-hard', 'rt-mikrotik'].includes(id)) return [{ sel: '.ng-rt-desc:not(.ng-rt-failover)', count: 1 }, { sel: '.ng-rt-work .ng-action-line', count: 1 },
     // Round 6 repair (Fable): the control is the row's first field; the other fields are reachable.
     { sel: `${firstRow} .ng-rt-field:not(.ng-rt-f-dist):not(.ng-rt-f-blackhole)`, count: id === 'rt-mikrotik' ? 2 : 3, first: 1 }];
@@ -692,7 +705,8 @@ export function declaredEssentials(id, state, phone = false) {
 //   - registration both ways: an example on a screen whose recipe is not
 //     listed fails (its opened state would never be gated), and a listed
 //     recipe's first view without one fails;
-//   - one per screen; closed unless the state is `example-open` (it never
+//   - one per screen; closed unless the state is `example-open`, or
+//     `first-visit` on the three hard screens (round 9: the only time it
 //     opens by itself);
 //   - on first views: directly under the action line, its toggle's target
 //     disjoint from every other control's, no essential inside it (it is
@@ -701,11 +715,13 @@ export function declaredEssentials(id, state, phone = false) {
 //     over), separately from the declared essentials, which are measured
 //     with the folded row in place.
 /** Recipes whose screens carry a worked example (the section writers add theirs). */
-export const exampleRecipes = new Set(['setup-router', 'setup-switch', 'setup-mikrotik', 'rt-guided', 'rt-hard', 'rt-free', 'rt-mikrotik', 'mask-type', 'fw-order1', 'fw-order2', 'vl-ports', 'vl-route', 'dhcp-sides', 'dhcp-server', 'dhcp-nat', 'dhcp-fault', 'checks-proof', 'checks-ladder', 'checks-claims']);
+export const exampleRecipes = new Set(['setup-router', 'setup-switch', 'setup-mikrotik', 'rt-guided', 'rt-hard', 'rt-free', 'rt-mikrotik', 'mask-type', 'fw-order1', 'fw-order2', 'vl-predict', 'vl-ports', 'vl-route', 'dhcp-sides', 'dhcp-server', 'dhcp-nat', 'dhcp-fault', 'checks-proof', 'checks-ladder', 'checks-claims']);
 /** The folded row's words (measured on first views). */
 export const EXAMPLE_LABEL = '[data-worked-example] > .ng-wex-toggle .ng-wex-label';
 /** What `exampleRow` checks on a state: 'first' (a first view), 'open' (example-open) or 'closed' (any other). */
-export const exampleMode = state => (state === 'example-open' ? 'open' : isFirstView(state) ? 'first' : 'closed');
+export const exampleMode = state => (['example-open', 'first-visit'].includes(state) ? 'open' : isFirstView(state) ? 'first' : 'closed');
+/** The three hard screens whose example starts open on the first visit (round 9, B3; never on a phone). */
+export const firstVisitRecipes = new Set(['setup-router', 'fw-order2', 'rt-hard']);
 /**
  * The worked example's row in the page (self-contained: Playwright sends its
  * source). `mode`: exampleMode(state); `essentials`: the state's declared
@@ -730,8 +746,8 @@ export function exampleRow({ mode, essentials = [], registered = false }) {
     else if (!body || !ex.contains(body) || body.getAttribute('aria-live') !== 'polite') fail('the toggle controls no polite live region inside the example');
     if (mode === 'open') {
       if (!open || !card) fail('the toggle did not open the example');
-      else if (!/приклад · інші числа/u.test(card.textContent)) fail('the opened example has no «приклад · інші числа» tag');
-    } else if (open || card) fail('the example is open without the learner asking (it opens only by its toggle, on the gate-only state example-open)');
+      else if (!/приклад · інші (?:числа|картки)/u.test(card.textContent)) fail('the opened example has no «приклад · інші числа» or «приклад · інші картки» tag');
+    } else if (open || card) fail('the example is open without the learner asking (it opens by its toggle, or by itself on a first visit: the gate-only states example-open and first-visit)');
     // Read-only: nothing inside the content takes focus or input.
     for (const el of body ? body.querySelectorAll('*') : []) {
       if (el.matches('input, select, textarea, button, a[href], [tabindex], [contenteditable]:not([contenteditable="false"])')) fail(`a focusable or input element inside the example: ${el.tagName.toLowerCase()}`, '[data-worked-example] .ng-wex-body');
@@ -1118,6 +1134,7 @@ export function gateStates(exercise, size = null) {
     ...(exercise.id === 'fw-order2' ? ['shadow-walk'] : []),
     ...(['vl-ports', 'vl-route', 'vl-fault'].includes(baseOf(exercise.id)) || routerSwitch(exercise.id) ? ['device-tab'] : []),
     ...(exampleRecipes.has(baseOf(exercise.id)) ? ['example-open'] : []),
+    ...(firstVisitRecipes.has(exercise.id) && !isPhoneSize(size) ? ['first-visit'] : []),
     ...(replays.has(exercise.id) || ['mask-type', 'binary', 'rt-guided', 'rt-free', 'rt-mikrotik'].includes(exercise.id) ? ['success-edit', 'success-recheck'] : [])])]
     .filter(state => !notApplicable[exercise.id]?.[state]);
 }
@@ -1387,7 +1404,7 @@ class Driver {
   async reveal() {
     await this.press(/Показати відповідь/, 'Reveal the reference answer');
   }
-  async open() {
+  async open({ keepExample = false } = {}) {
     await this.page.goto(origin);
     this.note('Open NetGym with a fresh seeded page');
     await this.page.locator('.ng-home').waitFor();
@@ -1434,6 +1451,9 @@ class Driver {
     const decks = { 'setup-switch': 'Комутатор Cisco 2960', 'setup-mikrotik': 'Роутер MikroTik' };
     if (decks[e.id]) await this.radio(decks[e.id], `Choose ${decks[e.id]}`);
     await this.settle();
+    // A hard screen's example starts open on the first visit: every other state is a later visit's view.
+    const opened = this.page.locator('[data-worked-example] > .ng-wex-toggle[aria-expanded="true"]');
+    if (!keepExample && await opened.count()) await this.click(opened, 'Fold the example that opened on the first visit');
   }
   async wheel(area, delta) {
     // Find an exposed point belonging to this scroll area, avoiding nested
@@ -2008,6 +2028,8 @@ async function dhcpFaultFacts(d) {
   const isp = clean(await d.page.locator('.ng-dh .ng-fw-svg .ng-fw-isp .ng-fw-box-ip').textContent());
   return { lan, wan, router, prefix: Number(prefix), base, network: `${base}.0`, dns, isp, cisco: d.exercise.syntax !== 'routeros' };
 }
+/** MikroTik's native `disabled` at level 3: the words on the option that leaves the server on. */
+const NATIVE_ENABLED = 'no — увімкнено';
 async function dhcpFaultRepair(d, f) {
   const box = id => d.page.locator(`.ng-dh-repair [data-field="${id}"]`);
   const has = async id => (await box(id).count()) > 0;
@@ -2016,7 +2038,7 @@ async function dhcpFaultRepair(d, f) {
     const radio = (root ?? box(id)).getByRole('radio', { name: label, exact: true });
     if (await radio.getAttribute('aria-checked') !== 'true') await d.click(radio, `«${id}»: ${label}`);
   };
-  const native = async () => (await box('enabled').getByRole('radio', { name: 'no', exact: true }).count()) > 0;
+  const native = async () => (await box('enabled').getByRole('radio', { name: NATIVE_ENABLED, exact: true }).count()) > 0;
   const rows = async (id, wanted) => {
     while (await box(id).locator('.ng-dh-row-fields').count() > wanted.length) await d.click(box(id).locator('.ng-dh-remove').last(), `«${id}»: remove a row`);
     while (await box(id).locator('.ng-dh-row-fields').count() < wanted.length) await d.click(box(id).locator('.ng-dh-add'), `«${id}»: add a row`);
@@ -2028,7 +2050,7 @@ async function dhcpFaultRepair(d, f) {
   const given = async id => (await box(id).locator('input').count() ? (await box(id).locator('input').first().inputValue()).trim() : await chosen(box(id)));
   // What the given configuration had wrong: its first line that differs from a working one.
   let cause = null;
-  const yes = (await native()) ? 'no' : 'так';
+  const yes = (await native()) ? NATIVE_ENABLED : 'так';
   if (await given('enabled') !== yes || await given('interface') !== f.lan) cause = 'no-server';
   else if (await has('poolNetwork') && await given('poolNetwork') !== f.network) cause = 'wrong-range';
   else if (await has('ranges') && !(await given('ranges')).startsWith(`${f.base}.`)) cause = 'wrong-range';
@@ -2189,9 +2211,10 @@ async function checksShots(d) {
   }
   if (id === 'checks-claims') {
     const lines = d.page.locator('.ng-ck-claim-board .ng-ck-terminal .ng-ck-line');
-    await d.click(lines.first(), 'Tap the first line'); await d.press('Перевірити рядки', 'Check the lines');
+    // Evidence groups (A2): any one line of a group can pass, so a wrong answer is «жоден рядок» where lines are needed.
+    await d.click(d.page.locator('.ng-ck-none'), 'Tap «жоден рядок»'); await d.press('Перевірити рядки', 'Check with no line');
     if (await ckTone(d, 'no')) await d.shot('wrong');
-    else d.skip('wrong', 'the first line alone was the right set');
+    else d.skip('wrong', '«жоден рядок» was the right answer');
     if (!await d.page.locator('.ng-ck-verdicts').count()) {
       d.note('Find the line set: «жоден рядок», then one, two and three lines, each checked (in the page)');
       const found = await d.page.evaluate(async () => {
@@ -2494,7 +2517,12 @@ async function firewallReplay(d, reference, solved = true) {
   const texts = async rows => Promise.all((await rows.all()).map(async row => clean([
     await row.locator('.ng-fwo-chain').innerText(), await row.locator('.ng-fw-action').innerText(), await row.locator('.ng-fwo-desc').innerText(),
   ].join(' '))));
-  for (const [index, text] of reference.entries()) await reorder(d, '.ng-fwo-list .ng-reorder', { index, text }, texts);
+  // «Увесь фільтр» has a list per chain (round 9, B4); each rule's text starts with its chain.
+  const chains = await d.page.locator('.ng-fwo-chain-head').count() ? ['input', 'forward'] : [null];
+  for (const chain of chains) {
+    const list = chain ? `.ng-fwo-list .ng-reorder[aria-label$=": ${chain}"]` : '.ng-fwo-list .ng-reorder';
+    for (const [index, text] of reference.filter(rule => !chain || rule.startsWith(chain)).entries()) await reorder(d, list, { index, text }, texts);
+  }
   await d.press('Перевірити', 'Check the replayed firewall rule order');
   if (solved) await d.page.locator('.ng-fwo.is-solved').waitFor();
 }
@@ -2533,7 +2561,7 @@ async function setupReference(d) {
   }
   return { cards, recall };
 }
-async function setupReplay(d, reference, mistake = false) {
+async function setupReplay(d, reference, mistake = false, until = 'sorted') {
   const order = [...reference.cards];
   if (mistake) {
     // Invert one real dependency, leaving every other pair in reference order.
@@ -2546,12 +2574,17 @@ async function setupReplay(d, reference, mistake = false) {
     d.note(id === 'setup-mikrotik' ? 'Swap the bridge/port dependency pair' : id === 'setup-switch' ? 'Swap the save card with the first card' : 'Swap the domain/key dependency pair');
   }
   for (const [index, card] of order.entries()) await reorder(d, '.ng-su-board .ng-reorder', { index, text: card.text }, setupTexts);
+  await d.press('Перевірити', 'Check the replayed order');
+  if (mistake) return d.page.locator('[data-help-current][data-help-tone="no"]').waitFor();
+  if (until === 'modes' || !order.some(card => card.mode)) return d.page.locator(until === 'modes' ? '.ng-su.is-modes' : '.ng-su.is-sorted').waitFor();
+  // The Cisco decks' second step (round 9, B1): the order passed, now each card's mode.
+  await d.page.locator('.ng-su.is-modes').waitFor();
   for (const [index, card] of order.entries()) {
-    const prompts = d.page.locator('.ng-su-board .ng-reorder > li').nth(index).getByRole('radiogroup');
-    if (card.mode && await prompts.count()) await d.click(prompts.getByRole('radio', { name: card.mode, exact: true }), `Choose ${card.mode} for ${card.text}`);
+    const prompts = d.page.locator('.ng-su-modes-deck > li').nth(index).getByRole('radiogroup');
+    await d.click(prompts.getByRole('radio', { name: card.mode, exact: true }), `Choose ${card.mode} for ${card.text}`);
   }
-  await d.press('Перевірити', 'Check the replayed setup deck');
-  await d.page.locator(mistake ? '[data-help-current][data-help-tone="no"]' : '.ng-su.is-sorted').waitFor();
+  await d.press('Перевірити', 'Check the replayed modes');
+  await d.page.locator('.ng-su.is-sorted').waitFor();
 }
 /** Type a recall line (by its description) and press Enter. */
 async function recallLine(d, reference, index, wrong = false) {
@@ -2578,6 +2611,14 @@ async function setupExtra(exercise, withDriver) {
     await d.open(); reference = await setupReference(d);
     if (reference.recall.length !== 3) throw new Error('Expected three recall lines in the reference');
   })) return;
+  await withDriver('modes-first', async d => {
+    await d.open();
+    d.note('Read the reference answer in another fresh context; replay the order here with the same seed');
+    await setupReplay(d, reference, false, 'modes');
+    await d.settle(); await d.shot('modes-first');
+    await d.hint(); await d.shot('modes-hint');
+    await d.press('Перевірити', 'Check with no mode chosen'); await d.feedback(); await d.shot('modes-wrong');
+  });
   const solved = async d => {
     await d.open();
     d.note('Read the reference answer and recall commands in another fresh context; replay the deck here with the same seed');
@@ -2964,10 +3005,15 @@ async function successEdit(d) {
 /** Open the screen's worked example by its toggle (none: exampleRow fails the state). */
 async function openExample(d) {
   const toggle = d.page.locator('[data-worked-example] > .ng-wex-toggle');
-  if (await toggle.count() === 1) await d.click(toggle, 'Open the worked example («Приклад ▸ готова відповідь (інші числа)»)');
+  if (await toggle.count() === 1) await d.click(toggle, 'Open the worked example («Приклад: як це розв’язують»)');
 }
 
 async function lifecycleGates(exercise, withDriver) {
+  // Round 9 (B3): a hard screen on its first visit, the example open by itself (never on a phone).
+  if (firstVisitRecipes.has(exercise.id)) await withDriver('first-visit', async d => {
+    if (isPhoneSize(d.page.viewportSize())) return;
+    await d.open({ keepExample: true }); await d.gate('first-visit');
+  });
   // Round 5 (spec 5b-2 A): the worked example, opened by its toggle on the untouched screen (gate-only).
   if (exampleRecipes.has(baseOf(exercise.id))) await withDriver('example-open', async d => {
     await d.open(); await openExample(d); await d.gate('example-open');
@@ -3205,7 +3251,7 @@ export async function writeIndex(out, selected, records, gaps, seconds, fatal, o
   await writeFile(path.join(out, 'gate.json'), `${JSON.stringify({ recipe: 'v3-visibility', commit, seed, mode: options.gate, sizes: options.sizes, summary, notApplicable: na, states: gates }, null, 2)}\n`);
   const lines = ['# NetGym review screenshots', '', `Recipe v3 (v2 screenshot names retained) · commit ${commit ?? 'unavailable'} (working tree) · seed ${seed} · Chromium ${browserVersion ?? 'unavailable'} · ${options.sizes.map(s => `${s.width}×${s.height}`).join(', ')} · scale 1 · reduced motion · ${seconds.toFixed(1)} seconds.`, '',
     `Visibility gate: **${summary.passed} passed, ${summary.failed} failed, ${summary.skipped} unsupported/skipped**; ${summary.partial} partial baseline states; ${summary.waived} states with declared waivers; ${na.length} states not applicable by design (listed in gate.json). Mode: ${options.gate}. [gate.json](gate.json) records every state and size before screenshot scrolling. Legacy screens use fallback selectors: this baseline is partial, including evidence approximations.`, '',
-    'The first requested size saves screenshots; other sizes run all action states as gate-only views (use `--narrow-shots` to save them). The six historical narrow first views are still saved when 1000×700 is a secondary size. Hint 2, lifecycle probes and an opened worked example (`example-open`) are gate-only; a worked example on any state is checked: its recipe registered (and present on a registered recipe\'s first views), one per screen, closed unless opened by its toggle; on first views directly under the action line, its target disjoint from other controls, its folded label visible, never an essential.', '',
+    'The first requested size saves screenshots; other sizes run all action states as gate-only views (use `--narrow-shots` to save them). The six historical narrow first views are still saved when 1000×700 is a secondary size. Hint 2, lifecycle probes and an opened worked example (`example-open`) are gate-only; a worked example on any state is checked: its recipe registered (and present on a registered recipe\'s first views), one per screen, closed unless opened by its toggle or on the gate-only `first-visit` state of the three hard screens; on first views directly under the action line, its target disjoint from other controls, its folded label visible, never an essential.', '',
     'Viewport PNGs in review order. Scroll images continue the same state; independently scrolling columns are traversed separately. `done` may be a reference reveal, not an earned solve; read the recorded steps. Light first views use the shell switch, once per selected section.', '',
     'The calculator starts with a result; empty inputs retain its stale result. VLAN prediction discloses the answer after each check and has no hint/reveal. VLAN fault finding asks the cause from the start; its step2 shows that existing question.', '',
     '`solved` is a checked replay in a fresh context after reading the reveal in another context with the same seed. It is earned through UI checks, with prior reference knowledge. `done` retains the v1 reveal. New states run independently. VLAN routing mistake uses task 2 because task 1 gives the whole switch read-only.', '',

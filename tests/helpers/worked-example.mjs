@@ -3,7 +3,7 @@
 // the controlled live region inside it; closed unless `open`; opened, the
 // card carries the tag and nothing in it is focusable or an input.
 //
-//   expectWorkedExample(container, { open = false, rows })
+//   expectWorkedExample(container, { open = false, rows, tag })
 // `container`: a DOM element (mini-dom or a browser) or server markup (a
 // string). `rows`: the number of ✓ rows expected when open (optional).
 // Throws an AssertionError naming the first problem.
@@ -41,7 +41,7 @@ function ofMarkup(html) {
       bodyId: /^<div\b[^>]*\sid="([^"]*)"/.exec(body)?.[1],
       live: /^<div\b[^>]*aria-live="polite"/.test(body),
       card: /class="ng-wex-card"/.test(body),
-      tag: text(body).includes(TAG),
+      words: text(body),
       marks: (body.match(/class="ng-wex-mark" aria-hidden="true">✓</g) ?? []).length,
       control: CONTROL.exec(body.replace(/^<div\b[^>]*>/, ''))?.[0] ?? null,
     };
@@ -59,14 +59,14 @@ function ofDom(container) {
       bodyId: body?.getAttribute('id') ?? null,
       live: body?.getAttribute('aria-live') === 'polite',
       card: Boolean(body?.querySelector('.ng-wex-card')),
-      tag: (body?.textContent ?? '').replace(/\s+/g, ' ').includes(TAG),
+      words: (body?.textContent ?? '').replace(/\s+/g, ' '),
       marks: body ? [...body.querySelectorAll('.ng-wex-mark')].filter(m => m.textContent === '✓').length : 0,
       control: control ? control.tagName.toLowerCase() : null,
     };
   });
 }
 
-export function expectWorkedExample(container, { open = false, rows } = {}) {
+export function expectWorkedExample(container, { open = false, rows, tag = TAG } = {}) {
   const found = typeof container === 'string' ? ofMarkup(container) : ofDom(container);
   assert.equal(found.length, 1, `worked examples on the screen: ${found.length}, expected 1`);
   const [ex] = found;
@@ -76,7 +76,7 @@ export function expectWorkedExample(container, { open = false, rows } = {}) {
   assert.equal(ex.card, open, open ? 'the opened example shows its card' : 'nothing of the example is in the page while closed');
   assert.equal(ex.control, null, `nothing inside the example takes focus or input: ${ex.control}`);
   if (open) {
-    assert.ok(ex.tag, `the opened example carries the tag «${TAG}»`);
+    assert.ok(ex.words.includes(tag), `the opened example carries the tag «${tag}»`);
     if (rows !== undefined) assert.equal(ex.marks, rows, `✓ rows: ${ex.marks}, expected ${rows}`);
   }
 }

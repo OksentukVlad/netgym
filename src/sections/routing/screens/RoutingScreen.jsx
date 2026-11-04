@@ -129,7 +129,7 @@ import { AddressRow, CodeField } from './Addresses.jsx';
 import { modeFor, useLayoutMode, useStageHeight } from './layoutMode.js';
 import FaultsView from './FaultsView.jsx';
 import ActionLine from '../../../ui/components/ActionLine.jsx';
-import WorkedExample from '../../../ui/components/WorkedExample.jsx';
+import WorkedExample, { useFirstVisit } from '../../../ui/components/WorkedExample.jsx';
 import { legendFacts } from '../logic/legend.js';
 import { routingExample } from '../logic/examples.js';
 import '../../../ui/tokens.css';
@@ -400,7 +400,9 @@ function TasksView({ bank, exerciseSwitch = null }) {
   const playKey = trace ? `${ex.key}|${shown.kind}|${shown.id}|${cv.play}` : null;
 
   // The hint ladder, from the current rows (not only the last checked answer).
-  const hintIndex = ex.session.hintIndex;
+  // Each router has its own ladder (Олена: three hints spent on R1 left R2 with none).
+  // A saved instance from before this has only the session's count.
+  const hintIndex = ex.view.routerHints ? ex.view.routerHints[router] ?? 0 : ex.session.hintIndex;
   const currentRows = answers.currentAnswer();
   const currentKey = JSON.stringify(currentRows);
   const hintTexts = useMemo(() => routing.hints(task, currentRows, syntax.id).map(h => t(`routing.static.${h.code}`, h.params)),
@@ -480,13 +482,14 @@ function TasksView({ bank, exerciseSwitch = null }) {
     const { result, answer } = answers.checkNetwork();
     const view = presentCheck(task, result, syntax.id);
     foldAsides();
-    ex.setView({ checks: (ex.view.checks ?? 0) + 1, checkedEdits: ex.edits ?? 0, ...(result.ok ? { proven: JSON.stringify(answer) } : {}) });
+    const formRouter = result.formErrors?.find(e => routerNames.includes(e.routerId))?.routerId ?? null;
+    const repair = formRouter ?? (!result.ok && routerNames.includes(view.repairRouter) ? view.repairRouter : null);
+    const moved = Boolean(repair) && repair !== router;
+    ex.setView({ checks: (ex.view.checks ?? 0) + 1, checkedEdits: ex.edits ?? 0, checkedOn: router, movedFrom: moved ? router : null, ...(result.ok ? { proven: JSON.stringify(answer) } : {}) });
     // Its review waits until nothing plays; this check is the instance's next generation.
     if (result.ok) reviews.add({ key: ex.key, generation: (ex.generation ?? 0) + 1, edits: ex.edits ?? 0, steps: reviewSteps(task, answer, { assessment: result, bank }) });
     act({ type: 'checked', ok: result.ok });
-    const formRouter = result.formErrors?.find(e => routerNames.includes(e.routerId))?.routerId ?? null;
-    const repair = formRouter ?? (!result.ok && routerNames.includes(view.repairRouter) ? view.repairRouter : null);
-    if (repair && repair !== router) setPlace({ router: repair });
+    if (moved) setPlace({ router: repair });
   }
   function pickLine(id) {
     act({ type: 'pick', kind: 'line', id });
@@ -521,6 +524,7 @@ function TasksView({ bank, exerciseSwitch = null }) {
   useEffect(() => { if (!tipTarget) focusNext.current = null; }, [tipTarget]);
   function moreHint() {
     ex.hint(hintTexts.length);
+    ex.setView({ routerHints: { ...ex.view.routerHints, [router]: hintIndex + 1 } });
   }
   // «Далі» focuses the new task's first input (its first row's first field,
   // or «+ Маршрут» when a free list is empty); an opened code, the heading.
@@ -659,8 +663,8 @@ function TasksView({ bank, exerciseSwitch = null }) {
   const [fullOpen, setFullOpen] = useState({});
   const fullShown = Boolean(full && fullOpen[ex.key]);
   const fullId = `${markerIds}-full`;
-  // Round 8: on a phone such a task keeps its first route in the first view: the first sentence (the second
-  // opens with «Уся умова»), the short drawing, «Розгорнути схему» in its tool row, the panel after the routes.
+  // Round 8: on a phone such a task keeps its first route in the first view: its short text (Fable 12: whole,
+  // the distance sentence is what the task asks), the short drawing, «Розгорнути схему» in its tool row, the panel after the routes.
   const phone = usePhone();
   const phoneLong = phone && Boolean(full);
   useIsoLayoutEffect(() => {
@@ -677,6 +681,7 @@ function TasksView({ bank, exerciseSwitch = null }) {
   // and backup default routes); display data only, never the learner's rows.
   const backupExample = record.displayNumber === 15;
   const example = useMemo(() => routingExample({ syntax: syntax.id, taskNumber: backupExample ? 15 : 1 }), [syntax.id, backupExample]);
+  const firstVisit = useFirstVisit(backupExample ? 'routing-15' : null);
 
   // The packet path: the diagram's own geometry (as TopologyMap draws it), one motion for both parts.
   const geo = useMemo(() => diagramGeometry(topo, topo, undefined, NETGYM_DIAGRAM_FONT), [topo]);
@@ -716,6 +721,9 @@ function TasksView({ bank, exerciseSwitch = null }) {
   const stale = Boolean(presented) && checkedEdits !== null && (ex.edits ?? 0) !== checkedEdits;
   const [staleSeen, setStaleSeen] = useState(false);
   useEffect(() => { if (stale !== staleSeen) setStaleSeen(stale); }, [stale]);
+  const [panelFirst, setPanelFirst] = useState(false);
+  // What the success takes as given: below the routes wherever the panel sits.
+  const modelNote = presented?.ok ? ui.shared.modelNote(task.network.endpoints.some(e => e.kind === 'internet')) : null;
   let verdict = null;
   if (presented) {
     const ending = presented.ok ? lapEnding(presented, task.network, task.record) : null;
@@ -723,7 +731,7 @@ function TasksView({ bank, exerciseSwitch = null }) {
     verdict = {
       tone: presented.ok ? 'ok' : 'no', scope: 'task', summary, stamp: checkStamp,
       detail: presented.ok ? <SuccessDetail presented={presented} submitted={submitted} other={other} onDemo={pickDemo}
-        onReplay={lapShown || presented.ok ? replayLap : null} tips={tips} onTip={goToTip} best={best} syntax={syntax} /> : null,
+        onReplay={lapShown || presented.ok ? replayLap : null} tips={tips} onTip={goToTip} best={best} syntax={syntax} note={panelFirst ? null : modelNote} /> : null,
     };
   }
   // What the verdict is about (data-evidence="current"), on the router it
@@ -750,7 +758,6 @@ function TasksView({ bank, exerciseSwitch = null }) {
   // A long board (task 15's two routes) has the panel before the routes (HelpPanel's home, round 4):
   // then the action line says route #1 is below it (repair v1, Fable suggestion 1, its second option;
   // moving the panel after the routes broke the hint and edit states' visibility, see the handoff).
-  const [panelFirst, setPanelFirst] = useState(false);
   useIsoLayoutEffect(() => {
     const rows = boardRef.current, host = root.current?.querySelector('.ng-help-host');
     // The panel at home before the routes (not anchored after a row inside them).
@@ -765,7 +772,8 @@ function TasksView({ bank, exerciseSwitch = null }) {
       placement={phoneLong ? 'after' : 'auto'}
       primary={editedSuccess && nextRecord ? 'next' : undefined}
       className="ng-rt-help"
-      check={{ onCheck: runNetworkCheck }}
+      // The rows show the answer, not the learner's: nothing of theirs to check until «Моя відповідь» (Олена 1).
+      check={mine ? { onCheck: runNetworkCheck } : null}
       verdict={editedSuccess ? { ...verdict, scope: 'part' } : verdict}
       stale={stale}
       hints={{ texts: hintTexts, shown: Math.min(hintIndex, hintTexts.length), onMore: moreHint }}
@@ -776,6 +784,13 @@ function TasksView({ bank, exerciseSwitch = null }) {
   );
   // The action line (and the worked example under it): while the learner's own rows are shown and there is a route to fill.
   const acting = mine && (mode === 'free' || (answers.rows[router] ?? []).length > 0);
+  // A check that moved here from a finished router says so, in the action line's place (Олена).
+  const movedFrom = !stale && presented && !presented.ok && ex.view.movedFrom && ex.view.movedFrom !== router ? ex.view.movedFrom : null;
+  const fromDone = movedFrom && mode === 'guided' && (answers.rows[movedFrom] ?? []).length > 0
+    && (answers.rows[movedFrom] ?? []).every((_, i) => answers.networkResultOf(answers.slotItem(movedFrom, i))?.ok === true);
+  const several = mode === 'guided' && (answers.rows[router] ?? []).length > 1;
+  const actionWords = fromDone ? ui.shared.actionNext(movedFrom, router)
+    : panelFirst ? (several ? ui.shared.actionRowsBelow : ui.shared.actionBelow) : several ? ui.shared.actionRows : ui.shared.action;
   // An edit after a check dims its verdict; the panel anchors next to the
   // edited row (HelpPanel), and nothing scrolls while the learner types.
   const mineToggle = revealed ? (
@@ -847,7 +862,7 @@ function TasksView({ bank, exerciseSwitch = null }) {
                 work column starts under the task bar and its first route and «Перевірити» fit the first view;
                 in one column the order is as before (task, legend, diagram, work). */}
             <div className="ng-rt-left">
-              <p className="ng-rt-desc">{detailsShut || (phoneLong && !fullShown) ? taskParts.first : taskText}</p>
+              <p className="ng-rt-desc">{detailsShut ? taskParts.first : taskText}</p>
               {full ? (
                 <div id={fullId} className="ng-rt-full" hidden={!fullShown}>
                   {fullShown && <><p>{full}</p>{failover && <p className="ng-rt-failover">{ui.shared.failover(failover.title)}</p>}</>}
@@ -897,10 +912,10 @@ function TasksView({ bank, exerciseSwitch = null }) {
             <section className="ng-rt-work" aria-label={ui.shared.rowsCaption(router)}>
               <InterfacesCard task={task} syntax={syntax} router={router} colour={routerClass(routerNames, router)} />
               {/* Round 5 (R1): the action line, under the router's addresses and above the routes (or the panel, when a long board puts it first). */}
-              {acting && <ActionLine>{panelFirst ? ui.shared.actionBelow : ui.shared.action}</ActionLine>}
+              {acting && <ActionLine>{actionWords}</ActionLine>}
               {/* Round 5 5b-2 (A): the folded worked example, directly under the action line (same condition). */}
               {acting && (
-                <WorkedExample taskKey={`${ex.key}|${syntax.id}`} context={example.context} rows={example.rows} note={example.note ?? undefined}
+                <WorkedExample taskKey={`${ex.key}|${syntax.id}`} context={example.context} rows={example.rows} note={example.note ?? undefined} autoOpen={firstVisit}
                   head={[...ui.shared.exampleHead[syntax.id], ...(backupExample ? [ui.shared.exampleDistance] : [])]} />
               )}
               {mine
@@ -909,6 +924,8 @@ function TasksView({ bank, exerciseSwitch = null }) {
                     boardRef={boardRef} head={mineToggle} />
                 : <div ref={boardRef}><ReferenceRows ex={ex} syntax={syntax} router={router} colour={routerClass(routerNames, router)} head={mineToggle} /></div>}
               {help}
+              {/* A panel before the routes holds its height while typing, so there the note goes after them. */}
+              {panelFirst && modelNote && <p className="ng-rt-note ng-rt-model-note">{modelNote}</p>}
               <div ref={disclosureHost} className="ng-rt-disclosures" />
             </section>
           </div>

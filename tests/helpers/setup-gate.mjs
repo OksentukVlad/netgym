@@ -45,9 +45,14 @@ export const shownPurpose = row => (row?.kind === 'checkpoint' ? comprehension.c
 /** A row's second line as shown: «Winbox:» and the path. */
 export const pathWords = secondary => `${ui.winbox} ${secondary}`;
 
+/** The cards on the board: the sortable rows, or the locked rows of the modes step (round 9, B1). */
+export const deckRows = root => {
+  const sortable = [...root.querySelectorAll('.ng-reorder-item')];
+  return sortable.length ? sortable : [...root.querySelectorAll('.ng-su-modes-deck .ng-su-own-item')];
+};
 /** The sortable rows as the learner sees them: a card's command, or the login check's words. */
 export function rowTexts(root) {
-  return [...root.querySelectorAll('.ng-reorder-item')].map(li => {
+  return deckRows(root).map(li => {
     const command = li.querySelector('.ng-su-cmd');
     if (command) return command.textContent;
     return words(li.querySelector('.ng-su-step')).replace(/^✋\s*/u, '');
@@ -64,22 +69,26 @@ export function rowTexts(root) {
 export function structureFindings(root, task, state, { unchecked = false } = {}) {
   const out = [];
   const prompted = capabilities(task).prompts.length > 0;
-  const sorting = state.phase === 'sorting';
+  const sorting = state.phase === 'sorting', moding = state.phase === 'modes';
   const lists = root.querySelectorAll('ol.ng-reorder');
   if (lists.length !== (sorting ? 1 : 0)) out.push(`lists: ${lists.length} in ${state.phase}`);
-  const rows = [...root.querySelectorAll('.ng-reorder-item')];
-  const shown = sorting ? render(task, state) : [];
+  if (root.querySelectorAll('.ng-su-modes-deck').length !== (moding ? 1 : 0)) out.push(`locked deck in ${state.phase}`);
+  const rows = deckRows(root);
+  const shown = sorting || moding ? render(task, state) : [];
   if (rows.length !== shown.length) out.push(`rows: ${rows.length}`);
   const texts = rowTexts(root);
   shown.forEach((row, i) => { if (texts[i] !== row.text) out.push(`order: row ${i + 1} shows «${texts[i]}», the learner has «${row.text}» there`); });
   rows.forEach((li, i) => {
     const n = i + 1, last = rows.length;
     const handle = li.querySelector('.ng-reorder-handle');
-    if (words(handle?.querySelector('.ng-reorder-n')) !== String(n)) out.push(`numbering: row ${n} shows ${words(handle?.querySelector('.ng-reorder-n'))}`);
-    if (!handle?.getAttribute('aria-label')?.startsWith(`${n}. `)) out.push(`numbering: row ${n} handle «${handle?.getAttribute('aria-label')}»`);
+    if (sorting && words(handle?.querySelector('.ng-reorder-n')) !== String(n)) out.push(`numbering: row ${n} shows ${words(handle?.querySelector('.ng-reorder-n'))}`);
+    if (sorting && !handle?.getAttribute('aria-label')?.startsWith(`${n}. `)) out.push(`numbering: row ${n} handle «${handle?.getAttribute('aria-label')}»`);
+    if (moding && (handle || li.querySelector('.ng-reorder-move'))) out.push(`moves: row ${n} can still be moved after the order passed`);
+    if (moding && words(li.querySelector('.ng-su-own-n')) !== String(n)) out.push(`numbering: row ${n} shows ${words(li.querySelector('.ng-su-own-n'))}`);
     const group = li.querySelector('[role="radiogroup"]');
     if (!prompted && group) out.push(`prompts: row ${n} has a prompt group on a deck without prompts`);
-    if (prompted && group?.getAttribute('aria-label') !== ui.promptOf({ n })) out.push(`numbering: row ${n} prompt group «${group?.getAttribute('aria-label')}»`);
+    if (sorting && group) out.push(`prompts: row ${n} asks for a mode before the order passed`);
+    if (moding && group?.getAttribute('aria-label') !== ui.promptOf({ n })) out.push(`numbering: row ${n} prompt group «${group?.getAttribute('aria-label')}»`);
     const path = li.querySelectorAll('.ng-su-path');
     const secondary = shown[i]?.secondary;
     if (path.length !== (secondary ? 1 : 0) || (secondary && words(path[0]) !== pathWords(secondary))) out.push(`second line: row ${n} shows «${[...path].map(words).join(' | ')}», its card has «${secondary ?? ''}»`);
@@ -89,18 +98,18 @@ export function structureFindings(root, task, state, { unchecked = false } = {})
     // 5b-2 F: the purpose is the row's first line and its name in words (the handle).
     const row = li.querySelector('.ng-su-row');
     if (row && row.children[0] !== purposes[0]) out.push(`purpose: row ${n} does not start with its purpose`);
-    if (shown[i] && !handle?.getAttribute('aria-label')?.endsWith(`: ${shownPurpose(shown[i])}`)) out.push(`name: row ${n} handle «${handle?.getAttribute('aria-label')}» is not named by its purpose`);
+    if (sorting && shown[i] && !handle?.getAttribute('aria-label')?.endsWith(`: ${shownPurpose(shown[i])}`)) out.push(`name: row ${n} handle «${handle?.getAttribute('aria-label')}» is not named by its purpose`);
     if (li.querySelectorAll('[data-term]').length !== 1) out.push(`purpose: row ${n} has ${li.querySelectorAll('[data-term]').length} rows with a term`);
     const [up, down] = li.querySelectorAll('.ng-reorder-move');
-    if (up?.getAttribute('aria-label') !== shared.reorder.up({ n }) || down?.getAttribute('aria-label') !== shared.reorder.down({ n })) out.push(`numbering: row ${n} move buttons`);
-    if (up?.getAttribute('aria-disabled') !== String(i === 0)) out.push(`move limits: row ${n} ↑ aria-disabled=${up?.getAttribute('aria-disabled')}`);
-    if (down?.getAttribute('aria-disabled') !== String(n === last)) out.push(`move limits: row ${n} ↓ aria-disabled=${down?.getAttribute('aria-disabled')}`);
-    if (up?.hasAttribute('disabled') || down?.hasAttribute('disabled')) out.push(`move limits: row ${n} a disabled button`);
+    if (sorting && (up?.getAttribute('aria-label') !== shared.reorder.up({ n }) || down?.getAttribute('aria-label') !== shared.reorder.down({ n }))) out.push(`numbering: row ${n} move buttons`);
+    if (sorting && up?.getAttribute('aria-disabled') !== String(i === 0)) out.push(`move limits: row ${n} ↑ aria-disabled=${up?.getAttribute('aria-disabled')}`);
+    if (sorting && down?.getAttribute('aria-disabled') !== String(n === last)) out.push(`move limits: row ${n} ↓ aria-disabled=${down?.getAttribute('aria-disabled')}`);
+    if (sorting && (up?.hasAttribute('disabled') || down?.hasAttribute('disabled'))) out.push(`move limits: row ${n} a disabled button`);
     const checked = [...li.querySelectorAll('[role="radio"]')].filter(b => b.getAttribute('aria-checked') === 'true').map(words);
     const chosen = shown[i] ? state.answer.prompts[shown[i].id] : null;
     if (unchecked && checked.length) out.push(`prompts: row ${n} starts with ${checked.join(', ')} checked`);
     if (JSON.stringify(checked) !== JSON.stringify(chosen == null ? [] : [chosen])) out.push(`prompts: row ${n} shows ${checked.join(', ') || 'none'}, the learner chose ${chosen ?? 'none'}`);
-    if (prompted && Boolean(li.querySelector('.ng-su-empty')) !== (chosen == null && !li.querySelector('.ng-su-choice .ng-su-mark'))) out.push(`prompts: row ${n} «${ui.noPrompt}» with ${chosen ?? 'none'} chosen`);
+    if (moding && Boolean(li.querySelector('.ng-su-empty')) !== (chosen == null && !li.querySelector('.ng-su-choice .ng-su-mark'))) out.push(`prompts: row ${n} «${ui.noPrompt}» with ${chosen ?? 'none'} chosen`);
   });
   // Attributes: only the panel's hooks among data attributes, no card
   // identity (the opaque id or the command's own name) in machine
@@ -119,9 +128,9 @@ export function structureFindings(root, task, state, { unchecked = false } = {})
   }
   for (const leak of setupLeaks(values.join('\n'))) out.push(`attribute leak: ${leak}`);
   // No mirror of the deck elsewhere (a hidden list, a script) while sorting.
-  if (sorting && !state.revealed) {
+  if ((sorting || moding) && !state.revealed) {
     const commands = shown.filter(r => r.kind === 'card').map(r => r.text);
-    const deck = root.querySelector('ol.ng-reorder');
+    const deck = root.querySelector('ol.ng-reorder, ol.ng-su-modes-deck');
     for (const el of elements(root)) {
       if (deck && (deck.contains(el) || el.contains(deck))) continue;
       if (commands.filter(c => (el.textContent ?? '').includes(c)).length >= 2) { out.push(`mirror: ${el.className || el.localName} repeats the commands`); break; }
@@ -186,11 +195,12 @@ export function hiddenFindings(root, task, state) {
  */
 export function disclosureFindings(root, task, state) {
   const out = [];
-  const sorting = state.phase === 'sorting';
+  const moding = state.phase === 'modes';
+  const sorting = state.phase === 'sorting' || moding;   // still on the cards
   const fb = sorting ? state.feedback : null;
   const failed = fb && !fb.ok ? fb.findings[0] : null;
   const live = failed && !state.stale ? failed : null;
-  const rows = [...root.querySelectorAll('.ng-reorder-item')];
+  const rows = deckRows(root);
   const shown = sorting ? render(task, state) : [];
   const want = live ? shown.map((r, i) => (live.cards.includes(r.id) ? i : -1)).filter(i => i >= 0) : [];
   const marked = rows.map((li, i) => (li.className.split(/\s+/).includes('is-marked') ? i : -1)).filter(i => i >= 0);
@@ -209,7 +219,8 @@ export function disclosureFindings(root, task, state) {
     // A hint may be the current item; the verdict then sits above it, outside the status.
     if (status !== expected && !root.querySelector('.ng-help-hint-text')) out.push(`failed status: «${status}», expected «${expected}»`);
   }
-  if (sorting && !fb && status && !root.querySelector('.ng-help-hint-text')) out.push(`status without a check: ${status}`);
+  if (moding && !fb && status !== `✓ ${shared.yes} ${text('order-ok')}` && !root.querySelector('.ng-help-hint-text')) out.push(`modes step status: ${status}`);
+  if (sorting && !moding && !fb && status && !root.querySelector('.ng-help-hint-text')) out.push(`status without a check: ${status}`);
   if (state.phase === 'sorted' && !status.startsWith(`✓ ${shared.yes} ${okWords(task)}`)) out.push(`success status: ${status}`);
   // The script: none while sorting; after, exactly the logic's, part by part.
   const parts = [...root.querySelectorAll('.ng-su-part')];

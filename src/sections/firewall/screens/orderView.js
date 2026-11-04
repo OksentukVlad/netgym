@@ -7,6 +7,7 @@
 //     given, with FW-1's chips (tableRows) and the rule's description. No
 //     row carries a number or an id beyond the React key: ReorderList
 //     numbers the positions it shows.
+//   - byChain(task, order): that order chain by chain, for two lists.
 //   - walkRows(walkIn): the learner walk (logic.walkInput) as each rule's
 //     outcome by id, plus the chain end when it decided; FW-1's words.
 //   - orderScene / orderTextSections: the diagram and «Текстом» for the
@@ -17,6 +18,12 @@ import { classify } from '../logic/classify.js';
 import { orderText, orderUi, walkText, ui } from '../uk.js';
 import { givenSections, networkSections, tableRows, walkFrame, walkNotes, walkOutcomes, walkPlan } from './walkView.js';
 import { neutralScene, sceneOf } from './diagram.js';
+
+/** The chains in «Увесь фільтр»'s two lists (round 9, B4). */
+export const CHAINS = ['input', 'forward'];
+/** The same order read chain by chain: input's rules, then forward's, each in its own order.
+ * A packet walks one chain only, so this changes no verdict. */
+export const byChain = (task, order) => CHAINS.flatMap(chain => order.filter(id => task.rules.find(rule => rule.id === id)?.chain === chain));
 
 /** The tips after success, by level (B2: FastTrack and forward only in «Увесь фільтр»). */
 export const TIPS = { input: ['replies', 'input'], all: ['fasttrack', 'replies', 'input', 'forward'] };

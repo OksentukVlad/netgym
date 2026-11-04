@@ -85,7 +85,7 @@ test('5b-2 firewall: a port-forwarded packet sets off to the router\'s public ad
 });
 
 test('5b-2 firewall: the order screen\'s action line, and its words once the list passes', () => {
-  assert.equal(orderUi.action, 'Перетягни правила (або ↑ ↓) у робочий порядок.');
+  assert.equal(orderUi.action, 'Постав правила в робочий порядок кнопками ↑ ↓.');
   assert.equal(orderUi.actionDone, 'Порядок прийнято.');
 });
 

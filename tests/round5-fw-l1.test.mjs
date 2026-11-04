@@ -98,12 +98,16 @@ test('R5 L1: task and hint ladder use screen words and the task addresses, inclu
       const ladder = hints(task, {}, { cardId: c.id });
       assert.deepEqual(ladder.map(h => h.rung), [1, 2, 3]);
       const known = [...task.topology.router.interfaces.map(i => i.address), ...task.topology.hosts.map(h => h.address)];
-      for (const h of ladder) {
+      for (const h of ladder.slice(0, 2)) {
         const text = chainText(h.code, h.params);
-        assert.match(text, /Куди/); assert.match(text, /адреси цього роутера|У цьому завданні/);
+        assert.match(text, /Куди/); assert.match(text, /адреси цього роутера/);
         assert.doesNotMatch(text, /Третій|Окремий приклад|192\.0\.2\.|198\.51\.100\.|undefined/);
         for (const address of text.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g) ?? []) assert.ok(known.includes(address));
       }
+      // Hint 3 is an example of its own: it can't answer this card or the next (Андрій).
+      const example = chainText(ladder[2].code, ladder[2].params);
+      assert.match(example, /Окремий приклад/);
+      for (const address of known) assert.ok(!example.includes(address));
       assert.ok(chainText(ladder[0].code, ladder[0].params).includes(c.packet.dstIp));
       for (const i of task.topology.router.interfaces) assert.ok(chainText(ladder[0].code, ladder[0].params).includes(i.address));
     }

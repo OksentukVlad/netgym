@@ -24,7 +24,7 @@ export const copy = {
   // Sorting explanations describe the dependency; recall has per-line syntax feedback.
   'save-last': 'Збереження конфігурації фіксує поточний стан. Збережи її після всіх змін, щоб після перезапуску налаштування були повними.',
   'hint-question': 'Якій дії спершу потрібні інші налаштування?',
-  'hint-evidence': 'Порівняй призначення дій: що вони створюють і що вже має бути готове? Для кожної також потрібен свій режим.',
+  'hint-evidence': 'Порівняй призначення дій: що вони створюють і що вже має бути готове?',
   'hint-example': 'Приклад на інших значеннях: hostname Demo, потім ip domain-name demo.example, а тоді створення ключа.',
   // After success, one tip about saving (the rule's words and why saving early fails).
   'tip-save': 'Збереження конфігурації фіксує поточний стан. Збережи її після всіх змін, щоб після перезапуску налаштування були повними. Команда — write memory (або copy running-config startup-config). Збереження до завершення змін збереже лише проміжний стан.',
@@ -86,16 +86,22 @@ export const copy = {
   'script-setup': 'Налаштування',
   'script-as-router': 'як у роутері',
   'hint-cards': ({ positions = [] } = {}) => `Подивись на ${positions.length === 1 ? 'картку' : 'картки'} ${cardList(positions)}.`,
-  // Rung 1 after a missing-mode verdict: where to look and what to ask of each card (the verdict already counts them).
-  'hint-mode-missing': ({ positions = [] } = {}) => `${positions.length && positions.length <= 4 ? `Почни з ${positions.length === 1 ? 'картки' : 'карток'} ${cardList(positions)}` : 'Пройди позначені картки по черзі'}: де вводять кожну команду — у налаштуваннях усього пристрою, інтерфейсу, ліній входу чи просто в привілейованому режимі?`,
+  // Rung 1 after a missing-mode verdict: the first card still without one, and where such a command goes.
+  'hint-mode-missing': ({ positions = [], prompt } = {}) => `Почни з картки ${positions[0] ?? 1}. ${text('hint-mode-rule', { prompt })}`,
   'hint-mode-rule': ({ prompt } = {}) => ({
     '(config-if)#': 'Команду для інтерфейсу вводять у (config-if)#.',
     '(config-line)#': 'Параметри ліній віддаленого входу задають у (config-line)#.',
     '#': 'Зберігають конфігурацію з привілейованого режиму #.',
   }[prompt] ?? 'Загальні параметри пристрою задають у (config)#.'),
+  // The second step of the Cisco decks (round 9, B1): hint 1 is concrete, on this deck's own cards.
+  'order-ok': 'Порядок працює. Лишилося обрати режими.',
+  'hint-modes-router': 'hostname вводять у (config)#, transport input — у (config-line)#.',
+  'hint-modes-switch': 'hostname вводять у (config)#, ip address — у (config-if)#.',
+  'hint-modes-where': 'Те, що стосується всього пристрою, — у (config)#; один інтерфейс — у (config-if)#; лінії входу — у (config-line)#; збереження — у #.',
+  'hint-modes-shape': 'Приклад з інших карток: enable вводять у >, configure terminal — у #, banner motd — у (config)#.',
   'hint-bridge-shape': 'спершу створи міст bridge-demo, потім додай до нього порт ether3.',
   'hint-start-router': 'Почни з того, без чого не працюють інші команди: ім’я та домен.',
-  'hint-start-switch': 'Зістав адресу керування з інтерфейсом VLAN, а шлюз — з налаштуваннями всього комутатора.',
+  'hint-start-switch': 'Тут важливо одне: зберігають останнім, коли всі зміни вже внесено.',
   'hint-start-routeros': 'Почни зі створення об’єктів, на які посилаються інші дії: міст і список інтерфейсів.',
   'hint-shape': ({ example } = {}) => `Приклад на інших значеннях: ${example ?? 'hostname Demo'}`,
   'hint-recall-mode': ({ mode, count } = {}) => `Цю команду вводять у режимі ${mode ?? ''}; у ній ${count ?? ''} ${count >= 2 && count <= 4 ? 'слова' : 'слів'}.`,
@@ -157,9 +163,11 @@ export const ui = {
   decks: 'Пристрій',
   // One task sentence for every deck: the goal only (round 5 repair v1); the how is the action line's.
   task: 'Збери базове налаштування в робочому порядку.',
-  // The action line above the deck (round 5, R1), on the Cisco decks with the mode «?» after it; MikroTik has no prompts.
-  action: 'Перетягни картки (або ↑ ↓) у робочий порядок; у кожній обери режим.',
-  actionOrder: 'Перетягни картки (або ↑ ↓) у робочий порядок.',
+  // The action line above the deck (round 5, R1). Round 9 (B1): the order first; the Cisco decks' second
+  // step asks for the modes, the mode «?» after its word.
+  actionOrder: 'Постав картки в робочий порядок кнопками ↑ ↓.',
+  actionModes: 'У кожній картці обери режим.',
+  modesTask: 'Порядок прийнято: картки закріплено.',
   // Recall (spec S1): the order stays; three lines are typed from memory.
   recallTask: 'Порядок уже правильний. Тепер введи три команди по пам’яті: Enter перевіряє рядок.',
   // After the cards pass, or the answer is shown: the board is a script now.
@@ -171,6 +179,9 @@ export const ui = {
   nextWhere: 'нові значення',
   // Round 7: after the deck, the link to «Перевірка мережі» («Що це доводить»).
   checksLink: 'перевір, що роутер працює →',
+  checksLinkSwitch: 'перевір, що комутатор працює →',
+  // Sorting: «Пропустити» replaces the deck and its order with new values (Андрій), and says so.
+  skipDeck: 'Пропустити: нові значення',
   deck: 'Команди',
   promptOf: ({ n }) => `Режим для картки ${n}`,
   // The quiet prompt group's empty state, before anything is chosen.

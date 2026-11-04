@@ -235,6 +235,7 @@ export default function PortsForm({ device, syntax, form, raw, marks, edit, onCh
       <p className="ng-vl-legend-line">{ui.frameLegend}</p>
       <div className="ng-vl-vlans">
         <h3 className="ng-vl-caption">{ui.bridgeVlans}</h3>
+        <p className="ng-vl-form-what">{ui.accessRowsOptional}</p>
         {config.vlans.length === 0 && <p className="ng-vl-muted">{ui.noRows}</p>}
         <ol className="ng-vl-rows">
           {config.vlans.map((row, i) => {

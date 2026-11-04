@@ -108,15 +108,16 @@ export function normaliseReactIds(html) {
  * (the handle «N. Переставити: …», ↑ and ↓), and none may appear outside
  * the list, so a reference position can't hide in that exemption. */
 export function orderListFindings(html) {
-  const list = html.match(/<ol class="ng-reorder"[^>]*>[\s\S]*?<\/ol>/);
-  if (!list) return ['no list'];
+  // «Увесь фільтр» has a list per chain (round 9, B4): the numbers go on from one to the next.
+  const lists = [...html.matchAll(/<ol class="ng-reorder"[^>]*>[\s\S]*?<\/ol>/g)].map(m => m[0]);
+  if (!lists.length) return ['no list'];
   const out = [];
-  list[0].split(/<li class="ng-reorder-item/).slice(1).forEach((item, i) => {
+  lists.flatMap(list => list.split(/<li class="ng-reorder-item/).slice(1)).forEach((item, i) => {
     const n = i + 1, labels = [...item.matchAll(/aria-label="([^"]*)"/g)].map(m => m[1]);
     if (!labels.some(l => l.startsWith(`${n}. `) && l.includes(':'))) out.push(`handle ${n}`);
     const moves = labels.filter(l => /^(?:Вище|Нижче): позиція/u.test(l));
     if (moves.length !== 2 || moves[0] !== shared.reorder.up({ n }) || moves[1] !== shared.reorder.down({ n })) out.push(`moves ${n}`);
   });
-  if (/aria-label="(?:Вище|Нижче): позиція/u.test(html.replace(list[0], ''))) out.push('position names outside the list');
+  if (/aria-label="(?:Вище|Нижче): позиція/u.test(lists.reduce((rest, list) => rest.replace(list, ''), html))) out.push('position names outside the list');
   return out;
 }

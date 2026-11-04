@@ -153,7 +153,8 @@ scenario('E2 L1', m => {
   check('E2: the native lines for Cisco, read-only, labelled', text(q('.ng-dh-native-lines .ng-dh-client-title')) === words.labels.native
     && text(q('.ng-dh-native-lines pre')) === lines(server.nativeLines(task, answer, 'cisco')));
   click(radio('MikroTik'));
-  check('E2: the vendor switch starts the task over in that vendor (its own instance)', !q('.ng-dh-client') && labelled('від') && !labelled('від').hasAttribute('readonly'));
+  check('E2: the vendor switch preserves the neutral answer and updates native lines', q('.ng-dh-client') && labelled('від').hasAttribute('readonly')
+    && text(q('.ng-dh-native-lines pre')) === lines(server.nativeLines(task, answer, 'mikrotik')));
   click(radio('Cisco'));
   check('E2: switching back finds the Cisco instance as it was', q('.ng-dh-client') !== null);
 });
@@ -403,6 +404,15 @@ scenario('E4 L1', m => {
     && text(q('#ng-dh-action')) === fw.actions[0] && !q('[data-help-current][data-help-tone]'), next);
 });
 
+scenario('E4 L3 MikroTik: the native server switch has its words', m => {
+  click(radio('ПК без мережі'));
+  click(radio('MikroTik'));
+  placeFault(m, 3, 7);
+  click(button(words.screen.fault.toRepair));
+  check('E4 L3 MikroTik: `disabled` reads as the option says, never a blank button', all('[role="radio"]', q('.ng-dh-repair [data-field="enabled"]')).map(text).join('|') === `${words.fault.disabledYes}|${words.fault.disabledNo}`,
+    all('[role="radio"]', q('.ng-dh-repair [data-field="enabled"]')).map(text));
+});
+
 scenario('E4 L2 exhausted', m => {
   click(radio('ПК без мережі')); click(radio('MikroTik'));
   let seed = 0;
@@ -520,6 +530,23 @@ scenario('E4 wrong cause, locked step', m => {
   click(q('.ng-help-check')); click(q('.ng-help-continue'));
   click(option(faults.causesForLevel(1).find(c => c.id !== task.faultId).text));
   check('E4 a wrong cause: «Ні. Причина — у рядку R1, який довелося змінити.»', status().includes('Ні. Причина — у рядку R1, який довелося змінити.'), status());
+});
+
+scenario('R9 E2 compare vendors and advance', m => {
+  click(radio('DHCP-сервер'));
+  const { seed, other } = placeOf(m).server.tasks[1];
+  const task = server.generateScenario({ seed, level: 1, vendor: 'cisco', otherAddresses: other });
+  const answer = server.referenceAnswer(task), range = answer.ranges[0];
+  type(labelled('від'), range.from); type(labelled('до'), range.to); click(q('.ng-help-check'));
+  type(labelled('Шлюз для ПК'), answer.gateway); type(labelled('DNS для ПК'), answer.dns.join(' ')); click(q('.ng-help-check'));
+  click(radio('MikroTik'));
+  check('Group C: vendor switch keeps the neutral answer and shows MikroTik commands', labelled('від').value === range.from
+    && labelled('до').value === range.to && text(q('.ng-dh-native-lines')).includes('/ip pool add'), text(q('.ng-dh-native-lines')));
+  click(radio('Cisco'));
+  check('Group C: switching back keeps the answer and shows Cisco commands', labelled('від').value === range.from
+    && text(q('.ng-dh-native-lines')).includes('ip dhcp pool'), text(q('.ng-dh-native-lines')));
+  click(button(words.screen.nextServerLevel(2)));
+  check('Group C: the explicit level-2 action opens level 2', placeOf(m).server.level === 2);
 });
 
 check('no React warnings', warnings.length === 0, warnings.slice(0, 3));

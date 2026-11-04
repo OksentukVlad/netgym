@@ -160,7 +160,7 @@ test('calculator caption uses commandAddress for LAN, /31, /32; unavailable comm
 });
 
 test('additive copy: separate ruler spacing/block size, VLAN state meaning, ICMP, order, FastTrack, checkpoint, advice', () => {
-  assert.equal(ip.maskRulerCaption({ k: 4, labelStep: 32, prefix: 26, blockSize: 64, value: 77 }), 'Лінійка: 4-те число адреси, від 0 до 255; позначки через 32, блок для /26 — 64 адрес. Твоя адреса: 77.');
+  assert.equal(ip.maskRulerCaption({ k: 4, labelStep: 32, prefix: 26, blockSize: 64, value: 77 }), 'Лінійка: 4-те число адреси, від 0 до 255; поділки через 32, блок для /26 — 64 адреси. Твоя адреса: 77.');
   assert.match(vlan.frameAction, /не за IP-адресами/);
   assert.match(vlan.routerOnStick, /логічний інтерфейс з адресою шлюзу для кожного VLAN/);
   assert.deepEqual(vlan.adminStateOptions, [{ value: false, label: 'вимкнено', command: 'shutdown' }, { value: true, label: 'увімкнено', command: 'no shutdown' }]);

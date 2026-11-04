@@ -64,11 +64,10 @@ import { interVlanExample } from '../logic/examples.js';
 import VlanDiagram from './VlanDiagram.jsx';
 import RouteForm from './RouteForm.jsx';
 import Commands from './Commands.jsx';
-import { CommandsFold, exampleLines, failingStep, hostLines, isShort, portIdOf, taskCounts, useHelpInView, useShortAside, EvidenceMark, SCREEN, WalkPointer } from './panel.jsx';
+import { CommandsFold, exampleLines, failingStep, hostLines, portIdOf, taskCounts, useHelpInView, useShortAside, EvidenceMark, SCREEN, WalkPointer } from './panel.jsx';
 import { compactPcWidth, layout, traceScene, walkScene } from './diagram.js';
 import { interVlanAction } from '../logic/route-action.js';
 
-const TALL_ASIDE = 760;
 import { captionAt, chipsAt, runAt, sceneAt, sequence, stepMsFor, tokensAt, traceMotion } from './walkSteps.js';
 import { useSkipper, useWalkPlayer } from './walkPlayer.js';
 import { fieldKey, freshMarks, toggleMember, verdictOf, writeField } from './portsState.js';
@@ -106,7 +105,7 @@ const linkLines = (task, syntax) => task.topology.links.map(l => {
 /**
  * @param {{ records: object[], syntax: 'cisco'|'routeros', place: object, setPlace: Function, head: any }} props
  */
-export default function RouteView({ records, syntax, place, setPlace, head, skipper = null, short = false, height = 0 }) {
+export default function RouteView({ records, syntax, place, setPlace, head, skipper = null }) {
   const { state, dispatch } = useStore();
   const offered = recordsFor(records, syntax);
   const record = shownRecord(records, place.routeTask, syntax);
@@ -242,8 +241,9 @@ export default function RouteView({ records, syntax, place, setPlace, head, skip
   const moreHost = useRef(null);
   const earned = earnedBy(state.instances, identity => (identity.exerciseId === route.id ? identity.taskId : null));
   const foldAsides = useAsideFold(SCREEN);
-  // Task 3's aside is long (its limits): it folds on a 1280 × 800 window too, so the whole drawing is in view.
-  useShortAside(`route-goal-${task.taskNumber}`, short || (task.taskNumber === 3 && isShort(height, TALL_ASIDE)));
+  // Round 9 (Fable 8): «Умова повністю» starts folded at every size, as on a phone: the task, the drawing and
+  // the first action come first, and «?» opens it.
+  useShortAside(`route-goal-${task.taskNumber}`, true);
   // Round 5 (R1): what to do first, from the task's own givens (its parent interface, what is left to the learner).
   const action = useMemo(() => interVlanAction(task, syntax), [task, syntax]);
   // The worked example (5b-2 A): its own instance on reserved addresses, in this syntax; never this task's values.
@@ -418,6 +418,9 @@ export default function RouteView({ records, syntax, place, setPlace, head, skip
           </section>
   ) : null;
 
+  const shownConfig = forCommands(effective)[device.id];
+  const routerEmpty = device.kind === 'router' && !shownConfig?.subifs?.length && !shownConfig?.vlanIfs?.length;
+
   // The panel's verdict: the check's words whole (the device and port to
   // look at in task 2), a line pointing at the failing walk; after a success, the tips
   // (open) and the lap line.
@@ -517,8 +520,9 @@ export default function RouteView({ records, syntax, place, setPlace, head, skip
           }}
           next={{ onNext }}
         />
-        <CommandsFold device={device.id} text={commands[device.id] ?? ''} note={commandNotes(task, device.id, syntax)} empty={routeUi.noCommands}
-          fold={result && !stale ? `v${ex.presses}` : null} />
+        {/* Round 9 (Fable 8): the router's commands wait for its first subinterface; before that they are one word to copy. */}
+        {!routerEmpty && <CommandsFold device={device.id} text={commands[device.id] ?? ''} note={commandNotes(task, device.id, syntax)} empty={routeUi.noCommands}
+          fold={result && !stale ? `v${ex.presses}` : null} />}
         <div ref={moreHost} className="ng-vl-more-host" />
       </section>
     </>

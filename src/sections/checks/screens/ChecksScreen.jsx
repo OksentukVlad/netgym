@@ -11,6 +11,8 @@
 // its data. The place `checks` keeps the exercise and each task's seed (and
 // the levels of C1 and C2). A link from another section («як це перевіряють
 // на ПК →») opens an exercise by its route params (`ex`), once per navigation.
+import { useEffect, useRef } from 'react';
+import { scrollAreaOf } from '../../../ui/phone.js';
 import { usePlace, usePref } from '../../../ui/useStore.js';
 import { useRouteParams } from '../../../ui/useNav.js';
 import { BarControls, SheetCaption } from '../../../ui/BarSlot.jsx';
@@ -42,13 +44,29 @@ export default function ChecksScreen({ route = null }) {
   const [themeName] = usePref('theme');
   const [place, setPlace] = usePlace('checks', firstPlace);
   // A link from another section names the exercise (`ex`): applied once per navigation.
-  useRouteParams(route, params => { if (EXERCISES.includes(params.ex)) setPlace({ exercise: params.ex }); });
+  useRouteParams(route, params => {
+    if (!EXERCISES.includes(params.ex)) return;
+    // A setup deck: its own vendor, and only what it configured.
+    if (SYNTAXES.includes(params.syntax)) setSyntax(params.syntax);
+    setPlace({ exercise: params.ex, ...(params.ex === 'proof' ? { proof: { seed: place.proof?.seed ?? newSeed(), ...(params.scope ? { scope: params.scope } : {}) } } : {}) });
+  });
   const syntax = SYNTAXES.includes(syntaxPref) ? syntaxPref : 'cisco';
   const vendor = syntax === 'routeros' ? 'mikrotik' : 'cisco';
   const exercise = EXERCISES.includes(place.exercise) ? place.exercise : 'proof';
+  const sectionRef = useRef(null);
+  const current = place[exercise];
+  const navigationKey = `${exercise}:${current?.level ?? ''}:${JSON.stringify(current?.tasks?.[current?.level] ?? current)}`;
+  const previous = useRef(navigationKey);
+  useEffect(() => {
+    if (previous.current !== navigationKey) {
+      const area = scrollAreaOf(sectionRef.current);
+      if (area) area.scrollTop = 0;
+      previous.current = navigationKey;
+    }
+  }, [navigationKey]);
   const props = { vendor, place, setPlace };
   return (
-    <div className="ng-ck" data-theme={themeName} data-exercise={exercise}>
+    <div ref={sectionRef} className="ng-ck" data-theme={themeName} data-exercise={exercise}>
       <BarControls>
         <div className="ng-ck-controls">
           <SheetCaption label={screen.exercise} />

@@ -363,7 +363,8 @@ test('route screen: the third tab; task 4 only in MikroTik, one line why in Cisc
   assert.match(html, /class="ng-vl-switch is-router/);
   // Round 5 (R3): each gateway line carries its address as an explicit fact.
   for (const host of task.topology.hosts) assert.ok(html.includes(`class="ng-vl-host-fourth is-gateway" data-hl="address:${host.gateway}">шлюз ${host.gateway}<`), host.device);
-  assert.ok(html.includes(routeNotes.routerParent) && html.includes(routeNotes.assumptions) && html.includes(routeUi.taskOne[1]) && !html.includes(routeText[1]), 'the task once, in one sentence (Fable 3)');
+  assert.ok(html.includes(routeNotes.assumptions) && html.includes(routeUi.taskOne[1]) && !html.includes(routeText[1]), 'the task once, in one sentence (Fable 3)');
+  assert.ok(!html.includes(routeNotes.routerParent) && !html.includes('class="ng-vl-cmds"'), 'no router commands before its first subinterface (Fable 8)');
   // Round 4 (F5): the header keeps to the tabs (no task-4 line in Cisco), so the diagram fits.
   assert.equal(cisco.split(routeUi.ciscoNoBridge).length - 1, 0);
   // Task 3's givens on screen, not only in «Текстом»; the SVI note only for Cisco's management task.

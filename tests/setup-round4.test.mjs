@@ -14,10 +14,12 @@ import { full, sweepSeeds } from './helpers/sweep-mode.mjs';
 const id = (task, name) => task.cards.find(c => c.commandId === name).id;
 const sorted = (task, order = task.referenceOrder) => {
   let state = initialState(task);
-  state = transition(task, state, { type: 'order', order });
+  state = transition(task, transition(task, state, { type: 'order', order }), { type: 'check' });
   for (const card of task.cards.filter(c => c.mode)) state = transition(task, state, { type: 'prompt', id: card.id, prompt: card.mode });
   return transition(task, state, { type: 'check' });
 };
+/** The order passed: a deck with modes on its second step (round 9, B1). */
+const toModes = task => transition(task, transition(task, initialState(task), { type: 'order', order: task.referenceOrder }), { type: 'check' });
 const recall = (task, order) => transition(task, sorted(task, order), { type: 'continue' });
 const correct = (task, state, lineId) => transition(task,
   transition(task, state, { type: 'typed', id: lineId, text: cardText(task, lineId).replace('<пароль>', 'UniqueOwn!9') }),
@@ -87,13 +89,26 @@ for (const bank of decks) test(`${bank.id}: sorting reveal applies reference, pr
   }
 });
 
-for (const bank of decks.slice(0, 2)) test(`${bank.id}: missing prompts first, finding-position snapshots and contextual hint rungs`, () => {
+for (const bank of decks.slice(0, 2)) test(`${bank.id}: the order first, then missing prompts; finding-position snapshots and contextual hint rungs`, () => {
   const task = create(bank, { seed: 11 });
-  let state = initialState(task);
-  const missing = [task.order[2], task.order.at(-1)];
+  // Round 9 (B1, Fable 1): a wrong order is answered with no mode chosen at all, and no mode can be chosen yet.
+  const first = transition(task, initialState(task), { type: 'check' });
+  assert.equal(first.phase, 'sorting');
+  assert.ok(['needs-before', 'not-last'].includes(first.feedback.code), 'the order is answered at once');
+  assert.equal(first.earned, false);
+  assert.equal(transition(task, first, { type: 'prompt', id: task.order[0], prompt: '#' }), first, 'no mode before the order passes');
+  let state = toModes(task);
+  assert.equal(state.phase, 'modes');
+  assert.equal(state.earned, false, 'a passed order is a step, not the task');
+  assert.equal(state.feedback, null);
+  assert.equal(transition(task, state, { type: 'order', order: task.order }), state, 'the order is locked');
+  assert.equal(hints(task, state)[0].code, task.values.mgmt ? 'hint-modes-switch' : 'hint-modes-router');
+  assert.match(text(hints(task, state)[0].code), /\(config\)#.*\(config-(?:if|line)\)#/, 'hint 1 names two real modes');
+  const missing = [task.referenceOrder[2], task.referenceOrder.at(-1)];
   for (const card of task.cards.filter(c => !missing.includes(c.id))) state = transition(task, state, { type: 'prompt', id: card.id, prompt: '>' });
   state = transition(task, state, { type: 'check' });
-  assert.equal(state.feedback.code, 'mode-missing', 'both order and wrong modes wait');
+  assert.equal(state.phase, 'modes');
+  assert.equal(state.feedback.code, 'mode-missing', 'wrong modes wait for the missing ones');
   assert.deepEqual(state.feedback.findings[0].cards, missing);
   assert.deepEqual(state.lastFinding.positions, [3, task.cards.length]);
   const lesson = explanation(state.feedback);
@@ -101,15 +116,15 @@ for (const bank of decks.slice(0, 2)) test(`${bank.id}: missing prompts first, f
   const before = hints(task, state);
   assert.equal(before[0].code, 'hint-mode-missing');
   assert.deepEqual(before[0].params.positions, [3, task.cards.length]);
-  assert.equal(before[1].params.prompt, task.cards.find(c => c.id === missing[0]).mode);
-  state = transition(task, state, { type: 'order', order: task.referenceOrder });
+  assert.equal(before[0].params.prompt, task.cards.find(c => c.id === missing[0]).mode);
+  assert.equal(before[1].code, 'hint-modes-where');
   state = transition(task, state, { type: 'prompt', id: missing[0], prompt: '#' });
   assert.equal(state.stale, true); assert.deepEqual(hints(task, state), before);
   assert.ok(state.feedback, 'stale verdict stays reachable');
   state = transition(task, state, { type: 'check' });
   assert.deepEqual(state.lastFinding.cards, [missing[1]]);
   // Wrong mode and save-last each get the specific second rung.
-  state = { ...initialState(task), answer: sorted(task).answer };
+  state = { ...initialState(task), phase: 'modes', answer: sorted(task).answer };
   state = transition(task, state, { type: 'prompt', id: task.referenceOrder[0], prompt: '>' });
   state = transition(task, state, { type: 'check' });
   assert.equal(hints(task, state)[0].code, 'hint-cards');

@@ -176,7 +176,7 @@ test('binary L1: all step/input-mode texts use only given operands and exact fin
     }
   }
   const task = { ip: '192.168.73.173', prefix: 27 };
-  assert.equal(binaryLevel1Text(task, { step: 2 }).action, 'Де в масці 1 — встанови відповідний біт прийнятої IP-адреси (0 або 1); де 0 — встанови 0.');
+  assert.equal(binaryLevel1Text(task, { step: 2 }).action, 'Де в масці 1 — постав той самий біт, що в IP-адресі (0 або 1); де 0 — постав 0.');
   assert.equal(binaryLevel1Text(task, { mode: 'text' }).action, 'Надрукуй вісім бітів октета 4 цього рядка: сума ваг позицій з одиницями має дорівнювати 173.');
   assert.throws(() => binaryLevel1Text(task, { step: 4 }), /invalid-step-or-mode/);
   assert.throws(() => binaryLevel1Text(task, { mode: 'other' }), /invalid-step-or-mode/);

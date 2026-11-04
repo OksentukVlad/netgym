@@ -132,6 +132,10 @@ test('saved progress in Chromium: refresh, flush, links, clearing, a second tab,
     // ── The plain address: the start screen first, the section where it was ──
     await go(page, BASE);
     assert.ok(await page.locator('.ng-home').count(), 'the start screen is the first view');
+    // Round 9 (B7): the solved section's card carries the quiet ✓, in its name, and no other card does.
+    assert.equal(await page.locator('.ng-card .ng-done').count(), 1, 'one ✓');
+    assert.match(await page.locator('.ng-card:has(.ng-done) .ng-card-title').innerText(), /^IP-адреси: маска/u, 'on the solved section');
+    assert.match(await page.locator('.ng-card:has(.ng-done) .ng-done').textContent(), /розв’язано/u, 'said in words too');
     await page.getByRole('button', { name: /IP-адреси: маска/ }).click();
     await settle(page);
     assert.equal(await page.locator('.ng-screen input').first().inputValue(), '10.9.9.9');

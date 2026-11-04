@@ -1,7 +1,7 @@
 // «Фаєрвол»'s saved state (spec save v2; app/saved.js runs these).
 import fw from '../logic/predict.js';
 import order from '../logic/order.js';
-import { asides, between, bool, count, isObject, listOf, mapOf, matches, nullable, oneOf, resultOf, shape, text, zoom } from '../../../ui/saved-shape.js';
+import { asides, between, bool, count, firstVisits, isObject, listOf, mapOf, matches, nullable, oneOf, resultOf, shape, text, zoom } from '../../../ui/saved-shape.js';
 import { MAX_SEED, recordsOf } from './url.js';
 
 const seed = between(1, MAX_SEED);
@@ -38,6 +38,7 @@ export const saved = Object.freeze({
   places: {
     'firewall-tab': shape({ exercise: oneOf('predict', 'order') }),
     firewall: shape({ level: between(1, 2), variantId: text, seeds: mapOf(seed), ...asides }, ['level', 'variantId', 'seeds']),
+    ...firstVisits,
     'firewall-order': shape({ variantId: text, seeds: mapOf(seed) }, ['variantId', 'seeds']),
   },
   exercises: {
@@ -49,7 +50,7 @@ export const saved = Object.freeze({
       },
       view: (view, id) => shape({
         drafts: mapOf(shape({ hook: text, decidedBy: text, said, retry: said })), position: count, commit,
-        revealed: ids, played: ids, hookChecks: count, zoom,
+        revealed: ids, played: ids, hookChecks: count, zoom, cardHints: mapOf(count),
       })(view) && walksFit(view.commit, id.level),
     },
     [order.id]: {

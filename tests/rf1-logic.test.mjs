@@ -122,9 +122,11 @@ test('A3 hint and feedback follow the actual reply loop instead of the catalogue
   const i = instance({ level: 2, taskId: bank.tasks[3].id, faultCode: 'wrong-next-hop', siteKey: 'wrong-next-hop/R2/0/R3.if1' });
   const result = F.check(i.task, F.initialAnswer(i.task)), hint = F.hints(i.task, null, { result })[0];
   assert.equal(hint.params.direction, 'reply'); assert.equal(hint.params.code, 'loop');
-  assert.match(hint.text, /Відповідь ходить по колу/);
-  assert.equal(F.feedback(i.task, result), hint.text);
-  assert.ok(!hint.text.includes('немає маршруту'));
+  assert.match(F.feedback(i.task, result), /Відповідь ходить по колу/);
+  // After a check the verdict says it: hint 1 says where to look instead (Олена).
+  assert.notEqual(F.feedback(i.task, result), hint.text);
+  assert.match(hint.text, /Відкрий таблицю/);
+  assert.match(F.hints(i.task, null, {})[0].text, /Відповідь ходить по колу/);
   assert.ok(F.describeTrace(i.task, result.evidence.snapshot.rows[0]).length);
 });
 for (const syntax of ['cisco', 'routeros']) test(`A4 syntax and topology validation precede behaviour: ${syntax}`, () => {

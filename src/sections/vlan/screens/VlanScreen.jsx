@@ -140,7 +140,7 @@ export default function VlanScreen({ bank }) {
       </BarControls>
       {exercise === 'predict' && <PredictView record={bank.predict} syntax={syntax} place={place} setPlace={setPlace} head={head} skipper={skipper} short={short} />}
       {exercise === 'ports' && <PortsView records={bank.ports} syntax={syntax} place={place} setPlace={setPlace} head={head} skipper={skipper} />}
-      {exercise === 'route' && <RouteView records={bank.route} syntax={syntax} place={place} setPlace={setPlace} head={head} skipper={skipper} short={short} height={height} />}
+      {exercise === 'route' && <RouteView records={bank.route} syntax={syntax} place={place} setPlace={setPlace} head={head} skipper={skipper} />}
       {exercise === 'faults' && <FaultsView records={bank.faults} syntax={syntax} place={place} setPlace={setPlace} head={head} skipper={skipper} short={short} />}
     </div>
   );

@@ -42,8 +42,8 @@ test('WorkedExample: closed by default — the toggle button, its words, aria-ex
   const id = /aria-controls="([^"]+)"/.exec(html)[1];
   assert.match(html, /^<div class="ng-wex" data-worked-example="">/);
   assert.match(html, /<button type="button" class="ng-wex-toggle" aria-expanded="false" aria-controls="[^"]+">/);
-  assert.equal(html.replace(/<[^>]+>/g, ''), 'Приклад ▸ готова відповідь (інші числа)', 'the toggle\'s words, nothing else in the page');
-  assert.match(html, /<span class="ng-wex-words">Приклад<\/span> <span aria-hidden="true">▸<\/span> <span class="ng-wex-words">/, 'the arrow is not part of the name');
+  assert.equal(html.replace(/<[^>]+>/g, ''), 'Приклад: як це розв’язують ▸', 'the toggle\'s words, nothing else in the page');
+  assert.match(html, /<span class="ng-wex-label">Приклад: як це розв’язують <span aria-hidden="true">▸<\/span><\/span>/, 'the arrow is not part of the name');
   assert.ok(html.endsWith(`<div id="${id}" class="ng-wex-body" aria-live="polite"></div></div>`), 'the live region is there, empty, before it opens');
   assert.doesNotMatch(html, /192\.0\.2|ng-wex-card|tabindex/, 'no example values in the page while closed');
   expectWorkedExample(html);
@@ -61,10 +61,8 @@ test('WorkedExample CSS: tokens only, muted and read-only in look, never below 1
   const style = css('ui/components/WorkedExample.css');
   assert.doesNotMatch(style, /#[0-9a-f]{3,8}\b|rgba?\(/i, 'tokens only: both themes follow tokens.css');
   assert.doesNotMatch(style, /font-size:\s*\d/, 'sizes from tokens (caption 14 px at least)');
-  assert.match(style, /\.ng-wex-toggle \{[^}]*color: var\(--ng-muted\);/, 'a quiet link: muted…');
-  assert.match(style, /\.ng-wex-words \{[^}]*text-decoration: underline;/, '…its words underlined');
+  assert.match(style, /\.ng-wex-toggle \{[^}]*border: 1px solid var\(--ng-stroke\);[^}]*color: var\(--ng-text\);[^}]*font-weight: 700;/, 'a secondary button: the weight of «Підказка» (B3)');
   assert.match(style, /\.ng-wex-toggle \{[^}]*min-height: var\(--ng-target\);/, 'a full target');
-  assert.match(style, /\.ng-wex-toggle \{[^}]*margin: 0 -6px;/, 'no vertical overhang: its target takes its own space (disjoint from the neighbouring controls)');
   assert.match(style, /\.ng-wex-card \{[^}]*border: 1px dashed var\(--ng-stroke\);[^}]*color: var\(--ng-muted\);[^}]*font-size: var\(--ng-font-caption\);/, 'muted, dashed: not a field');
   assert.match(style, /\.ng-wex-toggle:focus-visible \{[^}]*outline: var\(--ng-focus-width\) solid var\(--ng-focus\)/);
   assert.doesNotMatch(style, /display: none|visibility: hidden/, 'the live region is never removed from the tree');
@@ -163,7 +161,7 @@ test('WorkedExample in Chromium: the folded row keeps a first view\'s R5 essenti
         const line = document.querySelector('.ng-action-line').getBoundingClientRect(), label = document.querySelector('.ng-wex-label').getBoundingClientRect();
         const style = getComputedStyle(document.querySelector('.ng-wex-toggle'));
         return { control: document.querySelector('.fx-choice').getBoundingClientRect().top, under: label.top >= line.bottom - 1, size: parseFloat(style.fontSize), colour: style.color,
-          muted: getComputedStyle(document.querySelector('[data-theme]')).getPropertyValue('--ng-muted').trim() };
+          muted: getComputedStyle(document.querySelector('[data-theme]')).getPropertyValue('--ng-muted').trim(), plain: getComputedStyle(document.querySelector('[data-theme]')).getPropertyValue('--ng-text').trim() };
       });
       // R5 with the folded row in place, and the gate's row check.
       assert.deepEqual(reasons(await must(page)), [], `${at}: the first view's essentials pass with the folded row`);
@@ -183,12 +181,12 @@ test('WorkedExample in Chromium: the folded row keeps a first view\'s R5 essenti
       assert.deepEqual([await page.evaluate(() => document.activeElement.className), await expanded()], ['fx-choice', 'false'], `${at}: the first control's top edge reaches the control, not the toggle`);
       await page.mouse.click(midX, line.bottom - 1);
       assert.equal(await expanded(), 'false', `${at}: the action line's bottom edge doesn't toggle it`);
-      // The folded row and its words: under the action line, its 44 px target plus a gap (about 50 px), muted, 14 px.
+      // The folded row and its words: under the action line, its 44 px target plus a gap (about 50 px), a button's weight (round 9, B3).
       assert.ok(first.under, `${at}: the toggle's words are below the action line`);
       const added = first.control - before;
       assert.ok(added > 0 && added <= 56, `${at}: the folded row adds ${added} px above the first control`);
-      assert.equal(first.size, 14);
-      assert.equal(first.colour, (await page.evaluate(hex => { const d = document.createElement('i'); d.style.color = hex; document.body.append(d); const c = getComputedStyle(d).color; d.remove(); return c; }, first.muted)), `${at}: muted`);
+      assert.equal(first.size, 16);
+      assert.equal(first.colour, (await page.evaluate(hex => { const d = document.createElement('i'); d.style.color = hex; document.body.append(d); const c = getComputedStyle(d).color; d.remove(); return c; }, first.plain)), `${at}: a button's text colour`);
       assert.deepEqual(reasons(await must(page, [{ sel: EXAMPLE_LABEL, count: 1 }])), [], `${at}: the folded row itself is readable`);
       // Tab: the toggle, then the first control (the closed example holds nothing to reach).
       await page.evaluate(() => document.querySelector('.ng-wex-toggle').focus());
@@ -205,9 +203,9 @@ test('WorkedExample in Chromium: the folded row keeps a first view\'s R5 essenti
           live: window.__region.getAttribute('aria-live'), label: toggle.textContent, text: card.innerText.replace(/\s+/g, ' ').trim(),
           colour: getComputedStyle(card).color, value: getComputedStyle(card.querySelector('.ng-wex-value')).fontFamily };
       });
-      assert.deepEqual({ ...opened, colour: undefined, value: undefined }, { expanded: 'true', same: true, live: 'polite', label: 'Приклад ▾ готова відповідь (інші числа)',
+      assert.deepEqual({ ...opened, colour: undefined, value: undefined }, { expanded: 'true', same: true, live: 'polite', label: 'Приклад: як це розв’язують ▾',
         text: 'приклад · інші числа R1 → LAN-C 192.0.2.0/24, сусід 198.51.100.2 Мережа Маска Наступний перехід ✓ 192.0.2.0 255.255.255.0 198.51.100.2 Мережа — адреса блоку, не адреса вузла.', colour: undefined, value: undefined }, at);
-      assert.equal(opened.colour, first.colour, `${at}: the card is muted too`);
+      assert.equal(opened.colour, await page.evaluate(hex => { const d = document.createElement('i'); d.style.color = hex; document.body.append(d); const c = getComputedStyle(d).color; d.remove(); return c; }, first.muted), `${at}: the card is muted`);
       assert.match(opened.value, /Courier New|monospace/, 'values in monospace');
       assert.deepEqual(reasons(await gateCheck(page, 'example-open')), [], `${at}: example-open passes the gate's check`);
       assert.deepEqual(reasons(await must(page, ['.ng-wex-card .ng-wex-tag', '.ng-wex-card .ng-wex-context', '.ng-wex-card tbody td', '.ng-wex-card th', '.ng-wex-card .ng-wex-note'])), [], `${at}: the opened card is readable, in view, unclipped`);

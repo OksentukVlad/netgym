@@ -29,11 +29,11 @@ for (const vendor of vendors) for (const level of [1, 2, 3]) {
       assert.deepEqual(task, before, 'evaluation does not mutate the task or broken config');
       if (otherAddresses) assert.notEqual(task.network, '192.168.88.0');
       if (id === 'exhausted') {
-        assert.equal(task.task, 'ПК2 не має мережі.'); assert.equal(result.clientId, 'pc2');
+        assert.equal(task.task, 'ПК2: одна з перевірок мережі не проходить.'); assert.equal(result.clientId, 'pc2');
         assert.equal(evaluate(task.config, task, { clientId: 'pc1' }).ok, true);
         assert.equal(lines.find(l => l.id === 'leases').allocationCount, 3);
         assert.equal(task.leases.length, 3); assert.match(lines.find(l => l.id === 'leases').value, /ПК2: немає оренди/);
-      } else assert.equal(task.task, 'ПК1 не має мережі.');
+      } else assert.equal(task.task, 'ПК1: одна з перевірок мережі не проходить.');
       if (id === 'nat' || id === 'route') assert.equal(result.router.ok, id === 'nat');
       assert.equal(result.router.source, task.topology.wan);
       if (id === 'route') assert.ok(result.router.routes.every(r => r.source === 'connected'));
@@ -237,7 +237,7 @@ test('E4 all four checks pass but capacity or safety rejects: the verdict says s
     c.dhcp.exclusions = [{ from: ip(t, 2), to: ip(t, 49) }, { from: ip(t, 51), to: ip(t, 254) }];
     const r = checkRepair(t, c);
     assert.equal(evaluate(c, t).ok, true); assert.equal(r.code, 'capacity');
-    assert.match(r.text, /^Перевірки проходять, але доступно 1 адрес/);
+    assert.match(r.text, /^Перевірки проходять, але доступно адрес: 1, потрібно: 10/);
     assert.deepEqual(r.target, { field: v === 'cisco' && level === 3 ? 'exclusions' : 'ranges' });
     if (v === 'cisco' && level > 1) {
       const broad = referenceRepair(t); broad.nat.acl = [{ network: '0.0.0.0', wildcard: '255.255.255.255' }];

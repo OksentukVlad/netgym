@@ -46,6 +46,7 @@ function useRoving(count, current, onChoose, locked) {
 /**
  * @param {{ value: 'input'|'forward'|null, onChange: Function, locked?: boolean, decided?: 'input'|'forward'|null,
  *   evidence?: boolean, groupRef?: object, level?: 1|2, labelledBy?: string|null, mine?: boolean }} props
+ * `coming`: the door the walk will show (its words keep their place until then).
  * `decided`: after commitment, the door the filter took (its style; level 2
  * also says so in words inside it). `evidence`: the current message is
  * about this choice. `mine`: the locked choice is the learner's committed
@@ -53,7 +54,7 @@ function useRoving(count, current, onChoose, locked) {
  * Level 1 (round 5): «самому роутеру → input», «іншому пристрою → forward»,
  * and after commitment one line under the pair: «твій вибір: … · фільтр: …».
  */
-export function DoorChoice({ value, onChange, locked = false, decided = null, evidence = false, groupRef = null, mine = false, level = 2, labelledBy = null }) {
+export function DoorChoice({ value, onChange, locked = false, decided = null, coming = null, evidence = false, groupRef = null, mine = false, level = 2, labelledBy = null }) {
   const hooks = ['input', 'forward'];
   const current = hooks.indexOf(value);
   const roving = useRoving(hooks.length, current, i => onChange(hooks[i]), locked);
@@ -70,7 +71,7 @@ export function DoorChoice({ value, onChange, locked = false, decided = null, ev
               ? <>{predictStep.l1Options[hook]} → <b>{hook}</b></>
               : <><b>{ui.hook[hook].split(' — ')[0]}</b> — {ui.hook[hook].split(' — ')[1]}</>}
             {level !== 1 && mine && i === current && <> <span className="ng-fw-yours">{ui.yours}</span></>}
-            {level !== 1 && decided === hook && <span className="ng-fw-decided"> · ✓ {ui.filterChose}</span>}
+            {level !== 1 && (decided ?? coming) === hook && <span className={`ng-fw-decided${decided ? '' : ' ng-fw-hold'}`}> · ✓ {ui.filterChose}</span>}
           </button>
         ))}
       </div>
@@ -107,7 +108,7 @@ function Chips({ chips }) {
  * beside it too (aria-hidden there, so they aren't read twice; nothing
  * moves when focus leaves). No extra tab stops: hover keeps the chip's title.
  */
-export function RuleTable({ rows, value, onChange, locked = false, outcomes = null, lit = 0, end = false, deciding = null, commands = false, rowRef, notes = [], folded = null, evidence = null, mine = true, labelledBy = null }) {
+export function RuleTable({ rows, value, onChange, locked = false, outcomes = null, hold = true, lit = 0, end = false, deciding = null, commands = false, rowRef, notes = [], folded = null, evidence = null, mine = true, labelledBy = null }) {
   const current = rows.findIndex(r => r.id === value);
   const roving = useRoving(rows.length, current, i => onChange(rows[i].id), locked);
   const [focused, setFocused] = useState(null);
@@ -144,9 +145,11 @@ export function RuleTable({ rows, value, onChange, locked = false, outcomes = nu
               {(shown || (locked && selected && mine)) ? (
                 <span className="ng-fw-walk">
                   {locked && selected && mine && <span className="ng-fw-yours">{ui.yours}</span>}
-                  {shown?.text}
+                  {shown?.text ?? (outcomes && hold && <span className="ng-fw-hold" aria-hidden="true">{outcomes[row.at ?? i]?.text}</span>)}
                 </span>
-              ) : outcomes && <span className="ng-fw-walk is-pending" aria-hidden="true">{'\u00a0'}</span>}
+                // Round 9 (B6): while the walk plays the row keeps the height of its coming words, so what's under the table doesn't
+                // move. `hold` is off for «По кроках»: the learner paces it, and the step's row and the verdict must fit together.
+              ) : outcomes && <span className="ng-fw-walk is-pending" aria-hidden="true">{(hold && outcomes[row.at ?? i]?.text) || '\u00a0'}</span>}
             </button>
           );
         })}

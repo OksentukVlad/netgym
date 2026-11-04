@@ -19,7 +19,7 @@ import AddressField from '../../../ui/components/AddressField.jsx';
 import Segmented from '../../../ui/components/Segmented.jsx';
 import Purpose from '../../../ui/components/Purpose.jsx';
 import { uk } from '../../../ui/uk.js';
-import { labels, screen } from '../uk.js';
+import { fault, labels, screen } from '../uk.js';
 import TextField from './TextField.jsx';
 
 const w = screen.fault;
@@ -77,7 +77,7 @@ function Control({ field, label, value, onChange, onEnter, readOnly, invalid }) 
     // MikroTik's `disabled` (level 3): the server enabled reads «no».
     const native = field.native === 'disabled';
     const options = native
-      ? [{ value: false, label: 'yes' }, { value: true, label: 'no' }]
+      ? [{ value: false, label: fault.disabledYes }, { value: true, label: fault.disabledNo }]
       : [{ value: true, label: w.yes }, { value: false, label: w.no }];
     return <Choice label={label} value={value === true} onChange={set} options={options} readOnly={readOnly} invalid={invalid} />;
   }

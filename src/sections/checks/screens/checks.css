@@ -492,3 +492,9 @@
     order: 3;
   }
 }
+
+/* Earlier observations remain readable without replacing the current rung. */
+.ng-ck-folded summary { cursor: pointer; padding-block: 8px; }
+.ng-ck-folded details[open] .ng-ck-terminal { margin-block: 4px 12px; }
+.ng-ck-key { display: grid; gap: 8px; }
+.ng-ck-key p { margin: 0; }

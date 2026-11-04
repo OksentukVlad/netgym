@@ -2,6 +2,7 @@ export const codes = [
   'typed.svi-enter', 'typed.svi-address', 'typed.svi-up', 'typed.default-gateway', 'checkpoint-login', 'checkpoint-comment',
   'user-before-checkpoint', 'address-before-checkpoint', 'port-before-checkpoint', 'checkpoint-before-disable', 'tip-default-gateway',
   'script-part-1', 'script-part-2', 'script-setup', 'script-as-router', 'hint-cards', 'hint-mode-missing', 'hint-mode-rule', 'hint-bridge-shape',
+  'order-ok', 'hint-modes-router', 'hint-modes-switch', 'hint-modes-where', 'hint-modes-shape',
   'hint-start-router', 'hint-start-switch', 'hint-start-routeros', 'hint-shape', 'hint-recall-mode', 'hint-recall-first', 'hint-recall-almost',
   'ok', 'invalid-record', 'invalid-answer', 'needs-before', 'not-last', 'mode-missing', 'wrong-mode', 'typed-missing',
   'unknown-command', 'ambiguous-keyword', 'missing-part', 'wrong-part', 'extra-part', 'wrong-value', 'other-command', 'unsafe-command',

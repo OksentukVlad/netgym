@@ -73,6 +73,13 @@
 // a shadowing shows its packet and walk (logic witnessFor), as a changed
 // outcome does.
 // The zoom bar follows spec A3 (only when the diagram doesn't fit).
+//
+// Round 9 (B4): «Увесь фільтр» opens with the sentence that makes it tractable
+// (order matters only inside a chain) and shows the chains as two lists, input
+// then forward, numbered on from one to the other. A chain's rules never see
+// the other chain's packets, so the verdicts don't change (byChain, tested),
+// and the one order under them stays the answer: numbers in a verdict are the
+// numbers on the rows.
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { forRecord } from '../logic/order.js';
 import { hintsForState, initialState, transition } from '../logic/order-state.js';
@@ -88,7 +95,7 @@ import { useStore } from '../../../ui/useStore.js';
 import ReorderList from '../../../ui/components/ReorderList.jsx';
 import Purpose from '../../../ui/components/Purpose.jsx';
 import ActionLine from '../../../ui/components/ActionLine.jsx';
-import WorkedExample from '../../../ui/components/WorkedExample.jsx';
+import WorkedExample, { useFirstVisit } from '../../../ui/components/WorkedExample.jsx';
 import CopyBlock from '../../../ui/components/CopyBlock.jsx';
 import TextEquivalent, { TextEquivalentButton, lineCount } from '../../../ui/components/TextEquivalent.jsx';
 import DiagramExpand, { ExpandButton, useDiagramExpand, useTextOpen } from '../../../ui/topology/DiagramExpand.jsx';
@@ -97,7 +104,7 @@ import FirewallDiagram from './FirewallDiagram.jsx';
 import PacketCard from './PacketCard.jsx';
 import { cardLines, natRuleOf } from './walkView.js';
 import { nextSeed } from './round.js';
-import { TIPS, hint2Text, orderRows, orderScene, orderTextSections, quoted, taskLines, walkRows } from './orderView.js';
+import { TIPS, byChain, CHAINS, hint2Text, orderRows, orderScene, orderTextSections, quoted, taskLines, walkRows } from './orderView.js';
 import { comprehension, orderText, orderUi, t, ui } from '../uk.js';
 import '../../../ui/tokens.css';
 import './firewall.css';
@@ -198,7 +205,13 @@ export default function OrderView({ bank }) {
   const { state: store } = useStore();
   const earned = earnedBy(store.instances, identity => (identity.exerciseId === logic.id ? identity.variantId : null));
   const stored = ex.view.orderState;
-  const state = stored?.instanceKey === task.instanceKey ? stored : initialState(task);
+  // The chains' own lists read the one order as input, then forward (B4).
+  const split = variant.id === 'all';
+  const state = useMemo(() => {
+    const base = stored?.instanceKey === task.instanceKey ? stored : initialState(task);
+    return split ? { ...base, answer: { ...base.answer, order: byChain(task, base.answer.order) } } : base;
+  }, [stored, task, split]);
+  const firstVisit = useFirstVisit(split ? 'firewall-all' : null);
 
   const root = useRef(null);
   const layout = useLayout(root);
@@ -211,6 +224,7 @@ export default function OrderView({ bank }) {
   const expand = useDiagramExpand({ zoom: ex.view.zoom, onZoom: zoom => ex.setView({ zoom }) });
 
   const rows = useMemo(() => orderRows(task, state.answer.order), [task, state.answer.order]);
+  const lists = split ? CHAINS.map(chain => rows.filter(row => row.chain === chain)) : [rows];
   // A reveal sets aside the check before it: no row mark, «Ще ні» or packet
   // from it stays beside the answer; a check after the reveal shows as usual.
   const revealedAt = ex.view.orderRevealedAt?.instanceKey === task.instanceKey ? ex.view.orderRevealedAt.presses : null;
@@ -392,7 +406,7 @@ export default function OrderView({ bank }) {
   // The chains grouped inside the one list: an edge per chain, a divider where it changes.
   const rowClass = (row, index) => {
     const outcome = walk?.byId[row.id];
-    const change = index > 0 && rows[index - 1]?.chain !== row.chain;
+    const change = !split && index > 0 && rows[index - 1]?.chain !== row.chain;
     return [`is-chain-${row.chain}`, change && 'is-chain-change', marked.has(row.id) && 'is-marked', outcome && `is-walk is-walk-${outcome.state}`].filter(Boolean).join(' ');
   };
 
@@ -411,10 +425,10 @@ export default function OrderView({ bank }) {
             options={record.variants.map(v => ({ value: v.id, label: <>{v.title}<DoneMark done={earned.has(v.id)} /></>, step: v.title }))} />
         </header>
         <div className="ng-fw-intro ng-fwo-intro">
+          {/* Where the list holds both chains: the order matters within each one only. First: it makes the task tractable. */}
+          {new Set(task.rules.map(r => r.chain)).size > 1 && <p className="ng-fwo-ordering">{comprehension.ordering}</p>}
           <p className="ng-fwo-task">{sentence}</p>
           <div className="ng-fwo-goal"><GoalLines goals={goals} nat={nat} /></div>
-          {/* Where the list holds both chains: the order matters within each one only. */}
-          {new Set(task.rules.map(r => r.chain)).size > 1 && <p className="ng-fwo-ordering">{comprehension.ordering}</p>}
           {/* Below two columns (round 5, 5b-2 B): the diagram is after the list, so the router's own addresses are a line here. */}
           {layout !== 'two' && (
             <p className="ng-fwo-strip">{`${ui.routerAddresses}: `}{task.topology.router.interfaces.map((i, k) => (
@@ -427,15 +441,22 @@ export default function OrderView({ bank }) {
       </div>
 
       <section className="ng-fwo-work" aria-label={orderUi.list}>
-        <div id="ng-fwo-list" ref={listRef} className="ng-fwo-list">
+        <div id="ng-fwo-list" ref={listRef} className={`ng-fwo-list${split ? ' is-split' : ''}`}>
           {/* A passing list says so in the same place (repair v1, Fable 3); an edit brings the action back. */}
           <ActionLine id="ng-fwo-action">{solved ? orderUi.actionDone : orderUi.action}</ActionLine>
-          <WorkedExample taskKey={task.instanceKey} context={EXAMPLE.context} rows={EXAMPLE_LINES} />
+          <WorkedExample taskKey={task.instanceKey} context={EXAMPLE.context} rows={EXAMPLE_LINES} autoOpen={firstVisit} />
           <h2 id="ng-fwo-policy" ref={listHeading} tabIndex={-1} className="ng-fwo-policy">{session.revealed ? orderUi.yours : quoted(orderUi.policy)}</h2>
-          <ReorderList items={rows} label={orderUi.list} name={row => quoted(row.description)} onReorder={onReorder}
-            rowClassName={rowClass} showHelp={false}>
-            {row => <RuleBody row={row} marked={markOf(row.id)} outcome={walk?.byId[row.id] ?? null} current={row.id === evidenceId} />}
-          </ReorderList>
+          {lists.map((items, at) => (
+            <Fragment key={split ? items[0].chain : 'rules'}>
+              {split && <h3 className="ng-fwo-chain-head"><Chain chain={items[0].chain} /> {orderUi.chainHeads[items[0].chain]}</h3>}
+              <ReorderList items={items} label={split ? `${orderUi.list}: ${items[0].chain}` : orderUi.list} name={row => quoted(row.description)}
+                start={1 + lists.slice(0, at).reduce((n, list) => n + list.length, 0)}
+                onReorder={(order, moved) => onReorder(lists.flatMap((list, k) => (k === at ? order : list.map(row => row.id))), moved)}
+                rowClassName={rowClass} showHelp={false}>
+                {row => <RuleBody row={row} marked={markOf(row.id)} outcome={walk?.byId[row.id] ?? null} current={row.id === evidenceId} />}
+              </ReorderList>
+            </Fragment>
+          ))}
           {walk?.end && <p className="ng-fwo-end">{ui.chainEnd(walk.end.chain)} — {walk.end.text}</p>}
           {walk?.assumptions.map(line => <p key={line} className="ng-fw-note">{line}</p>)}
         </div>
@@ -451,7 +472,7 @@ export default function OrderView({ bank }) {
             revealed: session.revealed, onReveal, label: orderUi.revealButton, heading: orderText('order-reveal-label'),
             render: () => ex.solution && (
               <ol className="ng-fwo-answer">
-                {orderRows(task, ex.solution.order).map(row => (
+                {orderRows(task, split ? byChain(task, ex.solution.order) : ex.solution.order).map(row => (
                   <li key={row.id}><Chain chain={row.chain} /> <span className="ng-fw-action">{row.action}</span> {row.description}</li>
                 ))}
               </ol>

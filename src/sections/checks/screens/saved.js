@@ -9,7 +9,8 @@ import { MAX_SEED } from './seeds.js';
 const seed = between(0, MAX_SEED);
 const task = shape({ seed }, ['seed']);
 const levels = value => shape({ level: between(1, 2), tasks: mapOf(task) }, ['level', 'tasks'])(value) && Object.hasOwn(value.tasks, value.level);
-const place = shape({ exercise: oneOf(...EXERCISES), proof: task, ladder: levels, claims: levels }, ['exercise', 'proof', 'ladder', 'claims']);
+const proofPlace = shape({ seed, scope: oneOf('access') }, ['seed']);
+const place = shape({ exercise: oneOf(...EXERCISES), proof: proofPlace, ladder: levels, claims: levels }, ['exercise', 'proof', 'ladder', 'claims']);
 const vendor = oneOf('cisco', 'mikrotik', 'routeros');
 const ids = listOf(text);
 const versions = logic => id => matches(id, { version: logic.version, generatorVersion: logic.generatorVersion }) && seed(id.seed) && vendor(id.vendor);
@@ -22,7 +23,7 @@ export const saved = Object.freeze({
     [ladder.id]: {
       identity: leveled(ladder),
       view: shape({
-        index: count, rows: listOf(shape({ id: text, arg: any }, ['id'])), stopped: bool, places: ids,
+        index: count, rows: listOf(shape({ id: text, arg: any, trustHostKey: bool }, ['id'])), stopped: bool, places: ids,
         healthy: count, checks: count, attempt: count,
       }),
     },

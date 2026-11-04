@@ -180,7 +180,8 @@ test('A6: amended Ukrainian task, hint and Rules copy is available without scree
   assert.equal(hintQuestions['5'], 'Куди йде невідомий трафік, а які мережі лежать у протилежному напрямку?');
   assert.match(hintQuestions['13'], /вирівняні/);
   assert.equal(ui.shared.rulesDefaultDirection, 'Тому default пишемо лише вгору — до інтернету чи до центру, ніколи назустріч.');
-  assert.equal(ui.shared.rulesExactSummary, 'Сумарний маршрут має точно охоплювати потрібні мережі.');
+  assert.match(ui.shared.rulesExactSummary, /лише коли цього вимагає умова/);
+  assert.doesNotMatch(ui.shared.rulesExactSummary, /має точно/, 'Astra 8: «exactly» contradicted the discard lesson');
   assert.equal(networkUi.down, 'Якщо лінк до ISP1 недоступний');
   assert.match(tasks[6].variants[0].text, /HUB відкидає невідомий трафік/);
   assert.match(tasks[7].variants[0].text, /без default/);

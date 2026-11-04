@@ -8,6 +8,8 @@
 // The place `dhcp` keeps the exercise, the levels and each task's seed (a
 // first task on the base addresses, later ones on renumbered ones: the
 // logic's otherAddresses), so coming back restores where the learner was.
+import { useEffect, useRef } from 'react';
+import { scrollAreaOf } from '../../../ui/phone.js';
 import { usePlace, usePref } from '../../../ui/useStore.js';
 import { BarControls, SheetCaption } from '../../../ui/BarSlot.jsx';
 import Segmented from '../../../ui/components/Segmented.jsx';
@@ -42,9 +44,20 @@ export default function DhcpScreen() {
   const syntax = SYNTAXES.includes(syntaxPref) ? syntaxPref : 'cisco';
   const vendor = syntax === 'routeros' ? 'mikrotik' : 'cisco';
   const exercise = EXERCISES.includes(place.exercise) ? place.exercise : 'sides';
+  const sectionRef = useRef(null);
+  const current = place[exercise];
+  const navigationKey = `${exercise}:${current?.level ?? ''}:${JSON.stringify(current?.tasks?.[current?.level] ?? current)}`;
+  const previous = useRef(navigationKey);
+  useEffect(() => {
+    if (previous.current !== navigationKey) {
+      const area = scrollAreaOf(sectionRef.current);
+      if (area) area.scrollTop = 0;
+      previous.current = navigationKey;
+    }
+  }, [navigationKey]);
   const props = { vendor, place, setPlace };
   return (
-    <div className="ng-dh" data-theme={themeName} data-exercise={exercise}>
+    <div ref={sectionRef} className="ng-dh" data-theme={themeName} data-exercise={exercise}>
       <BarControls>
         <div className="ng-dh-controls">
           <SheetCaption label={screen.exercise} />

@@ -1,6 +1,7 @@
 import { strictIp, parseFields, isNull0 } from '../../../engine/vendors/fields.js';
 import { maskToPrefix, isNetworkAddress, contains, network, broadcast } from '../../../engine/ip.js';
 import { normIp, normalizeAnswer } from './normalise.js';
+import { slotDestination } from './routes.js';
 
 export const reasonCodes = [
   'empty', 'invalid-ip', 'invalid-prefix', 'dst-not-network', 'wrong-destination',
@@ -34,9 +35,12 @@ export function rowReasons(task, routerId, rowIndex, fields, syntax, verdict) {
   if (verdict.dstOk === false) {
     // Use the vendor parser with a valid synthetic gateway so only the destination is diagnosed.
     const parsed = parseFields({ dst: values.dst, gw: '198.51.100.1' }, 'routeros');
+    const own = row ? slotDestination(task, row) : null;
     reasons.dst = !values.dst ? 'empty' : !strictIp(values.dst.split('/')[0]) ? 'invalid-ip'
       : parsed.code === 'invalid-prefix' ? 'invalid-prefix'
-        : parsed.code === 'dst-not-network' ? 'dst-not-network' : 'wrong-destination';
+        // The row's own network under another prefix: the prefix is what's wrong, however it divides the address.
+        : own && values.dst.split('/')[0] === own.dst ? 'wrong-mask'
+          : parsed.code === 'dst-not-network' ? 'dst-not-network' : 'wrong-destination';
   }
   if (verdict.maskOk === false) {
     reasons.mask = !values.mask ? 'empty' : values.mask.startsWith('/') ? 'mask-not-dotted'

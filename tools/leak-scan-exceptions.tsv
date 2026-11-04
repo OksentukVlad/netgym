@@ -15,3 +15,4 @@ pages/OFL.txt	email	Copyright 2016 The Nunito Project Authors (contact@sansoxyge
 pages/THIRD_PARTY_NOTICES.md	email	Copyright 2016 The Nunito Project Authors (contact@sansoxygen.com),
 pages/third-party-notices.html	email	Copyright 2016 The Nunito Project Authors (contact@sansoxygen.com),
 tests/round5b2-content.test.mjs	assessment	for (const copy of [ip, routing, vlan, fw, setup]) for (const value of Object.values(copy)) if (typeof value === 'string') assert.doesNotMatch(value, /іспит|екзамен|\bклас\b/iu);
+tests/shared-parts.test.mjs	assessment	assert.doesNotMatch(html, /ng-done|навчальн|екзамен|клас/u, 'no ✓ before anything is solved; no class or exam in its words');

@@ -188,7 +188,10 @@ export function hints(task, answer, { result, snapshot: observed, rung = 2, assi
   const fixed = !stop && currentPass(task, result, answer ?? initialAnswer(task));
   // Its params are the words' own (t('routing-faults.fault-hint-question', params) === text); the ids stay in repairRouter.
   const said = stop && spoken(task, stop);
-  const list = [{ rung: 1, code: 'fault-hint-question', text: said ? faultText.stopped(said) : faultText.compare, params: said ?? {} },
+  // After a check the verdict already says where it stopped (Олена): rung 1 then says where to look.
+  const look = Boolean(said) && result?.fixOk === false && !said.lost;
+  const first = { ...said, ...(look ? { look: true } : {}) };
+  const list = [{ rung: 1, code: 'fault-hint-question', text: look ? faultText.look(said) : said ? faultText.stopped(said) : faultText.compare, params: said ? first : {} },
     { rung: 2, code: 'fault-hint-evidence', text: fixed ? faultText.causeMove : stop ? faultText.move : faultText.scopeMove,
       params: { fixed, noStop: !stop } }];
   if (rung >= 3 && assisted) list.push({ rung: 3, code: 'fault-hint-example', assisted: true,

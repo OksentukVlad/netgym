@@ -22,7 +22,7 @@ export function cardBank(topology = createTopology()) {
     id: cardId, side: cardId.startsWith('wan-') ? 'WAN' : 'LAN',
     purpose: typeof words.purpose === 'function' ? words.purpose(t.providerDns[0]) : words.purpose,
     ...(words.detail ? { detail: words.detail(t.providerDns[0]) } : {}),
-    native: native[cardId], why: words.why,
+    native: native[cardId], why: words.why, ciscoNote: words.ciscoNote,
   }));
 }
 
@@ -35,13 +35,14 @@ export function createRound(seed = 0, options = {}) {
   return rng.shuffle([...required, ...rng.shuffle(bank.filter(c => c.side === 'LAN' && c.id !== 'lan-dns')).slice(0, 2)]);
 }
 
-export function check(card, side) {
+export function check(card, side, vendor = 'cisco') {
   if (!card || !['WAN', 'LAN'].includes(card.side) || !['WAN', 'LAN'].includes(side)) {
     return { ok: false, kind: 'info', code: 'invalid-choice', text: findings.invalidChoice };
   }
+  const why = [card.why, ...(vendor === 'cisco' && card.ciscoNote ? [card.ciscoNote] : [])].join(' ');
   return {
-    ok: card.side === side, kind: 'verdict', side: card.side, why: card.why,
-    text: `${card.side === side ? verdicts.correct : verdicts.incorrect} ${card.why}`,
+    ok: card.side === side, kind: 'verdict', side: card.side, why,
+    text: `${card.side === side ? verdicts.correct : verdicts.incorrect} ${why}`,
     highlight: { kind: 'port', value: card.side === 'WAN' ? 'ether1' : 'bridge' },
   };
 }

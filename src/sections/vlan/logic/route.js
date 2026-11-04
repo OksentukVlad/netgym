@@ -182,6 +182,11 @@ function verdictLocation(task, compiled, finding, evidence, syntax, answer) {
   const end = fallback ? peer(task.topology, fallback.device, 'nic') : null;
   const ingressVid = end && compiled.tables[end.device]?.ports[end.port]?.pvid;
   const wrongIngress = Number.isInteger(ingressVid) && ingressVid !== task.goals[fallback?.device];
+  // The failing side's gateway is no interface's address: R1 is the device to fix, whatever the access ports say (Андрій 2).
+  const sender = task.topology.hosts.find(h => h.device === trace?.from);
+  if (!wrongIngress && !stop && !fieldPort && sender?.gateway && !evidence.attachments?.some(a => a.ip === sender.gateway)) {
+    return { device: 'R1', gateway: sender.gateway };
+  }
   const device = wrongIngress ? end.device : stop?.device ?? (fieldPort ? finding.entity : end?.device);
   const portId = wrongIngress ? end.port : stop?.port ?? fieldPort ?? end?.port;
   if (!device || !portId) return null;

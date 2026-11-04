@@ -48,6 +48,10 @@ export const zoom = value => value === null || value === 'all' || Number.isFinit
 /** The asides a screen's place can also hold (ui/components/Aside.jsx). */
 export const asides = Object.freeze({ asides: mapOf(bool), started: bool });
 
+/** Which hard screens' examples have opened by themselves (useFirstVisit): a place of its own,
+ * outside the sections' URLs, so a link can't bring a first visit back. */
+export const firstVisits = Object.freeze({ examples: mapOf(bool) });
+
 /** A check's finding, as far as the shared code reads it. */
 export const finding = shape({ code: text, severity: text, params: isObject });
 

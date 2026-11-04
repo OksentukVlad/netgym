@@ -420,7 +420,7 @@ test('firewall screen: a revealed card shows 👁, says so, and the round can\'t
   assert.match(region(clean, 'ng-help-next'), /Далі/);
 });
 
-test('firewall screen: hints for the current uncommitted card stay open for later cards (S3)', () => {
+test('firewall screen: hints belong to the card on screen; the next card starts its own ladder (Андрій)', () => {
   const { html, task } = render({ session: { hintIndex: 2, assisted: true } });
   const help = region(html, 'class="ng-help"');
   // Round 5: hint 1 compares this card's «Куди» (logic's chainText with the card's params).
@@ -430,7 +430,8 @@ test('firewall screen: hints for the current uncommitted card stay open for late
   const st = commit(task, initialCommitState(task), task.cards[0].id, { hook: 'input', decidedBy: 'r1' });
   const committed = region(render({ view: { commit: st }, session: { hintIndex: 2 } }).html, 'class="ng-help"');
   assert.ok(!committed.includes(t('hint-order')) && !/Підказка 3 з 3/.test(committed), 'no ladder on a committed card');
-  assert.ok(region(render({ view: { commit: st, position: 1 }, session: { hintIndex: 2 } }).html, 'class="ng-help"').includes(t('hint-order')));
+  const next = region(render({ view: { commit: st, position: 1, cardHints: { [task.cards[0].id]: 2 } }, session: { hintIndex: 2 } }).html, 'class="ng-help"');
+  assert.ok(!next.includes(t('hint-order')) && /Підказка 1 з 3/.test(next), 'a new card: nothing carried over, the counter at 1');
   assert.equal(region(html, 'class="ng-fw-help"'), null, 'no hint block under the diagram (round 4)');
 });
 

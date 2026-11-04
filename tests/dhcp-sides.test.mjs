@@ -17,7 +17,7 @@ test('E1: every card has one side, both native lines and correct-side feedback e
     assert.equal(wrong.highlight.value, card.side === 'WAN' ? 'ether1' : 'bridge');
   }
   assert.match(cards.find(c => c.id === 'wan-dns').detail, /203\.0\.113\.53.*WAN/);
-  assert.match(sideCards['wan-route'].why, /254/);
+  assert.match(sideCards['wan-route'].ciscoNote, /254/);
   assert.match(cards.find(c => c.id === 'wan-route').native.cisco, /опція router/);
   assert.equal(check(cards[0], '').kind, 'info');
 });

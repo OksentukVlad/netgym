@@ -18,6 +18,7 @@ export { RoutingScreen, MaskScreen, maskRulerCaption, commandCaptionOf, rulerFor
 /** A store for tests: `render(Component, props)` renders inside it. */
 export function testStore(prefs) {
   const store = { state: initialStore(prefs) };
+  store.state.places.examples = { 'routing-15': true };   // a later visit: task 15's example opens by itself once only
   store.dispatch = action => { store.state = storeReducer(store.state, action); };
   store.render = (Component, props = {}) => renderToStaticMarkup(
     <StoreContext.Provider value={{ state: store.state, dispatch: store.dispatch }}><Component {...props} /></StoreContext.Provider>,

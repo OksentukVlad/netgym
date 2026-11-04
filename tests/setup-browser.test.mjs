@@ -33,7 +33,7 @@ async function bundle() {
 /** In the page: each deck row's purpose, command and prompt group boxes, and the purpose's line count. */
 function rowBoxes() {
   const box = el => (el ? (({ top, bottom }) => ({ top, bottom }))(el.getBoundingClientRect()) : null);
-  return [...document.querySelectorAll('.ng-reorder-item .ng-su-row')].map(row => {
+  return [...document.querySelectorAll('.ng-reorder-item .ng-su-row, .ng-su-modes-deck .ng-su-row')].map(row => {
     const purpose = row.querySelector('[data-purpose]');
     const range = document.createRange();
     range.selectNodeContents(purpose);
@@ -65,8 +65,14 @@ test('setup decks in Chromium: purpose-first rows (one line, the prompt group on
         assert.deepEqual(rows.filter(r => r.lines !== 1).map(r => r.text), [], `${label}: every purpose is one line`);
         assert.deepEqual(rows.filter(r => r.term.top < r.purpose.bottom - 1).map(r => r.text), [], `${label}: the command under its purpose`);
         if (deck !== 'dr-3') {
+          // Round 9 (B1): the modes wait for their own step.
+          assert.deepEqual(rows.filter(r => r.group).map(r => r.text), [], `${label}: no prompt group on the order step`);
+          await page.evaluate(d => window.setup.toModes(d), deck);
+          await page.waitForSelector('.ng-su-modes-deck');
+          const moded = await page.evaluate(rowBoxes);
+          assert.deepEqual(moded.filter(r => r.lines !== 1).map(r => r.text), [], `${label}: every purpose is one line on the modes step`);
           // One band: the group's middle within the command's box, and clear of the purpose.
-          assert.deepEqual(rows.filter(r => {
+          assert.deepEqual(moded.filter(r => {
             const mid = (r.group.top + r.group.bottom) / 2;
             return mid < r.term.top - 1 || mid > r.term.bottom + 1 || r.group.top < r.purpose.bottom - 1;
           }).map(r => r.text), [], `${label}: the prompt group on the command's line`);

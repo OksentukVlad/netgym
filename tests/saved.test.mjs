@@ -332,6 +332,16 @@ test('secrets: the backstop drops command strings anywhere in the instance; ids 
   assert.equal(view.kept, 'enable secret <пароль>');
 });
 
+test('saved: the setup decks\' modes step comes back as it was (round 9, B1); a first visit stays used', () => {
+  const { key, instance } = exercises['setup-drill'];
+  const modes = { ...instance, view: { ...instance.view, setup: { ...instance.view.setup, phase: 'modes', feedback: null, typedFeedback: {}, answer: { ...instance.view.setup.answer, typed: {} } }, setupCheck: null } };
+  assert.equal(read(blobOf({ [key]: modes })).instances[key].view.setup.phase, 'modes');
+  assert.equal(h.redactorOf(target)(key, modes).view.setup.phase, 'modes');
+  const blob = places => JSON.stringify({ version: VERSION, gen: 0, instances: {}, prefs: {}, places });
+  assert.deepEqual(read(blob({ examples: { setup: true, 'routing-15': true } })).places.examples, { setup: true, 'routing-15': true }, 'the example never opens by itself again after a refresh');
+  assert.equal(read(blob({ examples: { setup: 'yes' } })).places.examples, undefined);
+});
+
 test('secrets: a sorted deck keeps its order, ids and verdict; the reveal stays honest, its reference lines shown', () => {
   const { key, instance } = exercises['setup-drill'];
   const clean = h.redactorOf(target)(key, instance);

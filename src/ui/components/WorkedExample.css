@@ -1,4 +1,4 @@
-/* The worked example (round 5, spec 5b-2 A): a quiet link under the action
+/* The worked example (round 5, spec 5b-2 A): a button under the action
    line and, opened, a muted read-only card. Tokens only, so both themes
    follow tokens.css (muted text is at least 4.5:1 on the panels:
    tests/contrast.test.mjs). Text never below 14 px. */
@@ -9,43 +9,39 @@
   min-width: 0;
 }
 
-/* A link-style button with a full 44 px target that takes its own space:
-   no vertical overlap, so its target and the neighbouring controls' never
-   meet (the gate checks it). Only the 6 px side padding hangs out, so the
-   words line up with the action line. */
+/* Round 9 (B3): a secondary button, the weight of «Підказка» (Button.css), so
+   it reads as help on offer. A full 44 px target in its own space: its target
+   and the neighbouring controls' never meet (the gate checks it). */
 .ng-wex-toggle {
   display: inline-flex;
   align-items: center;
   box-sizing: border-box;
   min-height: var(--ng-target);
-  margin: 0 -6px;
-  padding: 0 6px;
-  background: transparent;
-  border: 0;
+  padding: 0 16px;
+  background: var(--ng-input-bg);
+  border: 1px solid var(--ng-stroke);
   border-radius: var(--ng-radius);
-  color: var(--ng-muted);
-  font-family: var(--ng-sans);
-  font-size: var(--ng-font-caption);
-  font-weight: 400;
-  line-height: 1.3;
+  color: var(--ng-text);
+  font-family: var(--ng-mono);
+  font-size: var(--ng-font-small);
+  font-weight: 700;
+  line-height: 1.2;
   text-align: left;
   cursor: pointer;
 }
 
-/* The words are underlined as a link; the arrow and the spaces around it are not. */
-.ng-wex-words {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+.ng-wex-toggle:hover {
+  background: var(--ng-blue-bg);
+  border-color: var(--ng-blue);
 }
 
-.ng-wex-toggle:hover,
 .ng-wex-toggle[aria-expanded="true"] {
-  color: var(--ng-text);
+  border-color: var(--ng-blue);
 }
 
 .ng-wex-toggle:focus-visible {
   outline: var(--ng-focus-width) solid var(--ng-focus);
-  outline-offset: -2px;
+  outline-offset: 2px;
 }
 
 /* The live region: always present, empty (no height) while folded. */

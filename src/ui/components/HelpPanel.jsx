@@ -6,7 +6,9 @@
 // has moved here.
 //
 // Row: [Перевірити] [💡 Підказка n з N] [continueAction] [Далі →], then
-//      «Показати відповідь» on its own line. Round 6: before the task is
+//      «Показати відповідь» on its own line. Round 9 (B8): a primary continue
+//      button takes «Далі →» and the `link` to that line as quiet links, so one
+//      forward action stands out. Round 6: before the task is
 //      passed or revealed, «Далі →» is not in the row: it is the quiet
 //      link «Пропустити →» on that line, after «Показати відповідь». When the hint button goes, an
 //      invisible copy holds its place until the next check press or a new
@@ -21,7 +23,7 @@
 //   hint            the new rung, whole; the verdict shrinks to one line
 //                   above it (its summaryNode stays); earlier rungs fold
 //                   into «Підказки (n)»
-//   edit            unchanged; the verdict line says «до змін» (`stale`),
+//   edit            unchanged; the verdict line says it is from before the edit (`stale`),
 //                   dimmed; a success's detail (about the checked answer)
 //                   folds behind «Детальніше», so a long one shrinks
 //   reveal          render() or the `applied` line; the verdict goes,
@@ -230,7 +232,7 @@ export function bringPanelIntoView(row, current, evidence, behavior = 'auto', { 
  *   layoutKey?: any,                    // the board's layout (default stepKey): a change re-decides the home, keeping the verdict
  *   check?: { label?: string, onCheck: Function, disabled?: boolean } | null,   // null: no check button
  *   verdict?: { tone: 'ok'|'no'|'info', scope?: 'part'|'task', summary: string, summaryNode?: any,
- *               detail?: any, stamp: any } | null,
+ *               detail?: any, stamp: any, stay?: boolean } | null,
  *   stale?: boolean,                    // the answer changed since that verdict
  *   hints?: { texts: string[], shown: number, onMore: Function } | null,
  *   reveal?: { revealed: boolean, onReveal: Function, render: Function, applied?: string,
@@ -419,7 +421,8 @@ export default function HelpPanel(props) {
     if (mem.event === 'reveal' && by === 'reveal') focusRef.current?.focus();
     else if (mem.event === 'hint' && by === 'hint' && shown >= total) focusRef.current?.focus();
     else if (by && focusLost()) buttons.current[primary]?.focus();
-    const settle = settleNow;
+    // `verdict.stay`: this verdict opens a step elsewhere on the board, and the screen brings that into view.
+    const settle = mem.event === 'verdict' && latest.current.verdict?.stay ? () => {} : settleNow;
     if (evidence) {
       evidence();
       (window.requestAnimationFrame ?? (fn => setTimeout(fn, 0)))(settle);
@@ -471,8 +474,11 @@ export default function HelpPanel(props) {
   // With no «Перевірити» and no «Показати відповідь» (a committed card: «Наступний пакет →»), the skip
   // shares the row, after the continue button, rather than taking a line of its own.
   const skipInRow = skip && !check && !revealOpen;
+  // Round 9 (B8, Fable 10): one forward action stands out. With a continue button as the primary,
+  // «Далі →» and the link to another section are quiet links on the line under it.
+  const quietForward = Boolean(continueAction) && primary === 'continue' && Boolean(next) && !skip;
   const nextWords = <>
-    {next?.label ? next.label : <>{skip ? uk.help.skip : uk.nextName}<span aria-hidden="true"> →</span></>}
+    {next?.label ? next.label : <>{skip ? next?.skipLabel ?? uk.help.skip : uk.nextName}<span aria-hidden="true"> →</span></>}
     {next?.destination && <span className="ng-sr-only">, {next.destination}</span>}
   </>;
 
@@ -491,14 +497,16 @@ export default function HelpPanel(props) {
       {continueAction && (
         <Button ref={keep('continue')} variant={variant('continue')} className="ng-help-continue" onClick={press('continue', continueAction.onClick)}>{continueAction.label}</Button>
       )}
-      {next && !skip && (
+      {next && !skip && !quietForward && (
         <Button ref={keep('next')} variant={variant('next')} className="ng-help-next" onClick={press('next', next.onNext)}>{nextWords}</Button>
       )}
       {skipInRow && <Button ref={keep('next')} variant="quiet" className="ng-help-next is-skip" onClick={press('next', next.onNext)}>{nextWords}</Button>}
-      {link && <Button variant="quiet" className="ng-help-link" onClick={link.onClick}>{link.label}</Button>}
+      {link && !quietForward && <Button variant="quiet" className="ng-help-link" onClick={link.onClick}>{link.label}</Button>}
       {/* Its own line, so it never slides under the pointer when the hint button goes; a skip after it. */}
-      {(revealOpen || (skip && !skipInRow)) && (
+      {(revealOpen || (skip && !skipInRow) || quietForward) && (
         <div className="ng-help-row-link">
+          {quietForward && <Button ref={keep('next')} variant="quiet" className="ng-help-next" onClick={press('next', next.onNext)}>{nextWords}</Button>}
+          {quietForward && link && <Button variant="quiet" className="ng-help-link" onClick={link.onClick}>{link.label}</Button>}
           {revealOpen && <Button ref={keep('reveal')} variant="quiet" className="ng-help-reveal-link" onClick={press('reveal', reveal.onReveal)}>{reveal.label ?? uk.showAnswer}</Button>}
           {skip && !skipInRow && <Button ref={keep('next')} variant="quiet" className="ng-help-next is-skip" onClick={press('next', next.onNext)}>{nextWords}</Button>}
         </div>

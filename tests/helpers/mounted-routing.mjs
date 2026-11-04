@@ -46,7 +46,7 @@ const { act, mountRouting, routing, routingBank, syntaxes } = await import('../.
 const { tasks } = routingBank;
 // Round 4 (spec R1): the check is the help panel's «Перевірити» under the rows;
 // what it says is the panel's verdict (badge «✓ Так» or «• Ще ні», then the sentence).
-const SUCCESS = 'Мережа працює: усі пінги проходять в обидва боки.';
+const SUCCESS = 'Маршрути пройшли перевірки моделі: усі пінги проходять в обидва боки.';
 const FAILOVER = 'Якщо лінк до ISP1 недоступний — резерв спрацював.';
 const results = [];
 const check = (name, ok, detail = '') => results.push({ name, ok: Boolean(ok), detail: typeof detail === 'string' ? detail : JSON.stringify(detail) });
@@ -771,7 +771,10 @@ scenario('blur scope vs the network check, across syntaxes', m => {
   selectRouter('R1');
   check('network check after a Cisco blur: MikroTik\'s destination marked (the check wins; scopes translate)', q('#rt-R1-0-dst')?.getAttribute('aria-invalid') === 'true', q('#rt-R1-0-dst')?.getAttribute('aria-invalid'));
   selectRouter('R2');
-  check('network check: an entirely blank guided row gets its fields marked', q('#rt-R2-0-dst')?.getAttribute('aria-invalid') === 'true' && q('#rt-R2-0-gw')?.getAttribute('aria-invalid') === 'true');
+  check('network check: a blank row on a router the check was not pressed on stays unmarked (Олена)', !q('#rt-R2-0-dst')?.hasAttribute('aria-invalid') && !q('#rt-R2-0-gw')?.hasAttribute('aria-invalid') && !q('.ng-rt-reasons'));
+  click(checkNet());
+  selectRouter('R2');
+  check('network check: pressed on that router, its blank row gets its fields marked', q('#rt-R2-0-dst')?.getAttribute('aria-invalid') === 'true' && q('#rt-R2-0-gw')?.getAttribute('aria-invalid') === 'true');
   step(() => m.store.dispatch({ type: 'pref', name: 'syntax', value: 'cisco' }));
 });
 
@@ -1271,6 +1274,39 @@ const drawn = () => all('.ng-path-line').length;
 const routerButton = name => all('.ng-rt-router').find(b => b.textContent.trim() === name);
 const showRouter = name => { if (routerButton(name).getAttribute('aria-pressed') !== 'true') click(routerButton(name)); };
 const rowInputs = () => all('.ng-rf-rowlist li').map(li => li.querySelectorAll('input').map(i => i.value));
+// Round 9 usage review (Олена).
+scenario('round 9: «Перевірити» goes while the rows show the answer', m => {
+  click(q('.ng-rt-help .ng-help-reveal-link'));
+  check('A11: the answer on the rows, nothing of the learner\'s to check', Boolean(q('.ng-rt-commands')) && !checkNet() && Boolean(q('.ng-rt-help .ng-help-next')));
+  click(q('.ng-rt-mine'));
+  check('A11: «Моя відповідь» brings it back, on the learner\'s own rows', Boolean(checkNet()) && !q('.ng-rt-commands'));
+});
+scenario('round 9: a check moves on from a finished router', m => {
+  const hint = () => q('.ng-rt-help .ng-help-hint-button');
+  selectRouter('R1');
+  for (let i = 0; i < 3; i++) click(hint());
+  check('hints: three opened on R1, the button gone', !hint());
+  typeRow('rt-R1-0', { net: '192.168.2.0', mask: '255.255.255.0', gw: '10.0.0.2' });
+  click(checkNet());
+  check('A13: the check opens R2', m.store.state.places.routing.router === 'R2');
+  check('A13: R2\'s untouched rows stay calm: no red, no «Заповни це поле»', !q('.ng-rt-work [aria-invalid="true"]') && !q('.ng-rt-work .ng-rt-reasons'), q('.ng-rt-work')?.textContent.slice(0, 200));
+  check('A13: the action line says R1 is done and what is next', q('.ng-rt-work .ng-action-line')?.textContent === 'На R1 усе правильно. Тепер заповни маршрути на R2.', q('.ng-rt-work .ng-action-line')?.textContent);
+  check('A13: R2 has its own hints', hint()?.textContent.includes('Підказка 1 з 3'), hint()?.textContent);
+});
+scenario('round 9: success says what the model assumes', m => {
+  fill(1);
+  click(checkNet());
+  check('A10: the verdict says «model», the note says the path is simulated; no NAT without an internet', q('.ng-rt-model-note')?.textContent === routingUi.shared.modelNote(false) && /перевірки моделі/.test(q('.ng-rt-help [role="status"]')?.textContent ?? ''), q('.ng-rt-model-note')?.textContent);
+  check('A10: said once', all('.ng-rt-model-note').length === 1);
+});
+scenario('round 9: a wrong mask on a right network', m => {
+  selectRouter('R1');
+  typeRow('rt-R1-0', { net: '192.168.2.0', mask: '255.255.0.0', gw: '10.0.0.2' });
+  click(checkNet());
+  check('A12: the mask is marked, the network is not', q('#rt-R1-0-mask')?.getAttribute('aria-invalid') === 'true' && q('#rt-R1-0-net')?.getAttribute('aria-invalid') !== 'true');
+  check('A12: its words are about the mask', /Адреса мережі правильна/.test(q('.ng-rt-form-mark')?.textContent ?? ''), q('.ng-rt-form-mark')?.textContent);
+});
+
 const hintButton = () => all('button').find(b => /^💡 Підказка/.test(rfText(b)));
 const rowPrefix = li => li.querySelector('input').id.replace(/-(net|dst)$/, '');
 /** Type a route into a row (by its field id prefix). */
@@ -1504,10 +1540,10 @@ rfScenario('RF: each check outcome, and the cause after a passing fix', m => {
   click(againButton());
   check('RF «Далі»: it says it is preparing, on itself and beside the levels', rfText(againButton()) === faultsUi.preparing && rfText(q('.ng-rf-busy')) === faultsUi.preparing);
   const random = Math.random;
-  Math.random = () => 0.0002;
+  Math.random = () => 0.0009;
   try { tick(BUILD); } finally { Math.random = random; }
   const after = m.store.state.places[RF];
-  check('RF «Далі»: the next level the logic offers, a new instance, focus on its table\'s first field', after.level === rfLevels.find(l => l > before.level) && after.seed === 2
+  check('RF «Далі»: the same level (Олена), a new instance, focus on its table\'s first field', after.level === before.level && after.seed === 9
     && document.activeElement === q('.ng-rf-rowlist input') && !q('.ng-rf-causes') && statusText() === '' && !againButton().className.includes('primary') && Boolean(rfCheckButton()), { before, after });
 });
 
@@ -1682,8 +1718,8 @@ rfScenario('RF: the reveal', m => {
     && rfText(q('.ng-rf-reveal-head')) === faultsUi.revealChange(change.router)
     && rfText(q('.ng-rf-change-row.is-was dd')) === faultsUi.noRow
     && rfText(q('.ng-rf-change-row.is-now dd')) === syntaxes.cisco.command({ dst: change.after.dst, prefix: change.after.prefix, via: change.after.via }), rfText(reveal()));
-  check('RF reveal: it marks the instance assisted; the hints go; «Ще одна» joins the check', rfView(m, i.task).rf.assisted === true && Boolean(rfView(m, i.task).rf.reveal)
-    && !q('.ng-hints') && Boolean(rfCheckButton()) && Boolean(againButton()));
+  check('RF reveal: it marks the instance assisted; the hints go; «Перевірити» waits for an edit of the learner\'s table (Олена 1); «Ще одна» is there', rfView(m, i.task).rf.assisted === true && Boolean(rfView(m, i.task).rf.reveal)
+    && !q('.ng-hints') && !rfCheckButton() && Boolean(againButton()));
   // Round 4: the reveal is the cause and the change; the pings after the fix are the pings block's third choice.
   const snapRadio = label => all('.ng-rf-snaps [role="radio"]').find(b => rfText(b) === label);
   check('RF reveal: the original evidence stays: the start\'s failing pings, the first one the evidence', rfText(q('.ng-rf-snaps [aria-checked="true"]')) === faultText.initial

@@ -77,7 +77,9 @@ test('F1: wrong level-1 choice locks exactly once; evidence has only the checked
   assert.deepEqual(FW.check(task, FW.solution(task)).findings, []);
   assert.deepEqual(FW.hints(task).map(h => h.rung), [1, 2, 3]);
   const hint = FW.hints(task)[2];
-  assert.match(chainText(hint.code, hint.params), /У цьому завданні.*192\.168\.88\.1.*203\.0\.113\.50/);
+  // Its own example, never this round's addresses (Андрій: hint 3 gave the next packet's answer).
+  assert.match(chainText(hint.code, hint.params), /Окремий приклад.*192\.0\.2\.1/);
+  assert.doesNotMatch(chainText(hint.code, hint.params), /192\.168\.88\.1|203\.0\.113\.50/);
 });
 
 test('F1: level-2 hook retries disclose no rule evidence, consume no attempt/hint, survive JSON drafts, and retain earning', () => {
@@ -128,7 +130,7 @@ test('F2: full filter prioritises a forward failure and preserves the original f
   assert.equal(task.rules.find(r => r.id === forward.ruleId).chain, 'forward');
   assert.equal(forward.ruleId, r('forward-fasttrack'));
   assert.equal(forward.blockerId, r('forward-replies'));
-  assert.match(task.text, /Проброс порту: 100\.64\.0\.2:443 → Сервер:443/);
+  assert.match(task.text, /Прокидання порту: 100\.64\.0\.2:443 → Сервер:443/);
 });
 
 test('F2: analyzer can prefer a forward outcome difference without changing its legacy default/fallback', () => {

@@ -22,6 +22,7 @@ export { helpAt } from '../../src/sections/setup/screens/ModeHelp.jsx';
 export function storeFor({ seed = 1, prefs = {}, deck = 'dr-1', setup = null, session = {} } = {}) {
   const state = initialStore(prefs);
   state.places.setup = { deck, seeds: { [deck]: seed } };
+  state.places.examples = { setup: true };   // a later visit: the example opens by itself once only
   if (setup) {
     const task = drill.create(setupBank.decks.find(d => d.id === deck), { seed });
     state.instances[task.instanceKey] = { session: { status: 'working', hintIndex: 0, revealed: false, assisted: false, attempts: 0, earned: { solved: false, assisted: false }, ...session },
